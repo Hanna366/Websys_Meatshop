@@ -25,8 +25,9 @@
             top: 0;
             left: 0;
             width: 250px;
-            z-index: 100;
+            z-index: 1000;
             transition: all 0.3s;
+            overflow-y: auto;
         }
         
         .sidebar .brand {
@@ -173,10 +174,13 @@
                 <i class="fas fa-cog me-2"></i>
                 Settings
             </a>
-            <a class="nav-link" href="/login">
-                <i class="fas fa-sign-out-alt me-2"></i>
-                Logout
-            </a>
+            <form action="<?php echo e(route('logout')); ?>" method="POST" style="margin: 0;">
+                <?php echo csrf_field(); ?>
+                <button type="submit" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; padding: 1rem 1.5rem; color: rgba(255,255,255,0.8); transition: all 0.3s; border-radius: 0;">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Logout
+                </button>
+            </form>
         </nav>
     </div>
 
@@ -203,9 +207,12 @@
                                 <i class="fas fa-cog me-2"></i> Settings
                             </a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="/login">
-                                <i class="fas fa-sign-out-alt me-2"></i> Logout
-                            </a>
+                            <form action="<?php echo e(route('logout')); ?>" method="POST" style="display: inline;">
+                                <?php echo csrf_field(); ?>
+                                <button type="submit" class="dropdown-item" style="background: none; border: none; width: 100%; text-align: left; padding: 0.5rem 1rem;">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
