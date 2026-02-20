@@ -1,122 +1,521 @@
-<?php $__env->startSection('title', 'Products'); ?>
+
+
+<?php $__env->startSection('title', 'Products - Meat Shop POS'); ?>
 
 <?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Product Management</h1>
+        <h1 class="h2">Meat Products & Byproducts</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
-                    <i class="fas fa-print me-1"></i> Print
+                <button type="button" class="btn btn-sm btn-primary" onclick="showAddProductModal()">
+                    <i class="fas fa-plus me-1"></i> Add Product
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportProducts()">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
             </div>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProductModal">
-                <i class="fas fa-plus me-1"></i> Add Product
-            </button>
         </div>
     </div>
 
-    <!-- Product Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Products</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">245</div>
-                            <div class="text-xs text-gray-500">Active items</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-box fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                In Stock</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">198</div>
-                            <div class="text-xs text-gray-500">Available</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Low Stock</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">12</div>
-                            <div class="text-xs text-gray-500">Need reorder</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Categories</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">8</div>
-                            <div class="text-xs text-gray-500">Product types</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-tags fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Category Filter Tabs -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <ul class="nav nav-tabs card-header-tabs" id="categoryTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button">All Products</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="prime-tab" data-bs-toggle="tab" data-bs-target="#prime" type="button">Prime Grade</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="premium-tab" data-bs-toggle="tab" data-bs-target="#premium" type="button">Premium Grade</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="select-tab" data-bs-toggle="tab" data-bs-target="#select" type="button">Select Grade</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="byproduct-tab" data-bs-toggle="tab" data-bs-target="#byproduct" type="button">Byproducts</button>
-                </li>
-            </ul>
+    <!-- Products Table -->
+    <div class="card">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Meat & Byproduct List with Prices</h6>
         </div>
         <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Price (per kg)</th>
+                            <th>Category</th>
+                            <th>Stock Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Prime Rib Steak</td>
+                            <td class="text-end fw-bold">₱2,870</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="editProduct('Prime Rib Steak')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteProduct('Prime Rib Steak')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Ribeye</td>
+                            <td class="text-end fw-bold">₱3,570</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="editProduct('Ribeye')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteProduct('Ribeye')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Shortloin Slab</td>
+                            <td class="text-end fw-bold">₱2,670</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="editProduct('Shortloin Slab')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteProduct('Shortloin Slab')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Tenderloin</td>
+                            <td class="text-end fw-bold">₱4,020</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-warning">Low Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="editProduct('Tenderloin')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteProduct('Tenderloin')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Striploin</td>
+                            <td class="text-end fw-bold">$2,870</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Porterhouse</td>
+                            <td class="text-end fw-bold">$2,670</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>T-Bone</td>
+                            <td class="text-end fw-bold">$2,470</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Oyster Blade</td>
+                            <td class="text-end fw-bold">$1,720</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Flat Iron Steak</td>
+                            <td class="text-end fw-bold">$2,120</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Brisket</td>
+                            <td class="text-end fw-bold">$980</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Chuck Roll</td>
+                            <td class="text-end fw-bold">$1,870</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Short Plate</td>
+                            <td class="text-end fw-bold">$1,020</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Boneless Short Plate</td>
+                            <td class="text-end fw-bold">$1,270</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Tenderloin Tip</td>
+                            <td class="text-end fw-bold">$1,920</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Sirloin</td>
+                            <td class="text-end fw-bold">$1,720</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Tri-tip</td>
+                            <td class="text-end fw-bold">$1,720</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Flank Steak</td>
+                            <td class="text-end fw-bold">$1,870</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Flank Whole</td>
+                            <td class="text-end fw-bold">$885</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Chuck Tender</td>
+                            <td class="text-end fw-bold">$770</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Bolar Blade</td>
+                            <td class="text-end fw-bold">$1,060</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Short Ribs</td>
+                            <td class="text-end fw-bold">$855</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Boneless Short Rib</td>
+                            <td class="text-end fw-bold">$1,050</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Sirloin Tip</td>
+                            <td class="text-end fw-bold">$970</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Top Round</td>
+                            <td class="text-end fw-bold">$960</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Silverside</td>
+                            <td class="text-end fw-bold">$880</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Neck Meat</td>
+                            <td class="text-end fw-bold">$770</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Hump Roast</td>
+                            <td class="text-end fw-bold">$770</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Shank BI</td>
+                            <td class="text-end fw-bold">$620</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Eye Round</td>
+                            <td class="text-end fw-bold">$770</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Shin/Shank Boneless</td>
+                            <td class="text-end fw-bold">$670</td>
+                            <td><span class="badge bg-danger">Beef</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Neck Bones</td>
+                            <td class="text-end fw-bold">$410</td>
+                            <td><span class="badge bg-secondary">Bones</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Soup Bones</td>
+                            <td class="text-end fw-bold">$220</td>
+                            <td><span class="badge bg-secondary">Bones</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Bone Marrow</td>
+                            <td class="text-end fw-bold">$440</td>
+                            <td><span class="badge bg-secondary">Bones</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Fats</td>
+                            <td class="text-end fw-bold">$340</td>
+                            <td><span class="badge bg-warning">Byproduct</span></td>
+                            <td><span class="badge bg-success">In Stock</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+=======
             <!-- Search and Filter Bar -->
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -515,116 +914,77 @@
     </div>
 </div>
 
-<style>
-.product-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.product-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.product-card img {
-    height: 200px;
-    object-fit: cover;
-}
-</style>
-
 <script>
-// Search functionality
-document.getElementById('productSearch').addEventListener('keyup', function() {
-    const searchTerm = this.value.toLowerCase();
-    const cards = document.querySelectorAll('.product-card');
-    
-    cards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.closest('.col-lg-3').style.display = text.includes(searchTerm) ? '' : 'none';
-    });
-});
-
-// Stock filter
-document.getElementById('stockFilter').addEventListener('change', function() {
-    const filter = this.value;
-    const cards = document.querySelectorAll('.product-card');
-    
-    cards.forEach(card => {
-        if(filter === '') {
-            card.closest('.col-lg-3').style.display = '';
-        } else {
-            const badges = card.querySelectorAll('.badge');
-            let hasMatchingBadge = false;
-            
-            badges.forEach(badge => {
-                if(filter === 'instock' && badge.textContent === 'In Stock') hasMatchingBadge = true;
-                if(filter === 'lowstock' && badge.textContent === 'Low Stock') hasMatchingBadge = true;
-                if(filter === 'outofstock' && badge.textContent === 'Out of Stock') hasMatchingBadge = true;
-            });
-            
-            card.closest('.col-lg-3').style.display = hasMatchingBadge ? '' : 'none';
-        }
-    });
-});
-
-// Sort functionality
-document.getElementById('sortBy').addEventListener('change', function() {
-    const sortBy = this.value;
-    const grid = document.getElementById('productsGrid');
-    const cards = Array.from(grid.querySelectorAll('.col-lg-3'));
-    
-    cards.sort((a, b) => {
-        const aCard = a.querySelector('.product-card');
-        const bCard = b.querySelector('.product-card');
-        
-        if(sortBy === 'name') {
-            const aName = aCard.querySelector('.card-title').textContent;
-            const bName = bCard.querySelector('.card-title').textContent;
-            return aName.localeCompare(bName);
-        } else if(sortBy === 'price') {
-            const aPrice = parseFloat(aCard.querySelector('.h5').textContent.replace('$', ''));
-            const bPrice = parseFloat(bCard.querySelector('.h5').textContent.replace('$', ''));
-            return aPrice - bPrice;
-        }
-        // Add more sorting options as needed
-        return 0;
-    });
-    
-    cards.forEach(card => grid.appendChild(card));
-});
-
-// Product actions
-function editProduct(id) {
-    console.log('Editing product:', id);
-    // Implement edit functionality
+// Product Management Functions
+function showAddProductModal() {
+    document.getElementById('productModalLabel').textContent = 'Add New Product';
+    document.getElementById('productForm').reset();
+    new bootstrap.Modal(document.getElementById('productModal')).show();
 }
 
-function viewProduct(id) {
-    console.log('Viewing product:', id);
-    // Implement view functionality
+function editProduct(productName) {
+    document.getElementById('productModalLabel').textContent = 'Edit Product: ' + productName;
+    // Simulate loading product data
+    document.getElementById('productName').value = productName;
+    document.getElementById('productPrice').value = '2500';
+    document.getElementById('productCategory').value = 'Beef';
+    document.getElementById('productStock').value = '50';
+    new bootstrap.Modal(document.getElementById('productModal')).show();
+    showNotification('Editing product: ' + productName, 'info');
 }
 
-function addToCart(id) {
-    console.log('Adding product to cart:', id);
-    // Implement add to cart functionality
-}
-
-function restockProduct(id) {
-    console.log('Restocking product:', id);
-    // Implement restock functionality
+function deleteProduct(productName) {
+    if (confirm('Are you sure you want to delete "' + productName + '"?')) {
+        showNotification('Product "' + productName + '" deleted successfully!', 'success');
+        // In real app, this would make an API call to delete the product
+    }
 }
 
 function saveProduct() {
-    console.log('Saving new product');
-    // Implement save functionality
+    const productName = document.getElementById('productName').value;
+    if (!productName) {
+        showNotification('Please enter a product name', 'warning');
+        return;
+    }
     
-    const modal = bootstrap.Modal.getInstance(document.getElementById('newProductModal'));
-    modal.hide();
-    document.getElementById('newProductForm').reset();
+    showNotification('Product "' + productName + '" saved successfully!', 'success');
+    bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
 }
 
 function exportProducts() {
-    console.log('Exporting products');
-    // Implement export functionality
+    const products = [
+        { name: 'Prime Rib Steak', price: '₱2,870', category: 'Beef', stock: 'In Stock' },
+        { name: 'Ribeye', price: '₱3,570', category: 'Beef', stock: 'In Stock' },
+        { name: 'Tenderloin', price: '₱4,020', category: 'Beef', stock: 'Low Stock' }
+    ];
+    
+    const dataStr = JSON.stringify(products, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'products_export_' + new Date().toISOString().split('T')[0] + '.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    showNotification('Products exported successfully!', 'success');
+}
+
+// Show notification function
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : (type === 'warning' ? 'exclamation-triangle' : 'info-circle')} me-2"></i>
+        ${message}
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
 }
 </script>
 <?php $__env->stopSection(); ?>

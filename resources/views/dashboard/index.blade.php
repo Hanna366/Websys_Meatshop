@@ -18,8 +18,12 @@
         </div>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportDashboard()">
+                    <i class="fas fa-download me-1"></i>Export
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="printDashboard()">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
             </div>
             @if(session('user'))
                 <a href="/pricing" class="btn btn-sm btn-danger">
@@ -239,5 +243,57 @@
             }]
         }
     });
+
+    // Export Dashboard Function
+    function exportDashboard() {
+        const data = {
+            user: @if(session('user')) {
+                email: '{{ session('user.email') }}',
+                plan: '{{ session('user.plan') }}'
+            } @else null @endif,
+            timestamp: new Date().toISOString(),
+            stats: {
+                todaySales: '₱12,456',
+                products: 245,
+                customers: 128,
+                orders: 89
+            }
+        };
+        
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = 'dashboard_export_' + new Date().toISOString().split('T')[0] + '.json';
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        // Show success message
+        showNotification('Dashboard data exported successfully!', 'success');
+    }
+
+    // Print Dashboard Function
+    function printDashboard() {
+        window.print();
+        showNotification('Print dialog opened', 'info');
+    }
+
+    // Show notification function
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+        notification.style.zIndex = '9999';
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+            ${message}
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
 </script>
 @endsection

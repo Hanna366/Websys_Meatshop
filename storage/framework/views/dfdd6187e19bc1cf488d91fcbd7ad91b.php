@@ -1,18 +1,18 @@
-@extends('layouts.app')
 
-@section('title', 'Inventory - Meat Shop POS')
 
-@section('content')
+<?php $__env->startSection('title', 'Inventory - Meat Shop POS'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Inventory Management</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-primary" onclick="showAddStockModal()">
+                <button type="button" class="btn btn-sm btn-primary">
                     <i class="fas fa-plus me-1"></i> Add Stock
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportInventory()">
+                <button type="button" class="btn btn-sm btn-outline-secondary">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
             </div>
@@ -243,58 +243,6 @@
         </div>
     </div>
 </div>
+<?php $__env->stopSection(); ?>
 
-<script>
-// Inventory Management Functions
-function showAddStockModal() {
-    showNotification('Opening add stock form...', 'info');
-    // In real app, this would open a modal with product selection
-}
-
-function editStock(productName) {
-    showNotification('Editing stock for: ' + productName, 'info');
-    // In real app, this would open a modal with stock details
-}
-
-function addStock(productName) {
-    showNotification('Adding stock for: ' + productName, 'info');
-    // In real app, this would open a modal to add quantity
-}
-
-function exportInventory() {
-    const inventory = [
-        { product: 'Prime Rib Steak', category: 'Beef', stock: 45, unit: 'kg', status: 'In Stock', lastUpdated: '2024-02-20 10:30' },
-        { product: 'Ribeye', category: 'Beef', stock: 32, unit: 'kg', status: 'In Stock', lastUpdated: '2024-02-20 09:15' },
-        { product: 'Tenderloin', category: 'Beef', stock: 12, unit: 'kg', status: 'Low Stock', lastUpdated: '2024-02-20 08:00' }
-    ];
-    
-    const dataStr = JSON.stringify(inventory, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = 'inventory_export_' + new Date().toISOString().split('T')[0] + '.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    
-    showNotification('Inventory data exported successfully!', 'success');
-}
-
-// Show notification function
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-    notification.style.zIndex = '9999';
-    notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
-        ${message}
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-</script>
-@endsection
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/inventory.blade.php ENDPATH**/ ?>

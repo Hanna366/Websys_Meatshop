@@ -1,18 +1,18 @@
-@extends('layouts.app')
 
-@section('title', 'Sales - Meat Shop POS')
 
-@section('content')
+<?php $__env->startSection('title', 'Sales - Meat Shop POS'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Sales Management</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-primary" onclick="showNewSaleModal()">
+                <button type="button" class="btn btn-sm btn-primary">
                     <i class="fas fa-plus me-1"></i> New Sale
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSales()">
+                <button type="button" class="btn btn-sm btn-outline-secondary">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
             </div>
@@ -181,10 +181,10 @@
                             <td>2024-02-20 10:30</td>
                             <td><span class="badge bg-success">Completed</span></td>
                             <td>
-                                <button class="btn btn-sm btn-info" onclick="viewSale('#S005')">
+                                <button class="btn btn-sm btn-info">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="btn btn-sm btn-primary" onclick="printSale('#S005')">
+                                <button class="btn btn-sm btn-primary">
                                     <i class="fas fa-print"></i>
                                 </button>
                             </td>
@@ -195,61 +195,6 @@
         </div>
     </div>
 </div>
+<?php $__env->stopSection(); ?>
 
-<script>
-// Sales Management Functions
-function showNewSaleModal() {
-    showNotification('Opening new sale form...', 'info');
-    // In real app, this would open a modal with product selection
-}
-
-function viewSale(saleId) {
-    showNotification('Viewing sale details for ' + saleId, 'info');
-    // In real app, this would open a modal with sale details
-}
-
-function printSale(saleId) {
-    showNotification('Preparing receipt for ' + saleId + '...', 'info');
-    window.print();
-    // In real app, this would generate a printable receipt
-}
-
-function exportSales() {
-    const sales = [
-        { id: '#S001', customer: 'Juan Santos', items: 3, total: '₱8,450', payment: 'Cash', date: '2024-02-20 14:30', status: 'Completed' },
-        { id: '#S002', customer: 'Maria Reyes', items: 5, total: '₱12,890', payment: 'Card', date: '2024-02-20 13:45', status: 'Completed' },
-        { id: '#S003', customer: 'Roberto Cruz', items: 2, total: '₱5,670', payment: 'Cash', date: '2024-02-20 12:20', status: 'Completed' },
-        { id: '#S004', customer: 'Ana Martinez', items: 8, total: '₱18,340', payment: 'Card', date: '2024-02-20 11:15', status: 'Completed' },
-        { id: '#S005', customer: 'Carlos Mendoza', items: 6, total: '₱15,890', payment: 'Card', date: '2024-02-20 10:30', status: 'Completed' }
-    ];
-    
-    const dataStr = JSON.stringify(sales, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = 'sales_export_' + new Date().toISOString().split('T')[0] + '.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    
-    showNotification('Sales data exported successfully!', 'success');
-}
-
-// Show notification function
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-    notification.style.zIndex = '9999';
-    notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
-        ${message}
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-</script>
-@endsection
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/sales.blade.php ENDPATH**/ ?>

@@ -9,10 +9,10 @@
         <h1 class="h2">Meat Products & Byproducts</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-primary">
+                <button type="button" class="btn btn-sm btn-primary" onclick="showAddProductModal()">
                     <i class="fas fa-plus me-1"></i> Add Product
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportProducts()">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
             </div>
@@ -25,7 +25,6 @@
             <h6 class="m-0 font-weight-bold text-primary">Meat & Byproduct List with Prices</h6>
         </div>
         <div class="card-body">
-<<<<<<< HEAD
             <div class="table-responsive">
                 <table class="table table-bordered" width="100%" cellspacing="0">
                     <thead>
@@ -40,56 +39,56 @@
                     <tbody>
                         <tr>
                             <td>Prime Rib Steak</td>
-                            <td class="text-end fw-bold">$2,870</td>
+                            <td class="text-end fw-bold">₱2,870</td>
                             <td><span class="badge bg-danger">Beef</span></td>
                             <td><span class="badge bg-success">In Stock</span></td>
                             <td>
-                                <button class="btn btn-sm btn-info">
+                                <button class="btn btn-sm btn-info" onclick="editProduct('Prime Rib Steak')">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-sm btn-danger">
+                                <button class="btn btn-sm btn-danger" onclick="deleteProduct('Prime Rib Steak')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
                         <tr>
                             <td>Ribeye</td>
-                            <td class="text-end fw-bold">$3,570</td>
+                            <td class="text-end fw-bold">₱3,570</td>
                             <td><span class="badge bg-danger">Beef</span></td>
                             <td><span class="badge bg-success">In Stock</span></td>
                             <td>
-                                <button class="btn btn-sm btn-info">
+                                <button class="btn btn-sm btn-info" onclick="editProduct('Ribeye')">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-sm btn-danger">
+                                <button class="btn btn-sm btn-danger" onclick="deleteProduct('Ribeye')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
                         <tr>
                             <td>Shortloin Slab</td>
-                            <td class="text-end fw-bold">$2,670</td>
+                            <td class="text-end fw-bold">₱2,670</td>
                             <td><span class="badge bg-danger">Beef</span></td>
                             <td><span class="badge bg-success">In Stock</span></td>
                             <td>
-                                <button class="btn btn-sm btn-info">
+                                <button class="btn btn-sm btn-info" onclick="editProduct('Shortloin Slab')">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-sm btn-danger">
+                                <button class="btn btn-sm btn-danger" onclick="deleteProduct('Shortloin Slab')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
                         <tr>
                             <td>Tenderloin</td>
-                            <td class="text-end fw-bold">$4,020</td>
+                            <td class="text-end fw-bold">₱4,020</td>
                             <td><span class="badge bg-danger">Beef</span></td>
                             <td><span class="badge bg-warning">Low Stock</span></td>
                             <td>
-                                <button class="btn btn-sm btn-info">
+                                <button class="btn btn-sm btn-info" onclick="editProduct('Tenderloin')">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-sm btn-danger">
+                                <button class="btn btn-sm btn-danger" onclick="deleteProduct('Tenderloin')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -910,9 +909,82 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="saveProduct()">Save Product</button>
->>>>>>> 305f8b7252d827d96dd07bee93d9535683f0fdce
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Product Management Functions
+function showAddProductModal() {
+    document.getElementById('productModalLabel').textContent = 'Add New Product';
+    document.getElementById('productForm').reset();
+    new bootstrap.Modal(document.getElementById('productModal')).show();
+}
+
+function editProduct(productName) {
+    document.getElementById('productModalLabel').textContent = 'Edit Product: ' + productName;
+    // Simulate loading product data
+    document.getElementById('productName').value = productName;
+    document.getElementById('productPrice').value = '2500';
+    document.getElementById('productCategory').value = 'Beef';
+    document.getElementById('productStock').value = '50';
+    new bootstrap.Modal(document.getElementById('productModal')).show();
+    showNotification('Editing product: ' + productName, 'info');
+}
+
+function deleteProduct(productName) {
+    if (confirm('Are you sure you want to delete "' + productName + '"?')) {
+        showNotification('Product "' + productName + '" deleted successfully!', 'success');
+        // In real app, this would make an API call to delete the product
+    }
+}
+
+function saveProduct() {
+    const productName = document.getElementById('productName').value;
+    if (!productName) {
+        showNotification('Please enter a product name', 'warning');
+        return;
+    }
+    
+    showNotification('Product "' + productName + '" saved successfully!', 'success');
+    bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+}
+
+function exportProducts() {
+    const products = [
+        { name: 'Prime Rib Steak', price: '₱2,870', category: 'Beef', stock: 'In Stock' },
+        { name: 'Ribeye', price: '₱3,570', category: 'Beef', stock: 'In Stock' },
+        { name: 'Tenderloin', price: '₱4,020', category: 'Beef', stock: 'Low Stock' }
+    ];
+    
+    const dataStr = JSON.stringify(products, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'products_export_' + new Date().toISOString().split('T')[0] + '.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    showNotification('Products exported successfully!', 'success');
+}
+
+// Show notification function
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : (type === 'warning' ? 'exclamation-triangle' : 'info-circle')} me-2"></i>
+        ${message}
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
 @endsection
