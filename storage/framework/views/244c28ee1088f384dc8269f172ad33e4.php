@@ -1,8 +1,8 @@
-@extends('layouts.app')
 
-@section('title', 'Profile - Meat Shop POS')
 
-@section('content')
+<?php $__env->startSection('title', 'Profile - Meat Shop POS'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -21,16 +21,16 @@
             <div class="card border-primary">
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <img src="https://ui-avatars.com/api/?name={{ session('user.name') }}&background=random&color=fff" 
+                        <img src="https://ui-avatars.com/api/?name=<?php echo e(session('user.name')); ?>&background=random&color=fff" 
                              class="rounded-circle" 
                              style="width: 100px; height: 100px; border: 3px solid #007bff;" 
                              alt="Profile Picture">
                     </div>
-                    <h4 class="card-title">{{ session('user.name') }}</h4>
-                    <p class="text-muted mb-1">{{ session('user.email') }}</p>
-                    <span class="badge bg-{{ session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary') }} text-white mb-2">
+                    <h4 class="card-title"><?php echo e(session('user.name')); ?></h4>
+                    <p class="text-muted mb-1"><?php echo e(session('user.email')); ?></p>
+                    <span class="badge bg-<?php echo e(session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary')); ?> text-white mb-2">
                         <i class="fas fa-crown me-1"></i>
-                        {{ session('user.plan') }} Plan
+                        <?php echo e(session('user.plan')); ?> Plan
                     </span>
                 </div>
             </div>
@@ -84,7 +84,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Email Address</label>
-                                <input type="email" class="form-control" value="{{ session('email') }}" readonly>
+                                <input type="email" class="form-control" value="<?php echo e(session('email')); ?>" readonly>
                             </div>
                         </div>
                     </div>
@@ -177,7 +177,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Last Login</label>
-                                <p class="mb-0">{{ now()->format('F j, Y g:i A') }}</p>
+                                <p class="mb-0"><?php echo e(now()->format('F j, Y g:i A')); ?></p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -222,7 +222,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="editEmail" value="{{ session('email') }}">
+                        <input type="email" class="form-control" id="editEmail" value="<?php echo e(session('email')); ?>">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Phone Number</label>
@@ -330,4 +330,6 @@ function showNotification(message, type) {
     }, 3000);
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/profile.blade.php ENDPATH**/ ?>

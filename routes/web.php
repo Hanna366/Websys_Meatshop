@@ -28,27 +28,27 @@ Route::middleware(['auth'])->group(function () {
     
     Route::get('/products', function () {
         return view('products');
-    });
+    })->middleware('subscription');
     
     Route::get('/inventory', function () {
         return view('inventory');
-    });
+    })->middleware('subscription');
     
     Route::get('/sales', function () {
         return view('sales');
-    });
+    })->middleware('subscription:pos_access');
     
     Route::get('/customers', function () {
         return view('customers');
-    });
+    })->middleware('subscription:customer_management');
     
     Route::get('/suppliers', function () {
         return view('suppliers');
-    });
+    })->middleware('subscription:supplier_management');
     
     Route::get('/reports', function () {
         return view('reports');
-    });
+    })->middleware('subscription:advanced_analytics');
     
     Route::get('/settings', function () {
         return view('settings');

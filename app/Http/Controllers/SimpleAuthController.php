@@ -45,10 +45,14 @@ class SimpleAuthController extends Controller
 
         if (isset($demoAccounts[$credentials['email']]) && $demoAccounts[$credentials['email']]['password'] === $credentials['password']) {
             $account = $demoAccounts[$credentials['email']];
+            $name = explode('@', $credentials['email'])[0];
+            $name = ucfirst($name);
+            
             session([
                 'authenticated' => true,
                 'user' => [
                     'email' => $credentials['email'],
+                    'name' => $name,
                     'plan' => $account['plan'],
                     'features' => $account['features']
                 ]

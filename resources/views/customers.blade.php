@@ -9,13 +9,32 @@
         <h1 class="h2">Customer Management</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-primary">
+                @if(session('permissions.customer_management'))
+                <button type="button" class="btn btn-sm btn-primary" onclick="showAddCustomerModal()">
                     <i class="fas fa-plus me-1"></i> Add Customer
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">
+                @else
+                <button type="button" class="btn btn-sm btn-primary" disabled title="Customer management requires Standard plan or higher.">
+                    <i class="fas fa-plus me-1"></i> Add Customer
+                </button>
+                @endif
+                
+                @if(session('permissions.data_export'))
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportCustomers()">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
+                @else
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                @endif
             </div>
+            @if(!session('permissions.customer_management'))
+            <div class="alert alert-warning mb-0">
+                <small><i class="fas fa-exclamation-triangle me-1"></i>
+                Customer management requires Standard plan or higher. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
+            </div>
+            @endif
         </div>
     </div>
 

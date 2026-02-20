@@ -9,13 +9,32 @@
         <h1 class="h2">Sales Management</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
+                @if(session('permissions.pos_access'))
                 <button type="button" class="btn btn-sm btn-primary" onclick="showNewSaleModal()">
                     <i class="fas fa-plus me-1"></i> New Sale
                 </button>
+                @else
+                <button type="button" class="btn btn-sm btn-primary" disabled title="POS functionality requires Standard plan or higher.">
+                    <i class="fas fa-plus me-1"></i> New Sale
+                </button>
+                @endif
+                
+                @if(session('permissions.data_export'))
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSales()">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
+                @else
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                @endif
             </div>
+            @if(!session('permissions.pos_access'))
+            <div class="alert alert-warning mb-0">
+                <small><i class="fas fa-exclamation-triangle me-1"></i>
+                POS functionality requires Standard plan or higher. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
+            </div>
+            @endif
         </div>
     </div>
 

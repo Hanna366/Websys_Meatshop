@@ -9,13 +9,28 @@
         <h1 class="h2">Reports & Analytics</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-primary">
-                    <i class="fas fa-file-export me-1"></i> Generate Report
+                @if(session('permissions.advanced_analytics'))
+                <button type="button" class="btn btn-sm btn-primary" onclick="generateAdvancedReport()">
+                    <i class="fas fa-chart-line me-1"></i> Advanced Report
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-download me-1"></i> Export All
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportReports()">
+                    <i class="fas fa-download me-1"></i> Export Reports
                 </button>
+                @else
+                <button type="button" class="btn btn-sm btn-primary" disabled title="Advanced analytics requires Premium plan.">
+                    <i class="fas fa-chart-line me-1"></i> Advanced Report
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
+                    <i class="fas fa-download me-1"></i> Export Reports
+                </button>
+                @endif
             </div>
+            @if(!session('permissions.advanced_analytics'))
+            <div class="alert alert-warning mb-0">
+                <small><i class="fas fa-exclamation-triangle me-1"></i>
+                Advanced analytics and reporting require Premium plan. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
+            </div>
+            @endif
         </div>
     </div>
 

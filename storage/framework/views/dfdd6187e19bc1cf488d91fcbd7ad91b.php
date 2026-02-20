@@ -1,40 +1,40 @@
-@extends('layouts.app')
 
-@section('title', 'Inventory - Meat Shop POS')
 
-@section('content')
+<?php $__env->startSection('title', 'Inventory - Meat Shop POS'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Inventory Management</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                @if(session('permissions.max_products') == -1 || session('permissions.max_products') > 30)
+                <?php if(session('permissions.max_products') == -1 || session('permissions.max_products') > 30): ?>
                 <button type="button" class="btn btn-sm btn-primary" onclick="showAddStockModal()">
                     <i class="fas fa-plus me-1"></i> Add Stock
                 </button>
-                @else
+                <?php else: ?>
                 <button type="button" class="btn btn-sm btn-primary" disabled title="Stock management requires Standard plan or higher.">
                     <i class="fas fa-plus me-1"></i> Add Stock
                 </button>
-                @endif
+                <?php endif; ?>
                 
-                @if(session('permissions.data_export'))
+                <?php if(session('permissions.data_export')): ?>
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportInventory()">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
-                @else
+                <?php else: ?>
                 <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
-                @endif
+                <?php endif; ?>
             </div>
-            @if(session('permissions.max_products') != -1 && session('permissions.max_products') <= 30)
+            <?php if(session('permissions.max_products') != -1 && session('permissions.max_products') <= 30): ?>
             <div class="alert alert-warning mb-0">
                 <small><i class="fas fa-exclamation-triangle me-1"></i>
                 Advanced inventory management requires Standard plan. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 
@@ -316,4 +316,6 @@ function showNotification(message, type) {
     }, 3000);
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/inventory.blade.php ENDPATH**/ ?>
