@@ -35,8 +35,6 @@ return new class extends Migration
             $table->unique(['tenant_id', 'product_code']);
             $table->index(['tenant_id', 'category']);
             $table->index(['tenant_id', 'status']);
-            $table->index(['tenant_id', 'inventory_current_stock']);
-            $table->index(['tenant_id', 'barcode']);
         });
     }
 

@@ -29,7 +29,6 @@ return new class extends Migration
 
             $table->unique(['tenant_id', 'customer_code']);
             $table->index(['tenant_id', 'status']);
-            $table->index(['tenant_id', 'loyalty_tier']);
         });
     }
 
