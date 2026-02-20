@@ -45,6 +45,14 @@ Route::middleware(['web'])->group(function () {
     Route::get('/suppliers', function () {
         return view('suppliers');
     });
+    
+    Route::get('/reports', function () {
+        return view('reports');
+    });
+    
+    Route::get('/settings', function () {
+        return view('settings');
+    });
 });
 
 Route::get('/test', function () {
