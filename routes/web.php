@@ -27,23 +27,23 @@ Route::middleware(['web'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     Route::get('/products', function () {
-        return '<h1>Products</h1><p>Manage your products here</p><a href="/dashboard">Back to Dashboard</a>';
+        return view('products');
     });
     
     Route::get('/inventory', function () {
-        return '<h1>Inventory</h1><p>Manage your inventory here</p><a href="/dashboard">Back to Dashboard</a>';
+        return view('inventory');
     });
     
     Route::get('/sales', function () {
-        return '<h1>Sales</h1><p>Manage your sales here</p><a href="/dashboard">Back to Dashboard</a>';
+        return view('sales');
     });
     
     Route::get('/customers', function () {
-        return '<h1>Customers</h1><p>Manage your customers here</p><a href="/dashboard">Back to Dashboard</a>';
+        return view('customers');
     });
     
     Route::get('/suppliers', function () {
-        return '<h1>Suppliers</h1><p>Manage your suppliers here</p><a href="/dashboard">Back to Dashboard</a>';
+        return view('suppliers');
     });
 });
 
