@@ -8,60 +8,36 @@
     <!-- Hero Section -->
     <div class="container py-5">
         <div class="text-center mb-5">
-            <h1 class="display-4 fw-bold mb-4">Choose the right plan for your business</h1>
-            <p class="lead mb-4">Switch plans or cancel anytime. No hidden fees.</p>
-            <div class="d-flex justify-content-center align-items-center gap-3">
-                <span class="badge bg-success p-2">
-                    <i class="fas fa-check me-1"></i> Monthly Billing
-                </span>
-                <small class="text-muted">Save 20% with annual billing</small>
-            </div>
+            <h1 class="display-4 fw-bold mb-3">Go plan</h1>
+            <p class="lead">Choose the perfect plan for your meat shop business</p>
         </div>
 
-        <!-- Pricing Cards Netflix Style -->
+        <!-- Pricing Cards -->
         <div class="row g-4 mb-5">
             <!-- Basic Plan -->
             <div class="col-lg-3 col-md-6">
-                <div class="card h-100" style="background: #1a1a1a; border: 1px solid #333; color: white;">
+                <div class="card h-100" style="background: #2d2d2d; border: 1px solid #404040;">
                     <div class="card-body p-4">
-                        <h3 class="text-center mb-4">🟢 Basic</h3>
                         <div class="text-center mb-4">
-                            <div class="d-flex align-items-end justify-content-center">
-                                <span class="h1">₱</span>
-                                <span class="display-3 fw-bold">1,697</span>
-                                <span class="h6 mb-2">/month</span>
-                            </div>
+                            <div class="badge bg-success mb-2">🟢 Basic Plan</div>
+                            <h3 class="card-title text-white">Basic</h3>
+                            <p class="text-muted">Designed for small shops with simple needs</p>
                         </div>
-                        <p class="text-center text-muted mb-4">Perfect for small meat shops</p>
                         
+                        <div class="text-center mb-4">
+                            <h2 class="text-white">$29</h2>
+                            <p class="text-muted">Monthly subscription</p>
+                        </div>
+
                         <ul class="list-unstyled mb-4">
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Up to 100 products</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Inventory tracking</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Stock alerts</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Single user access</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center text-muted">
-                                <i class="fas fa-minus me-3"></i>
-                                <span>No POS functionality</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center text-muted">
-                                <i class="fas fa-minus me-3"></i>
-                                <span>No data export</span>
-                            </li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Up to 100 products</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Inventory tracking and stock alerts</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Single user access</li>
+                            <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>No POS functionality</li>
+                            <li class="mb-2 text-muted"><i class="fas fa-times text-danger me-2"></i>No data export</li>
                         </ul>
-                        
-                        <button class="btn btn-outline-light w-100 py-2 fw-bold" onclick="selectPlan('Basic', '₱1,697')">
+
+                        <button class="btn btn-outline-light w-100" onclick="selectPlan('Basic', 29)">
                             Get Started
                         </button>
                     </div>
@@ -70,53 +46,29 @@
 
             <!-- Standard Plan -->
             <div class="col-lg-3 col-md-6">
-                <div class="card h-100 position-relative" style="background: linear-gradient(135deg, #e50914, #b20710); border: 2px solid #e50914; color: white;">
-                    <div class="position-absolute top-0 start-50 translate-middle mt-3">
-                        <span class="badge bg-warning text-dark px-3 py-2 fw-bold">MOST POPULAR</span>
-                    </div>
-                    <div class="card-body p-4 pt-5">
-                        <h3 class="text-center mb-4">🔵 Standard</h3>
+                <div class="card h-100" style="background: #2d2d2d; border: 1px solid #404040;">
+                    <div class="card-body p-4">
                         <div class="text-center mb-4">
-                            <div class="d-flex align-items-end justify-content-center">
-                                <span class="h1">₱</span>
-                                <span class="display-3 fw-bold">4,622</span>
-                                <span class="h6 mb-2">/month</span>
-                            </div>
+                            <div class="badge bg-primary mb-2">🔵 Standard Plan</div>
+                            <h3 class="card-title text-white">Standard</h3>
+                            <p class="text-muted">Suitable for growing businesses</p>
                         </div>
-                        <p class="text-center mb-4">Great for growing businesses</p>
                         
+                        <div class="text-center mb-4">
+                            <h2 class="text-white">$79</h2>
+                            <p class="text-muted">Monthly subscription</p>
+                        </div>
+
                         <ul class="list-unstyled mb-4">
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check me-3"></i>
-                                <span>Unlimited products</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check me-3"></i>
-                                <span>Full POS system</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check me-3"></i>
-                                <span>Customer management</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check me-3"></i>
-                                <span>Supplier management</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check me-3"></i>
-                                <span>Basic reporting</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check me-3"></i>
-                                <span>CSV export (limited)</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check me-3"></i>
-                                <span>Up to 3 users</span>
-                            </li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Unlimited products</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Full POS system</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Supplier and customer management</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Basic reporting</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>CSV export (limited)</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Up to 3 users</li>
                         </ul>
-                        
-                        <button class="btn btn-light w-100 py-2 fw-bold text-dark" onclick="selectPlan('Standard', '₱4,622')">
+
+                        <button class="btn btn-outline-light w-100" onclick="selectPlan('Standard', 79)">
                             Get Started
                         </button>
                     </div>
@@ -125,54 +77,35 @@
 
             <!-- Premium Plan -->
             <div class="col-lg-3 col-md-6">
-                <div class="card h-100" style="background: #1a1a1a; border: 1px solid #333; color: white;">
-                    <div class="card-body p-4">
-                        <h3 class="text-center mb-4">🟣 Premium</h3>
-                        <div class="text-center mb-4">
-                            <div class="d-flex align-items-end justify-content-center">
-                                <span class="h1">₱</span>
-                                <span class="display-3 fw-bold">8,717</span>
-                                <span class="h6 mb-2">/month</span>
-                            </div>
+                <div class="card h-100" style="background: #2d2d2d; border: 2px solid #ff6b6b;">
+                    <div class="card-body p-4 position-relative">
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-danger">POPULAR</span>
                         </div>
-                        <p class="text-center mb-4">For advanced operations</p>
                         
+                        <div class="text-center mb-4">
+                            <div class="badge bg-danger mb-2">🟣 Premium Plan</div>
+                            <h3 class="card-title text-white">Premium</h3>
+                            <p class="text-muted">For advanced operations</p>
+                        </div>
+                        
+                        <div class="text-center mb-4">
+                            <h2 class="text-white">$149</h2>
+                            <p class="text-muted">Monthly subscription</p>
+                        </div>
+
                         <ul class="list-unstyled mb-4">
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>All Standard features</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Advanced analytics</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Unlimited data export</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>API access</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Batch operations</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Unlimited users</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Custom branding</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Priority support</span>
-                            </li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>All Standard features</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Advanced analytics dashboard</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Unlimited data export (CSV, Excel, PDF)</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>API access</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Batch operations</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Unlimited users</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Custom branding</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>SMS notifications and priority support</li>
                         </ul>
-                        
-                        <button class="btn btn-outline-light w-100 py-2 fw-bold" onclick="selectPlan('Premium', '₱8,717')">
+
+                        <button class="btn btn-danger w-100" onclick="selectPlan('Premium', 149)">
                             Get Started
                         </button>
                     </div>
@@ -181,251 +114,334 @@
 
             <!-- Enterprise Plan -->
             <div class="col-lg-3 col-md-6">
-                <div class="card h-100" style="background: #1a1a1a; border: 1px solid #333; color: white;">
-                    <div class="card-body p-4">
-                        <h3 class="text-center mb-4">🏢 Enterprise</h3>
-                        <div class="text-center mb-4">
-                            <div class="d-flex align-items-end justify-content-center">
-                                <span class="display-3 fw-bold">Custom</span>
-                            </div>
+                <div class="card h-100" style="background: #1a1a1a; border: 2px solid #gold;">
+                    <div class="card-body p-4 position-relative">
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-warning text-dark">ENTERPRISE</span>
                         </div>
-                        <p class="text-center mb-4">Large-scale operations</p>
                         
+                        <div class="text-center mb-4">
+                            <div class="badge bg-warning text-dark mb-2">🏢 Enterprise Plan</div>
+                            <h3 class="card-title text-white">Enterprise</h3>
+                            <p class="text-muted">Custom Pricing</p>
+                        </div>
+                        
+                        <div class="text-center mb-4">
+                            <h2 class="text-white">Custom</h2>
+                            <p class="text-muted">Contact for pricing</p>
+                        </div>
+
                         <ul class="list-unstyled mb-4">
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Dedicated database</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Custom integrations</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>SLA guarantee</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>On-premise option</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Advanced compliance</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-center">
-                                <i class="fas fa-check text-success me-3"></i>
-                                <span>Dedicated support</span>
-                            </li>
+                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>Dedicated database</li>
+                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>Custom integrations</li>
+                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>SLA and priority services</li>
+                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>On-premise deployment option</li>
+                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>Advanced compliance tools</li>
                         </ul>
-                        
-                        <button class="btn btn-outline-light w-100 py-2 fw-bold" onclick="contactSales()">
+
+                        <button class="btn btn-warning w-100 text-dark" onclick="contactSales()">
                             Contact Sales
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Features Grid -->
-        <div class="row mb-5">
-            <div class="col-12">
-                <h2 class="text-center mb-4">Everything you need to run your meat shop</h2>
-                <div class="row g-4">
-                    <div class="col-md-4 text-center">
-                        <div class="p-4">
-                            <i class="fas fa-mobile-alt fa-3x mb-3 text-danger"></i>
-                            <h4>Mobile POS</h4>
-                            <p class="text-muted">Process sales anywhere with our mobile-friendly POS system</p>
+    <!-- Payment Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: #2d2d2d; color: white;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="paymentModalLabel">Complete Your Subscription</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <h4 id="selectedPlanName" class="text-white">Premium Plan</h4>
+                        <p class="text-muted">Top features • Smarter, faster responses with GPT-5 • More messages & uploads • Create more images, faster • Extra memory & context</p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <h5 class="text-white">Monthly subscription</h5>
+                            <h3 class="text-white" id="planPrice">₱267.86</h3>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-white">Promotion</h5>
+                            <p class="text-success"><strong>-₱267.86</strong></p>
+                            <p class="text-success">100% off for a month</p>
                         </div>
                     </div>
-                    <div class="col-md-4 text-center">
-                        <div class="p-4">
-                            <i class="fas fa-chart-line fa-3x mb-3 text-danger"></i>
-                            <h4>Advanced Analytics</h4>
-                            <p class="text-muted">Get insights into your sales performance and inventory trends</p>
+
+                    <div class="border-top border-secondary pt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>VAT (0%)</span>
+                            <span>₱0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Due today</strong>
+                            <strong class="text-success" id="totalDue">₱0.00</strong>
                         </div>
                     </div>
-                    <div class="col-md-4 text-center">
-                        <div class="p-4">
-                            <i class="fas fa-shield-alt fa-3x mb-3 text-danger"></i>
-                            <h4>Secure & Reliable</h4>
-                            <p class="text-muted">Bank-level security to protect your business data</p>
+
+                    <!-- Payment Methods -->
+                    <div class="mb-3">
+                        <label class="form-label text-white">Select Payment Method</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="paymentMethod" id="creditCard" autocomplete="off" checked>
+                            <label class="btn btn-outline-light" for="creditCard">
+                                <i class="fas fa-credit-card me-2"></i>Credit Card
+                            </label>
+
+                            <input type="radio" class="btn-check" name="paymentMethod" id="gcash" autocomplete="off">
+                            <label class="btn btn-outline-light" for="gcash">
+                                <i class="fas fa-mobile-alt me-2"></i>GCash
+                            </label>
+
+                            <input type="radio" class="btn-check" name="paymentMethod" id="paypal" autocomplete="off">
+                            <label class="btn btn-outline-light" for="paypal">
+                                <i class="fab fa-paypal me-2"></i>PayPal
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Credit Card Form (shown by default) -->
+                    <div id="creditCardForm">
+                        <div class="mb-3">
+                            <label class="form-label text-white">Card Number</label>
+                            <input type="text" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-white">Expiry Date</label>
+                                <input type="text" class="form-control" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-white">CVV</label>
+                                <input type="text" class="form-control" placeholder="123" maxlength="4">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white">Cardholder Name</label>
+                            <input type="text" class="form-control" placeholder="John Doe">
+                        </div>
+                    </div>
+
+                    <!-- GCash Form (hidden by default) -->
+                    <div id="gcashForm" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label text-white">GCash Number</label>
+                            <input type="tel" class="form-control" placeholder="09XX XXX XXXX">
+                        </div>
+                        <div class="text-center">
+                            <img src="https://via.placeholder.com/150x50/004E98/FFFFFF?text=GCash" alt="GCash" class="img-fluid">
+                        </div>
+                    </div>
+
+                    <!-- PayPal Form (hidden by default) -->
+                    <div id="paypalForm" style="display: none;">
+                        <div class="text-center">
+                            <p class="text-white">You will be redirected to PayPal to complete your payment.</p>
+                            <img src="https://via.placeholder.com/200x50/003087/FFFFFF?text=PayPal" alt="PayPal" class="img-fluid">
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- FAQ Section Netflix Style -->
-        <div class="row mb-5">
-            <div class="col-12">
-                <h2 class="text-center mb-4">Frequently Asked Questions</h2>
-                <div class="max-width-800 mx-auto">
-                    <div class="accordion" id="faqAccordion" style="background: #1a1a1a;">
-                        <div class="accordion-item" style="background: #2a2a2a; border: 1px solid #333; margin-bottom: 1px;">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                    What is Meat Shop POS?
-                                </button>
-                            </h2>
-                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body bg-dark text-white">
-                                    Meat Shop POS is a complete point-of-sale and inventory management system designed specifically for meat shops, butchers, and meat retailers in the Philippines.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item" style="background: #2a2a2a; border: 1px solid #333; margin-bottom: 1px;">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                    Can I change my plan anytime?
-                                </button>
-                            </h2>
-                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body bg-dark text-white">
-                                    Yes! You can upgrade or downgrade your plan at any time. Changes take effect at the next billing cycle, and we'll prorate any differences.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item" style="background: #2a2a2a; border: 1px solid #333; margin-bottom: 1px;">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                    What payment methods do you accept?
-                                </button>
-                            </h2>
-                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body bg-dark text-white">
-                                    We accept all major credit/debit cards, bank transfers, GCash, Maya, PayMaya, and other popular e-wallets in the Philippines.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item" style="background: #2a2a2a; border: 1px solid #333; margin-bottom: 1px;">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                    Is there a contract or commitment?
-                                </button>
-                            </h2>
-                            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body bg-dark text-white">
-                                    No contracts or long-term commitments. You can cancel your subscription anytime with no cancellation fees.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item" style="background: #2a2a2a; border: 1px solid #333;">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
-                                    Do you offer customer support?
-                                </button>
-                            </h2>
-                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body bg-dark text-white">
-                                    Yes! All plans include email support. Premium and Enterprise plans include priority support with faster response times and dedicated account managers.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="processPayment()">
+                        <i class="fas fa-lock me-2"></i>Complete Payment
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- CTA Section -->
-        <div class="row">
-            <div class="col-12 text-center py-5">
-                <h3 class="mb-3">Ready to transform your meat shop?</h3>
-                <p class="mb-4 text-muted">Start your free 14-day trial today. No credit card required.</p>
-                <button class="btn btn-danger btn-lg px-5 py-3 fw-bold" onclick="startTrial()">
-                    Start Free Trial
-                </button>
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: #2d2d2d; color: white;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="successModalLabel">Payment Successful!</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                    <h4 class="text-white mb-3">Welcome to Premium!</h4>
+                    <p class="text-muted">Your subscription has been activated successfully.</p>
+                    <p class="text-white">You now have access to all premium features.</p>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-success" onclick="goToDashboard()">
+                        Go to Dashboard
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.max-width-800 {
-    max-width: 800px;
-}
-
-.accordion-button:not(.collapsed) {
-    background-color: #2a2a2a !important;
-    color: white !important;
-}
-
-.accordion-button:focus {
-    box-shadow: none;
-    border-color: #e50914;
-}
-
-.card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(229, 9, 20, 0.3);
-}
-
-.btn-outline-light:hover {
-    background-color: #e50914;
-    border-color: #e50914;
-}
-
-.display-3 {
-    font-size: 3.5rem;
-    font-weight: 700;
-}
-
-body {
-    background: #000000;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #1a1a1a;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #e50914;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #b20710;
-}
-</style>
-
 <script>
-function selectPlan(planName, price) {
-    // Create a modal or redirect to checkout
-    if (confirm(`You've selected the ${planName} plan for ${price}/month. Would you like to proceed?`)) {
-        // In a real application, this would redirect to checkout or show a registration form
-        console.log(`Selected: ${planName} - ${price}`);
-        alert(`Great choice! Redirecting to checkout for ${planName} plan...`);
-    }
+let selectedPlan = '';
+let selectedPrice = 0;
+
+function selectPlan(plan, price) {
+    selectedPlan = plan;
+    selectedPrice = price;
+    
+    // Update modal content
+    document.getElementById('selectedPlanName').textContent = plan + ' Plan';
+    document.getElementById('planPrice').textContent = '$' + price.toFixed(2);
+    
+    // Show payment modal
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
 }
 
 function contactSales() {
-    alert('Thank you for your interest in Enterprise! Our sales team will contact you within 24 hours.\n\nYou can also call us at: +63 2 1234 5678\nEmail: sales@meatshop.ph');
-}
-
-function startTrial() {
-    if (confirm('Start your 14-day free trial today! No credit card required.')) {
-        alert('Redirecting to trial registration...');
-        // In a real application, this would redirect to trial signup
+    // Create contact modal
+    const contactModal = `
+        <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background: #2d2d2d; color: white;">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="contactModalLabel">Contact Enterprise Sales</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-building fa-3x text-warning mb-3"></i>
+                            <h4 class="text-white">Enterprise Solutions</h4>
+                            <p class="text-muted">Get custom pricing and solutions tailored to your business needs</p>
+                        </div>
+                        
+                        <form id="contactForm">
+                            <div class="mb-3">
+                                <label class="form-label text-white">Company Name</label>
+                                <input type="text" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-white">Your Name</label>
+                                <input type="text" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-white">Business Email</label>
+                                <input type="email" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-white">Phone Number</label>
+                                <input type="tel" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-white">Company Size</label>
+                                <select class="form-select">
+                                    <option value="">Select company size</option>
+                                    <option value="small">1-50 employees</option>
+                                    <option value="medium">51-200 employees</option>
+                                    <option value="large">201-1000 employees</option>
+                                    <option value="enterprise">1000+ employees</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-white">Message</label>
+                                <textarea class="form-control" rows="3" placeholder="Tell us about your needs..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-warning text-dark" onclick="submitContact()">
+                            <i class="fas fa-paper-plane me-2"></i>Send Inquiry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing contact modal if any
+    const existingModal = document.getElementById('contactModal');
+    if (existingModal) {
+        existingModal.remove();
     }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', contactModal);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('contactModal'));
+    modal.show();
 }
 
-// Add smooth scroll behavior
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        document.querySelector(this.getAttribute('href')).scrollIntoView({
-            behavior: 'smooth'
-        });
+function submitContact() {
+    // Simulate form submission
+    const modal = bootstrap.Modal.getInstance(document.getElementById('contactModal'));
+    modal.hide();
+    
+    // Show success message
+    showNotification('Thank you! Our enterprise sales team will contact you within 24 hours.', 'success');
+}
+
+// Payment method switching
+document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        // Hide all payment forms
+        document.getElementById('creditCardForm').style.display = 'none';
+        document.getElementById('gcashForm').style.display = 'none';
+        document.getElementById('paypalForm').style.display = 'none';
+        
+        // Show selected payment form
+        if (this.id === 'creditCard') {
+            document.getElementById('creditCardForm').style.display = 'block';
+        } else if (this.id === 'gcash') {
+            document.getElementById('gcashForm').style.display = 'block';
+        } else if (this.id === 'paypal') {
+            document.getElementById('paypalForm').style.display = 'block';
+        }
     });
 });
+
+function processPayment() {
+    // Simulate payment processing
+    const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+    modal.hide();
+    
+    // Show success modal
+    setTimeout(() => {
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+    }, 500);
+}
+
+function goToDashboard() {
+    // Update session to premium
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            email: 'premium@meatshop.com',
+            password: 'premium123'
+        })
+    }).then(() => {
+        window.location.href = '/dashboard';
+    });
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
 </script>
 @endsection

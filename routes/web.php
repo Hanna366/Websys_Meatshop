@@ -57,6 +57,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pricing', function () {
         return view('pricing');
     });
+    
+    Route::get('/profile', function () {
+        return view('profile');
+    });
 });
 
 Route::get('/test', function () {

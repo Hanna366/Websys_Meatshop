@@ -140,7 +140,7 @@
                             <td>Fresh Farms Ltd.</td>
                             <td>Roberto Santos</td>
                             <td>+63 918 2345</td>
-                            <td>Chicken & Poultry</td>
+                            <td>Beef</td>
                             <td><span class="badge bg-warning">Pending</span></td>
                             <td>
                                 <button class="btn btn-sm btn-info">

@@ -174,6 +174,10 @@
                 <i class="fas fa-cog me-2"></i>
                 Settings
             </a>
+            <a class="nav-link bg-danger text-white" href="/pricing" style="margin-top: 10px; border-radius: 5px;">
+                <i class="fas fa-crown me-2"></i>
+                Upgrade Plan
+            </a>
             <form action="<?php echo e(route('logout')); ?>" method="POST" style="margin: 0;">
                 <?php echo csrf_field(); ?>
                 <button type="submit" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; padding: 1rem 1.5rem; color: rgba(255,255,255,0.8); transition: all 0.3s; border-radius: 0;">

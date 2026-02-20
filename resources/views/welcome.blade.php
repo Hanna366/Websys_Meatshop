@@ -116,7 +116,7 @@
             </a>
             <a href="/pricing" class="btn btn-outline-danger">
                 <i class="fas fa-crown me-2"></i>
-                View Pricing Plans
+                Get Started
             </a>
         </div>
         

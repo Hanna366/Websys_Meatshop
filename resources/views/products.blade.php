@@ -460,7 +460,7 @@
                         <tr>
                             <td>Neck Bones</td>
                             <td class="text-end fw-bold">$410</td>
-                            <td><span class="badge bg-secondary">Bones</span></td>
+                            <td><span class="badge bg-secondary">Byproducts</span></td>
                             <td><span class="badge bg-success">In Stock</span></td>
                             <td>
                                 <button class="btn btn-sm btn-info">
@@ -474,7 +474,7 @@
                         <tr>
                             <td>Soup Bones</td>
                             <td class="text-end fw-bold">$220</td>
-                            <td><span class="badge bg-secondary">Bones</span></td>
+                            <td><span class="badge bg-secondary">Byproducts</span></td>
                             <td><span class="badge bg-success">In Stock</span></td>
                             <td>
                                 <button class="btn btn-sm btn-info">
@@ -488,7 +488,7 @@
                         <tr>
                             <td>Bone Marrow</td>
                             <td class="text-end fw-bold">$440</td>
-                            <td><span class="badge bg-secondary">Bones</span></td>
+                            <td><span class="badge bg-secondary">Byproducts</span></td>
                             <td><span class="badge bg-success">In Stock</span></td>
                             <td>
                                 <button class="btn btn-sm btn-info">
@@ -502,7 +502,7 @@
                         <tr>
                             <td>Fats</td>
                             <td class="text-end fw-bold">$340</td>
-                            <td><span class="badge bg-warning">Byproduct</span></td>
+                            <td><span class="badge bg-danger">Beef</span></td>
                             <td><span class="badge bg-success">In Stock</span></td>
                             <td>
                                 <button class="btn btn-sm btn-info">
@@ -551,12 +551,12 @@
                         <!-- Prime Grade Products -->
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/prime-rib-steak/300/200.jpg" class="card-img-top" alt="Prime Rib Steak">
+                                <img src="https://picsum.photos/seed/beef-prime-rib-steak/300/200.jpg" class="card-img-top" alt="Prime Rib Steak">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Prime Rib Steak</h5>
                                     <p class="card-text text-muted small">Premium cut, perfect for roasting</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-danger">Prime</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Beef - Premium cattle meat">Beef</span>
                                         <span class="badge bg-success">In Stock</span>
                                     </div>
                                     <div class="mt-auto">
@@ -582,12 +582,12 @@
 
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/ribeye-steak-beef/300/200.jpg" class="card-img-top" alt="Ribeye">
+                                <img src="https://picsum.photos/seed/beef-ribeye-steak/300/200.jpg" class="card-img-top" alt="Ribeye">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Ribeye</h5>
                                     <p class="card-text text-muted small">Marbled perfection for grilling</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-danger">Prime</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Beef - Premium cattle meat">Beef</span>
                                         <span class="badge bg-success">In Stock</span>
                                     </div>
                                     <div class="mt-auto">
@@ -613,12 +613,12 @@
 
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/shortloin-slab-beef/300/200.jpg" class="card-img-top" alt="Shortloin Slab">
+                                <img src="https://picsum.photos/seed/beef-shortloin-slab/300/200.jpg" class="card-img-top" alt="Shortloin Slab">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Shortloin Slab</h5>
                                     <p class="card-text text-muted small">Tender and flavorful cut</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-danger">Prime</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Beef - Premium cattle meat">Beef</span>
                                         <span class="badge bg-success">In Stock</span>
                                     </div>
                                     <div class="mt-auto">
@@ -649,7 +649,7 @@
                                     <h5 class="card-title">Tenderloin</h5>
                                     <p class="card-text text-muted small">Most tender cut available</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-danger">Prime</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Beef - Premium cattle meat">Beef</span>
                                         <span class="badge bg-warning">Low Stock</span>
                                     </div>
                                     <div class="mt-auto">
@@ -676,12 +676,12 @@
                         <!-- Premium Grade Products -->
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/oyster-blade-steak/300/200.jpg" class="card-img-top" alt="Oyster Blade">
+                                <img src="https://picsum.photos/seed/beef-oyster-blade/300/200.jpg" class="card-img-top" alt="Oyster Blade">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Oyster Blade</h5>
                                     <p class="card-text text-muted small">Rich flavor, great value</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-warning">Premium</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Beef - Premium cattle meat">Beef</span>
                                         <span class="badge bg-success">In Stock</span>
                                     </div>
                                     <div class="mt-auto">
@@ -707,12 +707,12 @@
 
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/flat-iron-steak-beef/300/200.jpg" class="card-img-top" alt="Flat Iron Steak">
+                                <img src="https://picsum.photos/seed/beef-flat-iron-steak/300/200.jpg" class="card-img-top" alt="Flat Iron Steak">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Flat Iron Steak</h5>
                                     <p class="card-text text-muted small">Second most tender cut</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-warning">Premium</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Beef - Premium cattle meat">Beef</span>
                                         <span class="badge bg-success">In Stock</span>
                                     </div>
                                     <div class="mt-auto">
@@ -743,7 +743,7 @@
                                     <h5 class="card-title">Brisket</h5>
                                     <p class="card-text text-muted small">Perfect for slow cooking</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-warning">Premium</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Beef - Premium cattle meat">Beef</span>
                                         <span class="badge bg-success">In Stock</span>
                                     </div>
                                     <div class="mt-auto">
@@ -770,12 +770,12 @@
                         <!-- Select Grade Products -->
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/chuck-tender-beef/300/200.jpg" class="card-img-top" alt="Chuck Tender">
+                                <img src="https://picsum.photos/seed/beef-chuck-tender/300/200.jpg" class="card-img-top" alt="Chuck Tender">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Chuck Tender</h5>
                                     <p class="card-text text-muted small">Budget-friendly cut</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-info">Select</span>
+                                        <span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Beef - Premium cattle meat">Beef</span>
                                         <span class="badge bg-success">In Stock</span>
                                     </div>
                                     <div class="mt-auto">
@@ -807,8 +807,8 @@
                                     <h5 class="card-title">Bone Marrow</h5>
                                     <p class="card-text text-muted small">Rich and nutritious</p>
                                     <div class="mb-2">
-                                        <span class="badge bg-secondary">Byproduct</span>
-                                        <span class="badge bg-success">In Stock</span>
+                                        <span class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Byproducts - Animal organs and bones">Byproducts</span>
+                                        <span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top" title="In Stock - Available for purchase">In Stock</span>
                                     </div>
                                     <div class="mt-auto">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -870,12 +870,14 @@
                         <div class="col-md-6 mb-3">
                             <label for="productCategory" class="form-label">Category</label>
                             <select class="form-select" id="productCategory" required>
-                                <option value="">Select Grade</option>
-                                <option value="prime">Prime Grade</option>
-                                <option value="premium">Premium Grade</option>
-                                <option value="select">Select Grade</option>
-                                <option value="choice">Choice Grade</option>
-                                <option value="byproduct">Byproduct</option>
+                                <option value="">Select Category</option>
+                                <option value="beef">Beef</option>
+                                <option value="pork">Pork</option>
+                                <option value="chicken">Chicken</option>
+                                <option value="turkey">Turkey</option>
+                                <option value="goat">Goat</option>
+                                <option value="lamb">Lamb</option>
+                                <option value="byproduct">Byproducts</option>
                             </select>
                         </div>
                     </div>
@@ -915,6 +917,26 @@
 </div>
 
 <script>
+// Initialize Bootstrap tooltips - Force refresh
+document.addEventListener('DOMContentLoaded', function() {
+    // Destroy any existing tooltips first
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        var tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+        if (tooltip) {
+            tooltip.dispose();
+        }
+    });
+    
+    // Reinitialize tooltips
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            delay: { show: 0, hide: 0 },
+            trigger: 'hover focus'
+        });
+    });
+});
+
 // Product Management Functions
 function showAddProductModal() {
     document.getElementById('productModalLabel').textContent = 'Add New Product';
@@ -927,7 +949,7 @@ function editProduct(productName) {
     // Simulate loading product data
     document.getElementById('productName').value = productName;
     document.getElementById('productPrice').value = '2500';
-    document.getElementById('productCategory').value = 'Beef';
+    document.getElementById('productCategory').value = 'beef';
     document.getElementById('productStock').value = '50';
     new bootstrap.Modal(document.getElementById('productModal')).show();
     showNotification('Editing product: ' + productName, 'info');
