@@ -108,10 +108,17 @@
         <h1 class="title">Meat Shop POS</h1>
         <p class="subtitle">Complete Point of Sale System for Your Meat Business</p>
         
-        <a href="/login" class="btn btn-login">
-            <i class="fas fa-sign-in-alt me-2"></i>
-            Enter Dashboard
-        </a>
+        <!-- Action Buttons -->
+        <div class="d-grid gap-2">
+            <a href="{{ route('login') }}" class="btn btn-primary btn-welcome text-white">
+                <i class="fas fa-sign-in-alt me-2"></i>
+                Login to Dashboard
+            </a>
+            <a href="/pricing" class="btn btn-outline-danger">
+                <i class="fas fa-crown me-2"></i>
+                View Pricing Plans
+            </a>
+        </div>
         
         <div class="features">
             <div class="feature">

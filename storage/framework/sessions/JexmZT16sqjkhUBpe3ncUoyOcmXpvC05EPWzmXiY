@@ -1,1 +1,1 @@
-a:5:{s:6:"_flash";a:2:{s:3:"old";a:0:{}s:3:"new";a:0:{}}s:6:"_token";s:40:"tpiSIECfXkskqfArt3sMVRcHga0iKQPNyi89yeIS";s:9:"_previous";a:1:{s:3:"url";s:31:"http://127.0.0.1:8000/dashboard";}s:13:"authenticated";b:1;s:4:"user";a:1:{s:5:"email";s:18:"admin@meatshop.com";}}
+a:3:{s:6:"_flash";a:2:{s:3:"old";a:0:{}s:3:"new";a:0:{}}s:6:"_token";s:40:"c4q4OJ6vvUmzEgz1cb7xK9DlBB4P0lB9E2LoFBkg";s:9:"_previous";a:1:{s:3:"url";s:27:"http://127.0.0.1:8000/login";}}

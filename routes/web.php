@@ -23,7 +23,7 @@ Route::get('/login', [SimpleAuthController::class, 'showLoginForm'])->name('logi
 Route::post('/login', [SimpleAuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [SimpleAuthController::class, 'logout'])->name('logout');
 
-Route::middleware(['web'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     Route::get('/products', function () {
@@ -52,6 +52,10 @@ Route::middleware(['web'])->group(function () {
     
     Route::get('/settings', function () {
         return view('settings');
+    });
+    
+    Route::get('/pricing', function () {
+        return view('pricing');
     });
 });
 

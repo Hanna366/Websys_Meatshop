@@ -105,15 +105,16 @@
             <h1>Meat Shop POS</h1>
         </div>
         
-        @if(session('error'))
+        <?php if(session('error')): ?>
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-triangle me-2"></i>
-                {{ session('error') }}
+                <?php echo e(session('error')); ?>
+
             </div>
-        @endif
+        <?php endif; ?>
         
-        <form method="POST" action="{{ route('login.post') }}">
-            @csrf
+        <form method="POST" action="<?php echo e(route('login.post')); ?>">
+            <?php echo csrf_field(); ?>
             <div class="mb-3">
                 <label for="email" class="form-label fw-bold">Email Address</label>
                 <div class="input-group">
@@ -121,7 +122,7 @@
                         <i class="fas fa-envelope text-muted"></i>
                     </span>
                     <input type="email" class="form-control border-start-0" id="email" name="email" 
-                           placeholder="Enter your email" value="{{ old('email') }}" required>
+                           placeholder="Enter your email" value="<?php echo e(old('email')); ?>" required>
                 </div>
             </div>
             
@@ -211,3 +212,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/auth/login.blade.php ENDPATH**/ ?>

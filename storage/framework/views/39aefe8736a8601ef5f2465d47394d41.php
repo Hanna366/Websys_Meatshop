@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Meat Shop POS - @yield('title', 'Dashboard')</title>
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title>Meat Shop POS - <?php echo $__env->yieldContent('title', 'Dashboard'); ?></title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -141,7 +141,7 @@
         </div>
         
         <nav class="nav flex-column">
-            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+            <a class="nav-link <?php echo e(request()->routeIs('dashboard') ? 'active' : ''); ?>" href="<?php echo e(route('dashboard')); ?>">
                 <i class="fas fa-tachometer-alt me-2"></i>
                 Dashboard
             </a>
@@ -178,8 +178,8 @@
                 <i class="fas fa-crown me-2"></i>
                 Upgrade Plan
             </a>
-            <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                @csrf
+            <form action="<?php echo e(route('logout')); ?>" method="POST" style="margin: 0;">
+                <?php echo csrf_field(); ?>
                 <button type="submit" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; padding: 1rem 1.5rem; color: rgba(255,255,255,0.8); transition: all 0.3s; border-radius: 0;">
                     <i class="fas fa-sign-out-alt me-2"></i>
                     Logout
@@ -211,8 +211,8 @@
                                 <i class="fas fa-cog me-2"></i> Settings
                             </a>
                             <div class="dropdown-divider"></div>
-                            <form action="{{ route('logout') }}" method="POST" style="display: inline;">
-                                @csrf
+                            <form action="<?php echo e(route('logout')); ?>" method="POST" style="display: inline;">
+                                <?php echo csrf_field(); ?>
                                 <button type="submit" class="dropdown-item" style="background: none; border: none; width: 100%; text-align: left; padding: 0.5rem 1rem;">
                                     <i class="fas fa-sign-out-alt me-2"></i> Logout
                                 </button>
@@ -225,7 +225,7 @@
 
         <!-- Page Content -->
         <div class="container-fluid p-4">
-            @yield('content')
+            <?php echo $__env->yieldContent('content'); ?>
         </div>
     </div>
 
@@ -240,3 +240,4 @@
     </script>
 </body>
 </html>
+<?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/layouts/app.blade.php ENDPATH**/ ?>

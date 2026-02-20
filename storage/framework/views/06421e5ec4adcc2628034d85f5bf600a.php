@@ -1,32 +1,33 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <div>
             <h1 class="h2">Dashboard</h1>
-            @if(session('user'))
+            <?php if(session('user')): ?>
                 <div class="alert alert-info mb-2">
                     <i class="fas fa-user me-2"></i>
-                    Logged in as: <strong>{{ session('user.email') }}</strong> | 
-                    Plan: <span class="badge bg-{{ session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary') }} text-white">
-                        {{ session('user.plan') }}
+                    Logged in as: <strong><?php echo e(session('user.email')); ?></strong> | 
+                    Plan: <span class="badge bg-<?php echo e(session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary')); ?> text-white">
+                        <?php echo e(session('user.plan')); ?>
+
                     </span>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
                 <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
             </div>
-            @if(session('user'))
+            <?php if(session('user')): ?>
                 <a href="/pricing" class="btn btn-sm btn-danger">
                     <i class="fas fa-crown me-1"></i>
                     Upgrade Plan
                 </a>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 
@@ -240,4 +241,6 @@
         }
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/dashboard/index.blade.php ENDPATH**/ ?>
