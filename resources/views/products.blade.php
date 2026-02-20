@@ -154,7 +154,7 @@
                         <!-- Prime Grade Products -->
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/primerib/300/200.jpg" class="card-img-top" alt="Prime Rib Steak">
+                                <img src="https://picsum.photos/seed/prime-rib-steak/300/200.jpg" class="card-img-top" alt="Prime Rib Steak">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Prime Rib Steak</h5>
                                     <p class="card-text text-muted small">Premium cut, perfect for roasting</p>
@@ -185,7 +185,7 @@
 
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/ribeye/300/200.jpg" class="card-img-top" alt="Ribeye">
+                                <img src="https://picsum.photos/seed/ribeye-steak-beef/300/200.jpg" class="card-img-top" alt="Ribeye">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Ribeye</h5>
                                     <p class="card-text text-muted small">Marbled perfection for grilling</p>
@@ -216,7 +216,7 @@
 
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/shortloin/300/200.jpg" class="card-img-top" alt="Shortloin Slab">
+                                <img src="https://picsum.photos/seed/shortloin-slab-beef/300/200.jpg" class="card-img-top" alt="Shortloin Slab">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Shortloin Slab</h5>
                                     <p class="card-text text-muted small">Tender and flavorful cut</p>
@@ -247,7 +247,7 @@
 
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/tenderloin/300/200.jpg" class="card-img-top" alt="Tenderloin">
+                                <img src="https://picsum.photos/seed/beef-tenderloin-filet/300/200.jpg" class="card-img-top" alt="Tenderloin">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Tenderloin</h5>
                                     <p class="card-text text-muted small">Most tender cut available</p>
@@ -279,7 +279,7 @@
                         <!-- Premium Grade Products -->
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/oysterblade/300/200.jpg" class="card-img-top" alt="Oyster Blade">
+                                <img src="https://picsum.photos/seed/oyster-blade-steak/300/200.jpg" class="card-img-top" alt="Oyster Blade">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Oyster Blade</h5>
                                     <p class="card-text text-muted small">Rich flavor, great value</p>
@@ -310,7 +310,7 @@
 
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/flatiron/300/200.jpg" class="card-img-top" alt="Flat Iron Steak">
+                                <img src="https://picsum.photos/seed/flat-iron-steak-beef/300/200.jpg" class="card-img-top" alt="Flat Iron Steak">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Flat Iron Steak</h5>
                                     <p class="card-text text-muted small">Second most tender cut</p>
@@ -341,7 +341,7 @@
 
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/brisket/300/200.jpg" class="card-img-top" alt="Brisket">
+                                <img src="https://picsum.photos/seed/beef-brisket-cut/300/200.jpg" class="card-img-top" alt="Brisket">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Brisket</h5>
                                     <p class="card-text text-muted small">Perfect for slow cooking</p>
@@ -373,7 +373,7 @@
                         <!-- Select Grade Products -->
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/chucktender/300/200.jpg" class="card-img-top" alt="Chuck Tender">
+                                <img src="https://picsum.photos/seed/chuck-tender-beef/300/200.jpg" class="card-img-top" alt="Chuck Tender">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Chuck Tender</h5>
                                     <p class="card-text text-muted small">Budget-friendly cut</p>
@@ -405,7 +405,7 @@
                         <!-- Byproducts -->
                         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 product-card">
-                                <img src="https://picsum.photos/seed/bonemarrow/300/200.jpg" class="card-img-top" alt="Bone Marrow">
+                                <img src="https://picsum.photos/seed/beef-bone-marrow/300/200.jpg" class="card-img-top" alt="Bone Marrow">
                                 <div class="card-body d-flex flex-column">
                                     <h5 class="card-title">Bone Marrow</h5>
                                     <p class="card-text text-muted small">Rich and nutritious</p>
