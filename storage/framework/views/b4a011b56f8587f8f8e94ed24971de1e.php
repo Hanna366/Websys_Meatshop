@@ -138,6 +138,13 @@
         <div class="brand">
             <i class="fas fa-cut"></i>
             <h4 class="mb-0">Meat Shop POS</h4>
+            <?php if(session('user.name')): ?>
+                <div class="text-white small mt-2">
+                    <i class="fas fa-user-circle me-1"></i>
+                    <?php echo e(session('user.name')); ?>
+
+                </div>
+            <?php endif; ?>
         </div>
         
         <nav class="nav flex-column">
@@ -173,6 +180,10 @@
             <a class="nav-link" href="/settings">
                 <i class="fas fa-cog me-2"></i>
                 Settings
+            </a>
+            <a class="nav-link" href="/profile">
+                <i class="fas fa-user me-2"></i>
+                Profile
             </a>
             <a class="nav-link bg-danger text-white" href="/pricing" style="margin-top: 10px; border-radius: 5px;">
                 <i class="fas fa-crown me-2"></i>

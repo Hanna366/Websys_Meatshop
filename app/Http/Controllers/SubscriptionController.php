@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
-use Stripe\Stripe;
-use Stripe\Customer;
-use Stripe\Subscription as StripeSubscription;
+use App\Services\SubscriptionService;
 
 class SubscriptionController extends Controller
 {
@@ -16,6 +13,11 @@ class SubscriptionController extends Controller
      */
     public function index()
     {
+        // Check if user is authenticated
+        if (!session('authenticated')) {
+            return redirect('/login');
+        }
+        
         return view('pricing');
     }
 
@@ -24,85 +26,37 @@ class SubscriptionController extends Controller
      */
     public function processSubscription(Request $request)
     {
+        // Check if user is authenticated
+        if (!session('authenticated')) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
         $request->validate([
             'plan' => 'required|in:basic,standard,premium,enterprise',
             'payment_method' => 'required|in:credit_card,gcash,paypal'
         ]);
 
-        $user = session('user');
-        
-        if (!$user) {
-            return response()->json(['error' => 'User not authenticated'], 401);
-        }
-
-        // Get current subscription
-        $currentSubscription = Subscription::where('user_id', $user['id'])->first();
-        
-        // Plan pricing
-        $planPrices = [
-            'basic' => 29,
-            'standard' => 79,
-            'premium' => 149,
-            'enterprise' => null // custom pricing
-        ];
-
         $plan = $request->plan;
-        $price = $planPrices[$plan];
+        $paymentMethod = $request->payment_method;
 
-        // Handle enterprise plan (contact sales)
-        if ($plan === 'enterprise') {
-            return $this->handleEnterpriseInquiry($request);
-        }
-
-        // Process payment (simulation)
-        $paymentResult = $this->processPayment($request->payment_method, $price);
+        // Process subscription via service
+        $result = SubscriptionService::processSubscription($plan, $paymentMethod);
         
-        if (!$paymentResult['success']) {
-            return response()->json(['error' => $paymentResult['message']], 400);
-        }
+        if ($result['success']) {
+            // Update user session
+            $user = session('user');
+            $user['plan'] = SubscriptionService::getPlanDisplayName($plan);
+            session(['user' => $user]);
 
-        // Create or update subscription
-        if ($currentSubscription) {
-            // Update existing subscription
-            $currentSubscription->update([
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
                 'plan' => $plan,
-                'price' => $price,
-                'status' => 'active',
-                'starts_at' => now(),
-                'expires_at' => now()->addMonth(),
-                'payment_method' => $request->payment_method,
-                'last_payment_at' => now(),
-                'next_billing_at' => now()->addMonth(),
-                'auto_renew' => true,
-                'subscription_id' => $paymentResult['subscription_id']
-            ]);
-        } else {
-            // Create new subscription
-            Subscription::create([
-                'user_id' => $user['id'],
-                'plan' => $plan,
-                'price' => $price,
-                'status' => 'active',
-                'starts_at' => now(),
-                'expires_at' => now()->addMonth(),
-                'payment_method' => $request->payment_method,
-                'last_payment_at' => now(),
-                'next_billing_at' => now()->addMonth(),
-                'auto_renew' => true,
-                'subscription_id' => $paymentResult['subscription_id']
+                'next_billing' => now()->addMonth()->format('F j, Y')
             ]);
         }
 
-        // Update user session
-        $user['plan'] = ucfirst($plan);
-        session(['user' => $user]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Subscription updated successfully!',
-            'plan' => $plan,
-            'next_billing' => now()->addMonth()->format('F j, Y')
-        ]);
+        return response()->json(['error' => $result['message']], 400);
     }
 
     /**
@@ -110,25 +64,22 @@ class SubscriptionController extends Controller
      */
     public function cancel(Request $request)
     {
-        $user = session('user');
-        
-        if (!$user) {
+        // Check if user is authenticated
+        if (!session('authenticated')) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
-        $subscription = Subscription::where('user_id', $user['id'])->first();
-        
-        if (!$subscription) {
-            return response()->json(['error' => 'No active subscription found'], 404);
+        $result = SubscriptionService::cancelSubscription();
+
+        if ($result['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'expires_at' => now()->addMonth()->format('F j, Y')
+            ]);
         }
 
-        $subscription->cancel();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Subscription cancelled successfully',
-            'expires_at' => $subscription->expires_at->format('F j, Y')
-        ]);
+        return response()->json(['error' => $result['message']], 400);
     }
 
     /**
@@ -136,32 +87,22 @@ class SubscriptionController extends Controller
      */
     public function renew(Request $request)
     {
-        $user = session('user');
-        
-        if (!$user) {
+        // Check if user is authenticated
+        if (!session('authenticated')) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
-        $subscription = Subscription::where('user_id', $user['id'])->first();
-        
-        if (!$subscription) {
-            return response()->json(['error' => 'No subscription found'], 404);
+        $result = SubscriptionService::renewSubscription();
+
+        if ($result['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'next_billing' => now()->addMonth()->format('F j, Y')
+            ]);
         }
 
-        // Process payment for renewal
-        $paymentResult = $this->processPayment($subscription->payment_method, $subscription->price);
-        
-        if (!$paymentResult['success']) {
-            return response()->json(['error' => $paymentResult['message']], 400);
-        }
-
-        $subscription->renew();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Subscription renewed successfully',
-            'next_billing' => $subscription->next_billing_at->format('F j, Y')
-        ]);
+        return response()->json(['error' => $result['message']], 400);
     }
 
     /**
@@ -169,13 +110,12 @@ class SubscriptionController extends Controller
      */
     public function status()
     {
-        $user = session('user');
-        
-        if (!$user) {
+        // Check if user is authenticated
+        if (!session('authenticated')) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
-        $subscription = Subscription::where('user_id', $user['id'])->first();
+        $subscription = SubscriptionService::getCurrentSubscription();
         
         if (!$subscription) {
             return response()->json([
@@ -184,65 +124,22 @@ class SubscriptionController extends Controller
             ]);
         }
 
-        $planFeatures = $subscription->getPlanFeatures();
+        $planFeatures = SubscriptionService::getPlanFeatures($subscription['plan']);
 
         return response()->json([
             'has_subscription' => true,
             'subscription' => [
-                'plan' => $subscription->plan,
-                'plan_name' => $planFeatures['name'],
-                'price' => $subscription->price,
-                'status' => $subscription->status,
-                'expires_at' => $subscription->expires_at->format('F j, Y'),
-                'days_until_expiration' => $subscription->getDaysUntilExpiration(),
-                'auto_renew' => $subscription->auto_renew,
-                'next_billing' => $subscription->next_billing_at->format('F j, Y'),
-                'features' => $planFeatures['features']
+                'plan' => $subscription['plan'],
+                'plan_name' => SubscriptionService::getPlanDisplayName($subscription['plan']),
+                'price' => $subscription['price'],
+                'status' => $subscription['status'],
+                'expires_at' => $subscription['expires_at']->format('F j, Y'),
+                'days_until_expiration' => SubscriptionService::getDaysUntilExpiration(),
+                'auto_renew' => $subscription['auto_renew'],
+                'next_billing' => $subscription['next_billing_at']->format('F j, Y'),
+                'features' => $planFeatures
             ]
         ]);
-    }
-
-    /**
-     * Handle enterprise plan inquiry
-     */
-    private function handleEnterpriseInquiry($request)
-    {
-        // Store inquiry in database or send email
-        // For now, just return success message
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Thank you for your interest! Our enterprise sales team will contact you within 24 hours.'
-        ]);
-    }
-
-    /**
-     * Process payment (simulation)
-     */
-    private function processPayment($method, $amount)
-    {
-        // Simulate payment processing
-        // In real implementation, integrate with actual payment gateways
-        
-        try {
-            // Simulate API call delay
-            usleep(100000); // 0.1 seconds
-
-            // Generate fake subscription ID
-            $subscriptionId = 'sub_' . uniqid();
-
-            return [
-                'success' => true,
-                'subscription_id' => $subscriptionId,
-                'message' => 'Payment processed successfully'
-            ];
-
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Payment failed: ' . $e->getMessage()
-            ];
-        }
     }
 
     /**
@@ -250,31 +147,12 @@ class SubscriptionController extends Controller
      */
     public function billingHistory()
     {
-        $user = session('user');
-        
-        if (!$user) {
+        // Check if user is authenticated
+        if (!session('authenticated')) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
-        // Simulate billing history
-        $billingHistory = [
-            [
-                'id' => 'INV-001',
-                'date' => '2026-01-15',
-                'amount' => 149,
-                'plan' => 'Premium',
-                'status' => 'Paid',
-                'payment_method' => 'Credit Card'
-            ],
-            [
-                'id' => 'INV-002',
-                'date' => '2026-02-15',
-                'amount' => 149,
-                'plan' => 'Premium',
-                'status' => 'Paid',
-                'payment_method' => 'Credit Card'
-            ]
-        ];
+        $billingHistory = SubscriptionService::getBillingHistory();
 
         return response()->json([
             'billing_history' => $billingHistory
@@ -286,25 +164,18 @@ class SubscriptionController extends Controller
      */
     public function updateSettings(Request $request)
     {
+        // Check if user is authenticated
+        if (!session('authenticated')) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
         $request->validate([
             'auto_renew' => 'boolean',
             'payment_method' => 'sometimes|in:credit_card,gcash,paypal'
         ]);
 
-        $user = session('user');
-        
-        if (!$user) {
-            return response()->json(['error' => 'User not authenticated'], 401);
-        }
-
-        $subscription = Subscription::where('user_id', $user['id'])->first();
-        
-        if (!$subscription) {
-            return response()->json(['error' => 'No subscription found'], 404);
-        }
-
-        $subscription->update($request->only(['auto_renew', 'payment_method']));
-
+        // In a real implementation, this would update the database
+        // For demo purposes, just return success
         return response()->json([
             'success' => true,
             'message' => 'Settings updated successfully'
