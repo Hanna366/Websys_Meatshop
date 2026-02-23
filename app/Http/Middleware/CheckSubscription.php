@@ -98,7 +98,25 @@ class CheckSubscription
         
         // Check specific feature access if required
         if ($requiredFeature && !$userPermissions[$requiredFeature]) {
-            return redirect('/dashboard')->with('error', 'This feature requires ' . $requiredFeature . ' access. Upgrade your plan to unlock this feature.');
+            $featureNames = [
+                'pos_access' => 'POS functionality',
+                'customer_management' => 'Customer Management',
+                'supplier_management' => 'Supplier Management',
+                'advanced_analytics' => 'Advanced Analytics',
+                'custom_branding' => 'Custom Branding',
+                'api_access' => 'API Access',
+                'batch_operations' => 'Batch Operations',
+                'csv_export' => 'CSV Export',
+                'excel_export' => 'Excel Export',
+                'pdf_export' => 'PDF Export'
+            ];
+            
+            $featureName = $featureNames[$requiredFeature] ?? $requiredFeature;
+            $currentPlan = session('user.plan');
+            
+            $upgradeMessage = "This feature requires {$featureName}. Upgrade from {$currentPlan} Plan to unlock this feature.";
+            
+            return redirect('/dashboard')->with('error', $upgradeMessage);
         }
         
         return $next($request);

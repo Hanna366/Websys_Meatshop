@@ -15,7 +15,7 @@
         <!-- Pricing Cards -->
         <div class="row g-4 mb-5">
             <!-- Basic Plan -->
-            <div class="col-lg-3 col-md-6">
+            <div class="col-lg-4 col-md-6">
                 <div class="card h-100" style="background: #2d2d2d; border: 1px solid #404040;">
                     <div class="card-body p-4">
                         <div class="text-center mb-4">
@@ -45,11 +45,11 @@
             </div>
 
             <!-- Standard Plan -->
-            <div class="col-lg-3 col-md-6">
+            <div class="col-lg-4 col-md-6">
                 <div class="card h-100" style="background: #2d2d2d; border: 1px solid #404040;">
                     <div class="card-body p-4">
                         <div class="text-center mb-4">
-                            <div class="badge bg-primary mb-2">🔵 Standard Plan</div>
+                            <div class="badge bg-primary mb-2"> Standard Plan</div>
                             <h3 class="card-title text-white">Standard</h3>
                             <p class="text-muted">Suitable for growing businesses</p>
                         </div>
@@ -76,7 +76,7 @@
             </div>
 
             <!-- Premium Plan -->
-            <div class="col-lg-3 col-md-6">
+            <div class="col-lg-4 col-md-6">
                 <div class="card h-100" style="background: #2d2d2d; border: 2px solid #ff6b6b;">
                     <div class="card-body p-4 position-relative">
                         <div class="position-absolute top-0 end-0 m-2">
@@ -107,40 +107,6 @@
 
                         <button class="btn btn-danger w-100" onclick="selectPlan('Premium', 149)">
                             Get Started
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enterprise Plan -->
-            <div class="col-lg-3 col-md-6">
-                <div class="card h-100" style="background: #1a1a1a; border: 2px solid #gold;">
-                    <div class="card-body p-4 position-relative">
-                        <div class="position-absolute top-0 end-0 m-2">
-                            <span class="badge bg-warning text-dark">ENTERPRISE</span>
-                        </div>
-                        
-                        <div class="text-center mb-4">
-                            <div class="badge bg-warning text-dark mb-2">🏢 Enterprise Plan</div>
-                            <h3 class="card-title text-white">Enterprise</h3>
-                            <p class="text-muted">Custom Pricing</p>
-                        </div>
-                        
-                        <div class="text-center mb-4">
-                            <h2 class="text-white">Custom</h2>
-                            <p class="text-muted">Contact for pricing</p>
-                        </div>
-
-                        <ul class="list-unstyled mb-4">
-                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>Dedicated database</li>
-                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>Custom integrations</li>
-                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>SLA and priority services</li>
-                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>On-premise deployment option</li>
-                            <li class="mb-2"><i class="fas fa-check text-warning me-2"></i>Advanced compliance tools</li>
-                        </ul>
-
-                        <button class="btn btn-warning w-100 text-dark" onclick="contactSales()">
-                            Contact Sales
                         </button>
                     </div>
                 </div>
@@ -430,18 +396,37 @@ function goToDashboard() {
 }
 
 function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-    notification.style.zIndex = '9999';
-    notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
-        ${message}
-    `;
-    document.body.appendChild(notification);
+    const swalConfig = {
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    };
     
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
+    if (type === 'success') {
+        Swal.fire({
+            ...swalConfig,
+            icon: 'success',
+            title: message
+        });
+    } else if (type === 'error') {
+        Swal.fire({
+            ...swalConfig,
+            icon: 'error',
+            title: message
+        });
+    } else {
+        Swal.fire({
+            ...swalConfig,
+            icon: 'info',
+            title: message
+        });
+    }
 }
 </script>
 <?php $__env->stopSection(); ?>
