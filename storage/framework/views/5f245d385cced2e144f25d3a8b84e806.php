@@ -1,25 +1,25 @@
-@extends('layouts.app')
 
-@section('title', 'Products - Meat Shop POS')
 
-@section('content')
+<?php $__env->startSection('title', 'Products - Meat Shop POS'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Meat Products & Byproducts</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-                @if(session('permissions.max_products') == -1 || session('permissions.max_products') > 50)
+                <?php if(session('permissions.max_products') == -1 || session('permissions.max_products') > 50): ?>
                 <button type="button" class="btn btn-sm btn-primary" onclick="showAddProductModal()">
                     <i class="fas fa-plus me-1"></i> Add Product
                 </button>
-                @else
+                <?php else: ?>
                 <button type="button" class="btn btn-sm btn-primary" disabled title="Product limit reached. Upgrade to add more products.">
                     <i class="fas fa-plus me-1"></i> Add Product
                 </button>
-                @endif
+                <?php endif; ?>
                 
-                @if(session('permissions.csv_export'))
+                <?php if(session('permissions.csv_export')): ?>
                 <div class="btn-group">
                     <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                         <i class="fas fa-download me-1"></i> Export
@@ -28,31 +28,31 @@
                         <li><a class="dropdown-item" href="#" onclick="exportProducts('csv')">
                             <i class="fas fa-file-csv me-2"></i>Export as CSV
                         </a></li>
-                        @if(session('permissions.excel_export'))
+                        <?php if(session('permissions.excel_export')): ?>
                         <li><a class="dropdown-item" href="#" onclick="exportProducts('excel')">
                             <i class="fas fa-file-excel me-2"></i>Export as Excel
                         </a></li>
-                        @endif
-                        @if(session('permissions.pdf_export'))
+                        <?php endif; ?>
+                        <?php if(session('permissions.pdf_export')): ?>
                         <li><a class="dropdown-item" href="#" onclick="exportProducts('pdf')">
                             <i class="fas fa-file-pdf me-2"></i>Export as PDF
                         </a></li>
-                        @endif
+                        <?php endif; ?>
                     </ul>
                 </div>
-                @else
+                <?php else: ?>
                 <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
-                @endif
+                <?php endif; ?>
                 
-                @if(session('permissions.stock_alerts'))
+                <?php if(session('permissions.stock_alerts')): ?>
                 <button type="button" class="btn btn-sm btn-info" onclick="showStockAlerts()">
                     <i class="fas fa-bell me-1"></i> Stock Alerts
                 </button>
-                @endif
+                <?php endif; ?>
                 
-                @if(session('permissions.batch_operations'))
+                <?php if(session('permissions.batch_operations')): ?>
                 <div class="btn-group">
                     <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
                         <i class="fas fa-tasks me-1"></i> Batch Operations
@@ -69,14 +69,14 @@
                         </a></li>
                     </ul>
                 </div>
-                @endif
+                <?php endif; ?>
             </div>
-            @if(session('permissions.max_products') != -1)
+            <?php if(session('permissions.max_products') != -1): ?>
             <div class="alert alert-warning mb-0">
                 <small><i class="fas fa-exclamation-triangle me-1"></i>
-                {{ session('permissions.max_products') }} products limit ({{ session('permissions.max_products') - 50 }} remaining)</small>
+                <?php echo e(session('permissions.max_products')); ?> products limit (<?php echo e(session('permissions.max_products') - 50); ?> remaining)</small>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 
@@ -1165,4 +1165,6 @@ function showNotification(message, type, duration = 3000) {
     }
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/products.blade.php ENDPATH**/ ?>

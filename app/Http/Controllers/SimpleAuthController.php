@@ -40,11 +40,6 @@ class SimpleAuthController extends Controller
                 'password' => 'premium123',
                 'plan' => 'Premium', 
                 'features' => ['All features', 'Advanced analytics', 'API access', 'Unlimited users', 'Priority support']
-            ],
-            'enterprise@meatshop.com' => [
-                'password' => 'enterprise123',
-                'plan' => 'Enterprise',
-                'features' => ['Dedicated database', 'Custom integrations', 'SLA services', 'On-premise deployment']
             ]
         ];
 
@@ -66,7 +61,7 @@ class SimpleAuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Invalid credentials. Try basic@meatshop.com / basic123, standard@meatshop.com / standard123, premium@meatshop.com / premium123, or enterprise@meatshop.com / enterprise123',
+            'email' => 'Invalid credentials. Try basic@meatshop.com / basic123, standard@meatshop.com / standard123, or premium@meatshop.com / premium123',
         ]);
     }
 

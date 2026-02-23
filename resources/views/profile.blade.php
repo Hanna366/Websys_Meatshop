@@ -28,7 +28,7 @@
                     </div>
                     <h4 class="card-title">{{ session('user.name') }}</h4>
                     <p class="text-muted mb-1">{{ session('user.email') }}</p>
-                    <span class="badge bg-{{ session('user.plan') == 'Enterprise' ? 'dark' : (session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary')) }} text-white mb-2">
+                    <span class="badge bg-{{ session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary') }} text-white mb-2">
                         <i class="fas fa-crown me-1"></i>
                         {{ session('user.plan') }} Plan
                     </span>

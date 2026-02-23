@@ -155,7 +155,7 @@
             
             <div class="row mt-3">
                 <!-- Basic Plan -->
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <div class="card border-primary">
                         <div class="card-header bg-primary text-white text-center py-2">
                             <i class="fas fa-star me-2"></i><strong>Basic Plan</strong>
@@ -172,7 +172,7 @@
                 </div>
                 
                 <!-- Standard Plan -->
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <div class="card border-warning">
                         <div class="card-header bg-warning text-dark text-center py-2">
                             <i class="fas fa-crown me-2"></i><strong>Standard Plan</strong>
@@ -189,7 +189,7 @@
                 </div>
                 
                 <!-- Premium Plan -->
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <div class="card border-danger">
                         <div class="card-header bg-danger text-white text-center py-2">
                             <i class="fas fa-gem me-2"></i><strong>Premium Plan</strong>
@@ -201,23 +201,6 @@
                             <p><strong>Email:</strong> <code>premium@meatshop.com</code></p>
                             <p><strong>Password:</strong> <code>premium123</code></p>
                             <small class="text-muted">All features, Advanced analytics, API access, Unlimited users, Priority support</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Enterprise Plan -->
-                <div class="col-md-3 mb-3">
-                    <div class="card border-dark">
-                        <div class="card-header bg-dark text-white text-center py-2">
-                            <i class="fas fa-building me-2"></i><strong>Enterprise Plan</strong>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-center mb-2">
-                                <i class="fas fa-user-circle fa-2x text-dark mb-2"></i>
-                            </div>
-                            <p><strong>Email:</strong> <code>enterprise@meatshop.com</code></p>
-                            <p><strong>Password:</strong> <code>enterprise123</code></p>
-                            <small class="text-muted">Dedicated database, Custom integrations, SLA services, On-premise deployment</small>
                         </div>
                     </div>
                 </div>

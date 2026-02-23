@@ -2,23 +2,6 @@
 
 @section('content')
 <div class="container-fluid">
-    <!-- Flash Messages -->
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-    
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-    
     <!-- Page Header -->
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <div>
@@ -28,7 +11,7 @@
                     <i class="fas fa-user me-2"></i>
                     Welcome back, <strong>{{ session('user.name') }}</strong>! | 
                     Email: <strong>{{ session('user.email') }}</strong> | 
-                    Plan: <span class="badge bg-{{ session('user.plan') == 'Enterprise' ? 'dark' : (session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary')) }} text-white">
+                    Plan: <span class="badge bg-{{ session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary') }} text-white">
                         {{ session('user.plan') }}
                     </span>
                 </div>
@@ -300,18 +283,37 @@
 
     // Show notification function
     function showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-        notification.style.zIndex = '9999';
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
-            ${message}
-        `;
-        document.body.appendChild(notification);
+        const swalConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        };
         
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
+        if (type === 'success') {
+            Swal.fire({
+                ...swalConfig,
+                icon: 'success',
+                title: message
+            });
+        } else if (type === 'error') {
+            Swal.fire({
+                ...swalConfig,
+                icon: 'error',
+                title: message
+            });
+        } else {
+            Swal.fire({
+                ...swalConfig,
+                icon: 'info',
+                title: message
+            });
+        }
     }
 </script>
 @endsection

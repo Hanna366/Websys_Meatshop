@@ -11,7 +11,7 @@
                     <i class="fas fa-user me-2"></i>
                     Welcome back, <strong><?php echo e(session('user.name')); ?></strong>! | 
                     Email: <strong><?php echo e(session('user.email')); ?></strong> | 
-                    Plan: <span class="badge bg-<?php echo e(session('user.plan') == 'Enterprise' ? 'dark' : (session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary'))); ?> text-white">
+                    Plan: <span class="badge bg-<?php echo e(session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary')); ?> text-white">
                         <?php echo e(session('user.plan')); ?>
 
                     </span>
@@ -284,18 +284,37 @@
 
     // Show notification function
     function showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-        notification.style.zIndex = '9999';
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
-            ${message}
-        `;
-        document.body.appendChild(notification);
+        const swalConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        };
         
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
+        if (type === 'success') {
+            Swal.fire({
+                ...swalConfig,
+                icon: 'success',
+                title: message
+            });
+        } else if (type === 'error') {
+            Swal.fire({
+                ...swalConfig,
+                icon: 'error',
+                title: message
+            });
+        } else {
+            Swal.fire({
+                ...swalConfig,
+                icon: 'info',
+                title: message
+            });
+        }
     }
 </script>
 <?php $__env->stopSection(); ?>
