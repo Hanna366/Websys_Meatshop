@@ -9,7 +9,8 @@
             <?php if(session('user')): ?>
                 <div class="alert alert-info mb-2">
                     <i class="fas fa-user me-2"></i>
-                    Logged in as: <strong><?php echo e(session('user.email')); ?></strong> | 
+                    Welcome back, <strong><?php echo e(session('user.name')); ?></strong>! | 
+                    Email: <strong><?php echo e(session('user.email')); ?></strong> | 
                     Plan: <span class="badge bg-<?php echo e(session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary')); ?> text-white">
                         <?php echo e(session('user.plan')); ?>
 
