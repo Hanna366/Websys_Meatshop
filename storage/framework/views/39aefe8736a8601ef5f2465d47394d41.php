@@ -258,7 +258,14 @@
                 title: 'Access Denied',
                 text: '<?php echo e(session('error')); ?>',
                 confirmButtonColor: '#dc3545',
-                confirmButtonText: 'OK'
+                confirmButtonText: 'Upgrade Plan',
+                showCancelButton: true,
+                cancelButtonText: 'Cancel',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/pricing';
+                }
             });
         <?php endif; ?>
         
