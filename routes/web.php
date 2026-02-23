@@ -32,70 +32,60 @@ Route::post('/logout', [SimpleAuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    Route::middleware(['subscription:basic'])->group(function () {
-        Route::get('/products', function () {
-            // Check authentication first
-            if (!session('authenticated')) {
-                return redirect('/login');
-            }
-            return view('products');
-        });
-    });
+    // Basic Plan Routes (Products available to all authenticated users)
+    Route::get('/products', function () {
+        if (!session('authenticated')) {
+            return redirect('/login');
+        }
+        return view('products');
+    })->middleware('subscription');
     
-    Route::middleware(['subscription:standard'])->group(function () {
-        Route::get('/inventory', function () {
-            // Check authentication first
-            if (!session('authenticated')) {
-                return redirect('/login');
-            }
-            return view('inventory');
-        });
-        
-        Route::get('/sales', function () {
-            // Check authentication first
-            if (!session('authenticated')) {
-                return redirect('/login');
-            }
-            return view('sales');
-        });
-        
-        Route::get('/customers', function () {
-            // Check authentication first
-            if (!session('authenticated')) {
-                return redirect('/login');
-            }
-            return view('customers');
-        });
-        
-        Route::get('/suppliers', function () {
-            // Check authentication first
-            if (!session('authenticated')) {
-                return redirect('/login');
-            }
-            return view('suppliers');
-        });
-    });
+    // Standard Plan Routes (require standard features)
+    Route::get('/inventory', function () {
+        if (!session('authenticated')) {
+            return redirect('/login');
+        }
+        return view('inventory');
+    })->middleware('subscription');
     
-    Route::middleware(['subscription:premium'])->group(function () {
-        Route::get('/reports', function () {
-            // Check authentication first
-            if (!session('authenticated')) {
-                return redirect('/login');
-            }
-            return view('reports');
-        });
-        
-        Route::get('/settings', function () {
-            // Check authentication first
-            if (!session('authenticated')) {
-                return redirect('/login');
-            }
-            return view('settings');
-        });
-    });
+    Route::get('/sales', function () {
+        if (!session('authenticated')) {
+            return redirect('/login');
+        }
+        return view('sales');
+    })->middleware('subscription:pos_access');
     
+    Route::get('/customers', function () {
+        if (!session('authenticated')) {
+            return redirect('/login');
+        }
+        return view('customers');
+    })->middleware('subscription:customer_management');
+    
+    Route::get('/suppliers', function () {
+        if (!session('authenticated')) {
+            return redirect('/login');
+        }
+        return view('suppliers');
+    })->middleware('subscription:supplier_management');
+    
+    // Premium Plan Routes (require premium features)
+    Route::get('/reports', function () {
+        if (!session('authenticated')) {
+            return redirect('/login');
+        }
+        return view('reports');
+    })->middleware('subscription:advanced_analytics');
+    
+    Route::get('/settings', function () {
+        if (!session('authenticated')) {
+            return redirect('/login');
+        }
+        return view('settings');
+    })->middleware('subscription:custom_branding');
+    
+    // Routes available to all authenticated users
     Route::get('/profile', function () {
-        // Check authentication first
         if (!session('authenticated')) {
             return redirect('/login');
         }
@@ -103,7 +93,6 @@ Route::middleware(['auth'])->group(function () {
     });
     
     Route::get('/pricing', function () {
-        // Check authentication first
         if (!session('authenticated')) {
             return redirect('/login');
         }
