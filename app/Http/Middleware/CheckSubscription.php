@@ -31,7 +31,17 @@ class CheckSubscription
                 'batch_operations' => false,
                 'custom_branding' => false,
                 'priority_support' => false,
-                'max_users' => 1
+                'sms_notifications' => false,
+                'max_users' => 1,
+                'stock_alerts' => true,
+                'csv_export' => false,
+                'excel_export' => false,
+                'pdf_export' => false,
+                'dedicated_database' => false,
+                'custom_integrations' => false,
+                'sla_services' => false,
+                'onpremise_deployment' => false,
+                'compliance_tools' => false
             ],
             'Standard' => [
                 'max_products' => -1, // unlimited
@@ -44,7 +54,17 @@ class CheckSubscription
                 'batch_operations' => false,
                 'custom_branding' => false,
                 'priority_support' => false,
-                'max_users' => 3
+                'sms_notifications' => false,
+                'max_users' => 3,
+                'stock_alerts' => true,
+                'csv_export' => true,
+                'excel_export' => false,
+                'pdf_export' => false,
+                'dedicated_database' => false,
+                'custom_integrations' => false,
+                'sla_services' => false,
+                'onpremise_deployment' => false,
+                'compliance_tools' => false
             ],
             'Premium' => [
                 'max_products' => -1, // unlimited
@@ -57,7 +77,40 @@ class CheckSubscription
                 'batch_operations' => true,
                 'custom_branding' => true,
                 'priority_support' => true,
-                'max_users' => -1 // unlimited
+                'sms_notifications' => true,
+                'max_users' => -1, // unlimited
+                'stock_alerts' => true,
+                'csv_export' => true,
+                'excel_export' => true,
+                'pdf_export' => true,
+                'dedicated_database' => false,
+                'custom_integrations' => false,
+                'sla_services' => false,
+                'onpremise_deployment' => false,
+                'compliance_tools' => false
+            ],
+            'Enterprise' => [
+                'max_products' => -1, // unlimited
+                'pos_access' => true,
+                'customer_management' => true,
+                'supplier_management' => true,
+                'data_export' => true,
+                'advanced_analytics' => true,
+                'api_access' => true,
+                'batch_operations' => true,
+                'custom_branding' => true,
+                'priority_support' => true,
+                'sms_notifications' => true,
+                'max_users' => -1, // unlimited
+                'stock_alerts' => true,
+                'csv_export' => true,
+                'excel_export' => true,
+                'pdf_export' => true,
+                'dedicated_database' => true,
+                'custom_integrations' => true,
+                'sla_services' => true,
+                'onpremise_deployment' => true,
+                'compliance_tools' => true
             ]
         ];
         

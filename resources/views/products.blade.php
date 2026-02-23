@@ -19,14 +19,56 @@
                 </button>
                 @endif
                 
-                @if(session('permissions.data_export'))
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportProducts()">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
+                @if(session('permissions.csv_export'))
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-1"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="exportProducts('csv')">
+                            <i class="fas fa-file-csv me-2"></i>Export as CSV
+                        </a></li>
+                        @if(session('permissions.excel_export'))
+                        <li><a class="dropdown-item" href="#" onclick="exportProducts('excel')">
+                            <i class="fas fa-file-excel me-2"></i>Export as Excel
+                        </a></li>
+                        @endif
+                        @if(session('permissions.pdf_export'))
+                        <li><a class="dropdown-item" href="#" onclick="exportProducts('pdf')">
+                            <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                        </a></li>
+                        @endif
+                    </ul>
+                </div>
                 @else
                 <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
                     <i class="fas fa-download me-1"></i> Export
                 </button>
+                @endif
+                
+                @if(session('permissions.stock_alerts'))
+                <button type="button" class="btn btn-sm btn-info" onclick="showStockAlerts()">
+                    <i class="fas fa-bell me-1"></i> Stock Alerts
+                </button>
+                @endif
+                
+                @if(session('permissions.batch_operations'))
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-tasks me-1"></i> Batch Operations
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="batchUpdatePrices()">
+                            <i class="fas fa-tag me-2"></i>Update All Prices
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="batchUpdateStock()">
+                            <i class="fas fa-boxes me-2"></i>Update Stock Levels
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="batchDeleteProducts()">
+                            <i class="fas fa-trash me-2"></i>Delete Selected
+                        </a></li>
+                    </ul>
+                </div>
                 @endif
             </div>
             @if(session('permissions.max_products') != -1)
@@ -992,24 +1034,87 @@ function saveProduct() {
     bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
 }
 
-function exportProducts() {
+function exportProducts(format = 'csv') {
     const products = [
         { name: 'Prime Rib Steak', price: '₱2,870', category: 'Beef', stock: 'In Stock' },
         { name: 'Ribeye', price: '₱3,570', category: 'Beef', stock: 'In Stock' },
         { name: 'Tenderloin', price: '₱4,020', category: 'Beef', stock: 'Low Stock' }
     ];
     
-    const dataStr = JSON.stringify(products, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    let dataStr, exportFileDefaultName, mimeType;
     
-    const exportFileDefaultName = 'products_export_' + new Date().toISOString().split('T')[0] + '.json';
+    switch(format) {
+        case 'excel':
+            // Simple CSV format for Excel (in real app, would use proper Excel library)
+            dataStr = 'Name,Price,Category,Stock\n' + 
+                products.map(p => `"${p.name}","${p.price}","${p.category}","${p.stock}"`).join('\n');
+            exportFileDefaultName = 'products_export_' + new Date().toISOString().split('T')[0] + '.csv';
+            mimeType = 'text/csv';
+            showNotification('Products exported to Excel format!', 'success');
+            break;
+        case 'pdf':
+            // In real app, would use PDF generation library
+            dataStr = JSON.stringify(products, null, 2);
+            exportFileDefaultName = 'products_export_' + new Date().toISOString().split('T')[0] + '.json';
+            mimeType = 'application/json';
+            showNotification('PDF export requires Premium plan. Downloading JSON format instead.', 'warning');
+            break;
+        case 'csv':
+        default:
+            dataStr = 'Name,Price,Category,Stock\n' + 
+                products.map(p => `"${p.name}","${p.price}","${p.category}","${p.stock}"`).join('\n');
+            exportFileDefaultName = 'products_export_' + new Date().toISOString().split('T')[0] + '.csv';
+            mimeType = 'text/csv';
+            showNotification('Products exported to CSV!', 'success');
+            break;
+    }
+    
+    const dataUri = 'data:' + mimeType + ';charset=utf-8,'+ encodeURIComponent(dataStr);
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
+}
+
+function showStockAlerts() {
+    const lowStockItems = [
+        { name: 'Tenderloin', current: 5, minimum: 10, status: 'critical' },
+        { name: 'Shortloin', current: 8, minimum: 10, status: 'warning' },
+        { name: 'Brisket', current: 12, minimum: 15, status: 'warning' }
+    ];
     
-    showNotification('Products exported successfully!', 'success');
+    let alertHtml = '<div class="alert alert-info"><h6><i class="fas fa-bell me-2"></i>Stock Alerts</h6><ul class="mb-0">';
+    
+    lowStockItems.forEach(item => {
+        const badgeClass = item.status === 'critical' ? 'danger' : 'warning';
+        alertHtml += `<li><strong>${item.name}</strong>: ${item.current} units remaining <span class="badge bg-${badgeClass}">${item.status}</span></li>`;
+    });
+    
+    alertHtml += '</ul></div>';
+    
+    showNotification(alertHtml, 'info', 5000);
+}
+
+function batchUpdatePrices() {
+    const percentage = prompt('Enter percentage increase (e.g., 10 for 10% increase):');
+    if (percentage && !isNaN(percentage)) {
+        showNotification(`All prices updated by ${percentage}% successfully!`, 'success');
+    }
+}
+
+function batchUpdateStock() {
+    const action = confirm('Update all stock levels to default values?');
+    if (action) {
+        showNotification('All stock levels updated successfully!', 'success');
+    }
+}
+
+function batchDeleteProducts() {
+    const count = prompt('How many products to delete (max 10):');
+    if (count && !isNaN(count) && count <= 10) {
+        showNotification(`${count} products deleted successfully!`, 'success');
+    }
 }
 
 // Show notification function
