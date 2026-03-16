@@ -500,7 +500,7 @@
                         <i class="fas fa-sign-in-alt me-2"></i>
                         Login
                     </a>
-                    <a href="/pricing" class="btn-auth btn-signup-custom">
+                    <a href="/account/create" class="btn-auth btn-signup-custom">
                         <i class="fas fa-user-plus me-2"></i>
                         Sign Up
                     </a>
@@ -647,4 +647,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-<?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views/welcome.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/welcome.blade.php ENDPATH**/ ?>

@@ -500,7 +500,7 @@
                         <i class="fas fa-sign-in-alt me-2"></i>
                         Login
                     </a>
-                    <a href="/pricing" class="btn-auth btn-signup-custom">
+                    <a href="/account/create" class="btn-auth btn-signup-custom">
                         <i class="fas fa-user-plus me-2"></i>
                         Sign Up
                     </a>
