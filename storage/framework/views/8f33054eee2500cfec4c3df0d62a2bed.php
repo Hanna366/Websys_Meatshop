@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Meat Shop POS</title>
+    <?php if(config('services.recaptcha.site_key')): ?>
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <?php endif; ?>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -83,6 +86,47 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
             color: white;
         }
+
+        .btn-google {
+            border: 1px solid #dee2e6;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 10px;
+            width: 100%;
+            background: #fff;
+            color: #212529;
+            transition: all 0.3s;
+        }
+
+        .btn-google:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            color: #212529;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1rem 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .auth-divider::before {
+            margin-right: 0.75rem;
+        }
+
+        .auth-divider::after {
+            margin-left: 0.75rem;
+        }
         
         .alert {
             border-radius: 10px;
@@ -110,6 +154,16 @@
                 <i class="fas fa-exclamation-triangle me-2"></i>
                 <?php echo e(session('error')); ?>
 
+            </div>
+        <?php endif; ?>
+
+        <?php if($errors->any()): ?>
+            <div class="alert alert-danger">
+                <ul class="mb-0 ps-3">
+                    <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <li><?php echo e($error); ?></li>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </ul>
             </div>
         <?php endif; ?>
         
@@ -143,12 +197,25 @@
                     Remember me
                 </label>
             </div>
+
+            <?php if(config('services.recaptcha.site_key')): ?>
+                <div class="d-flex justify-content-center mb-3">
+                    <div class="g-recaptcha" data-sitekey="<?php echo e(config('services.recaptcha.site_key')); ?>"></div>
+                </div>
+            <?php endif; ?>
             
             <button type="submit" class="btn btn-login">
                 <i class="fas fa-sign-in-alt me-2"></i>
                 Sign In
             </button>
         </form>
+
+        <div class="auth-divider">or</div>
+
+        <a href="<?php echo e(route('google.redirect')); ?>" class="btn btn-google">
+            <i class="fab fa-google me-2 text-danger"></i>
+            Sign in with Google
+        </a>
         
         <div class="alert alert-info demo-info mt-4">
             <h6><i class="fas fa-info-circle me-2"></i><strong>Demo Accounts by Subscription Plan:</strong></h6>
