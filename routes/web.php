@@ -21,8 +21,8 @@ Route::get('/', function () {
     if (session('authenticated')) {
         return redirect('/dashboard');
     }
-    // Otherwise redirect to login
-    return redirect('/login');
+    // Otherwise show welcome page
+    return view('welcome');
 });
 
 Route::get('/login', [SimpleAuthController::class, 'showLoginForm'])->name('login');
