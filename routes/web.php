@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SimpleAuthController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\AccountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,8 @@ Route::get('/', function () {
 
 Route::get('/login', [SimpleAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [SimpleAuthController::class, 'login'])->name('login.post');
+Route::get('/auth/google', [SimpleAuthController::class, 'redirectToGoogle'])->name('google.redirect');
+Route::get('/auth/google/callback', [SimpleAuthController::class, 'handleGoogleCallback'])->name('google.callback');
 Route::post('/logout', [SimpleAuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
@@ -111,3 +114,9 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/test', function () {
     return 'Laravel Meat Shop POS is working!';
 });
+
+Route::get('/account/create', function () {
+    return view('account.create');
+})->name('account.create');
+
+Route::post('/account/store', [AccountController::class, 'store'])->name('account.store');

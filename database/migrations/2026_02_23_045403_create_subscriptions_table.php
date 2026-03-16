@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('plan'); // basic, standard, premium, enterprise
             $table->decimal('price', 8, 2)->nullable(); // null for enterprise (custom pricing)
             $table->string('status')->default('active'); // active, expired, cancelled, suspended
-            $table->timestamp('starts_at');
-            $table->timestamp('expires_at');
+            $table->dateTime('starts_at');
+            $table->dateTime('expires_at');
             $table->string('payment_method'); // credit_card, gcash, paypal, bank_transfer
             $table->timestamp('last_payment_at')->nullable();
             $table->timestamp('next_billing_at')->nullable();
