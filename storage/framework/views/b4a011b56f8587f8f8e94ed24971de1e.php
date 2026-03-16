@@ -10,6 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Custom CSS -->
     <style>
         body {
@@ -248,6 +250,34 @@
         document.getElementById('sidebarToggle')?.addEventListener('click', function() {
             document.querySelector('.sidebar').classList.toggle('show');
         });
+        
+        // SweetAlert flash messages
+        <?php if(session('error')): ?>
+            Swal.fire({
+                icon: 'error',
+                title: 'Access Denied',
+                text: '<?php echo e(session('error')); ?>',
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'Upgrade Plan',
+                showCancelButton: true,
+                cancelButtonText: 'Cancel',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/pricing';
+                }
+            });
+        <?php endif; ?>
+        
+        <?php if(session('success')): ?>
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: '<?php echo e(session('success')); ?>',
+                confirmButtonColor: '#28a745',
+                confirmButtonText: 'Great!'
+            });
+        <?php endif; ?>
     </script>
 </body>
 </html>
