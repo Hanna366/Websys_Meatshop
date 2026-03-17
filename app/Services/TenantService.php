@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Domain;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -17,6 +19,8 @@ class TenantService
     public static function createTenant(array $data): Tenant
     {
         $tenantId = Str::uuid()->toString();
+        $defaultConnection = config('database.default');
+        $connectionConfig = config("database.connections.{$defaultConnection}", []);
 
         $domain = $data['domain'] ?? null;
         if (!$domain) {
@@ -25,18 +29,24 @@ class TenantService
 
             $domain = $baseSlug . '.' . $root;
             $counter = 1;
-            while (Tenant::where('domain', $domain)->exists()) {
+            while (Tenant::where('domain', $domain)->exists() || (Schema::hasTable('domains') && Domain::where('domain', $domain)->exists())) {
                 $counter++;
                 $domain = $baseSlug . '-' . $counter . '.' . $root;
             }
         }
 
         $dbName = self::generateDatabaseName($tenantId);
-        $dbUsername = $data['db_username'] ?? config('database.connections.' . config('database.default') . '.username');
-        $dbPasswordPlain = $data['db_password'] ?? Str::random(20);
+        $dbUsername = $data['db_username'] ?? ('tenant_' . substr(sha1($tenantId), 0, 10));
+        $dbPasswordPlain = $data['db_password'] ?? Str::random(24);
 
-        // Create the tenant database (file for SQLite or schema for MySQL)
-        self::createDatabase($dbName);
+        // Create database and attempt dedicated database user creation.
+        $hasDedicatedDbUser = self::createDatabase($dbName, $dbUsername, $dbPasswordPlain);
+
+        if (!$hasDedicatedDbUser && (($connectionConfig['driver'] ?? 'mysql') !== 'sqlite')) {
+            // Fallback to central credentials if DB user management is unavailable.
+            $dbUsername = $connectionConfig['username'] ?? null;
+            $dbPasswordPlain = $connectionConfig['password'] ?? '';
+        }
 
         // Store the tenant record (password stored encrypted)
         $tenant = Tenant::create([
@@ -50,6 +60,8 @@ class TenantService
             'usage' => $data['usage'] ?? [],
             'limits' => $data['limits'] ?? [],
             'status' => $data['status'] ?? 'active',
+            'payment_status' => $data['payment_status'] ?? 'paid',
+            'suspended_message' => $data['suspended_message'] ?? 'Please contact your administrator.',
             'domain' => $domain,
             'db_name' => $dbName,
             'db_username' => $dbUsername,
@@ -60,6 +72,14 @@ class TenantService
             'admin_name' => $data['admin_name'] ?? null,
             'admin_email' => $data['admin_email'] ?? null,
         ]);
+
+        if (Schema::hasTable('domains')) {
+            Domain::firstOrCreate([
+                'domain' => $domain,
+            ], [
+                'tenant_id' => $tenant->id,
+            ]);
+        }
 
         // Run tenant migrations
         self::runTenantMigrations($tenant);
@@ -100,7 +120,7 @@ class TenantService
     /**
      * Create the tenant database using the central DB connection.
      */
-    public static function createDatabase(string $databaseName): void
+    public static function createDatabase(string $databaseName, ?string $dbUsername = null, ?string $dbPassword = null): bool
     {
         $databaseName = preg_replace('/[^A-Za-z0-9_]/', '_', $databaseName);
 
@@ -120,7 +140,7 @@ class TenantService
                 touch($file);
             }
 
-            return;
+            return true;
         }
 
         $sql = "CREATE DATABASE IF NOT EXISTS `{$databaseName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
@@ -128,6 +148,26 @@ class TenantService
         try {
             // Use central connection explicitly so tenant middleware cannot override it.
             DB::connection($defaultConnection)->statement($sql);
+
+            // Try to give each tenant its own DB user (best effort on local/dev MySQL).
+            if (($driver === 'mysql' || $driver === 'mariadb') && $dbUsername) {
+                $safeUser = preg_replace('/[^A-Za-z0-9_]/', '_', $dbUsername);
+                $safeDb = preg_replace('/[^A-Za-z0-9_]/', '_', $databaseName);
+                $quotedPassword = str_replace("'", "\\'", (string) ($dbPassword ?? ''));
+
+                try {
+                    DB::connection($defaultConnection)->statement("CREATE USER IF NOT EXISTS '{$safeUser}'@'%' IDENTIFIED BY '{$quotedPassword}'");
+                    DB::connection($defaultConnection)->statement("GRANT ALL PRIVILEGES ON `{$safeDb}`.* TO '{$safeUser}'@'%'");
+                    DB::connection($defaultConnection)->statement("FLUSH PRIVILEGES");
+
+                    return true;
+                } catch (Throwable $e) {
+                    // Dedicated user creation is optional in local environments.
+                    return false;
+                }
+            }
+
+            return true;
         } catch (Throwable $e) {
             $message = "Unable to create tenant database '{$databaseName}'. " .
                        "Ensure your database server is running and DB connection settings in .env are correct. " .
@@ -135,6 +175,30 @@ class TenantService
 
             throw new \RuntimeException($message, $e->getCode(), $e);
         }
+    }
+
+    public static function updateTenantLifecycle(string $tenantId, array $payload): Tenant
+    {
+        $tenant = Tenant::where('tenant_id', $tenantId)->firstOrFail();
+        $domain = array_key_exists('domain', $payload) ? $payload['domain'] : null;
+        unset($payload['domain']);
+
+        $tenant->fill($payload);
+
+        if ($domain !== null && $domain !== '') {
+            $tenant->domain = $domain;
+        }
+
+        $tenant->save();
+
+        if (Schema::hasTable('domains') && !empty($tenant->domain)) {
+            Domain::updateOrCreate(
+                ['tenant_id' => $tenant->id],
+                ['domain' => $tenant->domain]
+            );
+        }
+
+        return $tenant;
     }
 
     /**

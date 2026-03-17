@@ -133,13 +133,13 @@
                 </div>
             @endif
 
-            <form action="{{ route('account.store') }}" method="POST">
+            <form action="{{ route('tenants.store') }}" method="POST">
                 @csrf
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name" value="{{ old('name') }}" required>
 
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="{{ old('email') }}" required>
+                <label for="business_email">Business Email:</label>
+                <input type="email" id="business_email" name="business_email" value="{{ old('business_email', old('email')) }}" required>
 
                 <label for="business_name">Business Name:</label>
                 <input type="text" id="business_name" name="business_name" value="{{ old('business_name') }}" required>
@@ -150,12 +150,22 @@
                 <label for="business_address">Business Address:</label>
                 <input type="text" id="business_address" name="business_address" value="{{ old('business_address') }}">
 
+                <label for="admin_name">Administrator Name:</label>
+                <input type="text" id="admin_name" name="admin_name" value="{{ old('admin_name', old('name')) }}" required>
+
+                <label for="admin_email">Administrator Email:</label>
+                <input type="email" id="admin_email" name="admin_email" value="{{ old('admin_email', old('business_email', old('email'))) }}" required>
+
+                <label for="domain">Custom Domain (optional):</label>
+                <input type="text" id="domain" name="domain" placeholder="ramcar.localhost" value="{{ old('domain') }}">
+
                 <label for="plan">Choose Your Plan:</label>
                 <select id="plan" name="plan" class="form-select mb-3" required>
-                    <option value="basic" {{ old('plan') === 'basic' ? 'selected' : '' }}>Basic</option>
-                    <option value="standard" {{ old('plan') === 'standard' ? 'selected' : '' }}>Standard</option>
-                    <option value="premium" {{ old('plan') === 'premium' ? 'selected' : '' }}>Premium</option>
-                    <option value="enterprise" {{ old('plan') === 'enterprise' ? 'selected' : '' }}>Enterprise</option>
+                    @php($selectedPlan = old('plan', request('plan', 'basic')))
+                    <option value="basic" {{ $selectedPlan === 'basic' ? 'selected' : '' }}>Basic</option>
+                    <option value="standard" {{ $selectedPlan === 'standard' ? 'selected' : '' }}>Standard</option>
+                    <option value="premium" {{ $selectedPlan === 'premium' ? 'selected' : '' }}>Premium</option>
+                    <option value="enterprise" {{ $selectedPlan === 'enterprise' ? 'selected' : '' }}>Enterprise</option>
                 </select>
 
                 <label for="password">Password:</label>

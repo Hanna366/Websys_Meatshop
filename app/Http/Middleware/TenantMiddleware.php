@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class TenantMiddleware
 {
@@ -17,9 +18,21 @@ class TenantMiddleware
         $host = $request->getHost();
 
         // If this request is for the central app (no tenant domain), skip tenant boot.
-        $tenant = Tenant::where('domain', $host)->first();
+        $tenant = null;
+
+        // Tenant resolution should not hard-fail before tenancy migrations are applied.
+        if (Schema::hasTable('tenants') && Schema::hasColumn('tenants', 'domain')) {
+            $tenant = Tenant::where('domain', $host)->first();
+        }
 
         if ($tenant) {
+            if (in_array($tenant->status, ['inactive', 'suspended', 'unpaid'], true) || in_array($tenant->payment_status, ['unpaid', 'overdue'], true)) {
+                return response()->view('tenant.blocked', [
+                    'tenant' => $tenant,
+                    'message' => $tenant->suspended_message ?: 'Please contact your administrator.',
+                ], 403);
+            }
+
             // Store the tenant for easy access in the app
             app()->instance('tenant', $tenant);
 
