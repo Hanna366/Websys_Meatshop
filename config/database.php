@@ -38,7 +38,23 @@ return [
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'database' => (function () {
+                $database = env('DB_DATABASE', database_path('database.sqlite'));
+
+                // If the value starts with "database/" or "database\" (common when using relative sqlite paths),
+                // normalize it by stripping the leading segment so we can resolve it from database_path().
+                if ($database && preg_match('#^database[\\/](.+)$#', $database, $matches)) {
+                    $database = $matches[1];
+                }
+
+                // If env provides a relative path, resolve it from the Laravel database path.
+                // If it is already an absolute path (Windows drive letter or UNIX root), use as-is.
+                if ($database && !preg_match('#^(?:[A-Za-z]:\\\\|\\\\|/)#', $database)) {
+                    return database_path($database);
+                }
+
+                return $database;
+            })(),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],

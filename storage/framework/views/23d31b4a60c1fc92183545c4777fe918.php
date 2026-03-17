@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account</title>
-    @if (config('services.recaptcha.site_key'))
+    <?php if(config('services.recaptcha.site_key')): ?>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    @endif
+    <?php endif; ?>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -123,53 +123,53 @@
     <div class="main-content">
         <div class="form-container">
             <h1>Create Your Account</h1>
-            @if ($errors->any())
+            <?php if($errors->any()): ?>
                 <div class="alert alert-danger text-start" role="alert">
                     <ul class="mb-0">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
+                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <li><?php echo e($error); ?></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </ul>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            <form action="{{ route('account.store') }}" method="POST">
-                @csrf
+            <form action="<?php echo e(route('account.store')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
                 <label for="name">Name:</label>
-                <input type="text" id="name" name="name" value="{{ old('name') }}" required>
+                <input type="text" id="name" name="name" value="<?php echo e(old('name')); ?>" required>
 
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="{{ old('email') }}" required>
+                <input type="email" id="email" name="email" value="<?php echo e(old('email')); ?>" required>
 
                 <label for="business_name">Business Name:</label>
-                <input type="text" id="business_name" name="business_name" value="{{ old('business_name') }}" required>
+                <input type="text" id="business_name" name="business_name" value="<?php echo e(old('business_name')); ?>" required>
 
                 <label for="business_phone">Business Phone:</label>
-                <input type="text" id="business_phone" name="business_phone" value="{{ old('business_phone') }}">
+                <input type="text" id="business_phone" name="business_phone" value="<?php echo e(old('business_phone')); ?>">
 
                 <label for="business_address">Business Address:</label>
-                <input type="text" id="business_address" name="business_address" value="{{ old('business_address') }}">
+                <input type="text" id="business_address" name="business_address" value="<?php echo e(old('business_address')); ?>">
 
                 <label for="plan">Choose Your Plan:</label>
                 <select id="plan" name="plan" class="form-select mb-3" required>
-                    <option value="basic" {{ old('plan') === 'basic' ? 'selected' : '' }}>Basic</option>
-                    <option value="standard" {{ old('plan') === 'standard' ? 'selected' : '' }}>Standard</option>
-                    <option value="premium" {{ old('plan') === 'premium' ? 'selected' : '' }}>Premium</option>
-                    <option value="enterprise" {{ old('plan') === 'enterprise' ? 'selected' : '' }}>Enterprise</option>
+                    <option value="basic" <?php echo e(old('plan') === 'basic' ? 'selected' : ''); ?>>Basic</option>
+                    <option value="standard" <?php echo e(old('plan') === 'standard' ? 'selected' : ''); ?>>Standard</option>
+                    <option value="premium" <?php echo e(old('plan') === 'premium' ? 'selected' : ''); ?>>Premium</option>
+                    <option value="enterprise" <?php echo e(old('plan') === 'enterprise' ? 'selected' : ''); ?>>Enterprise</option>
                 </select>
 
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
 
-                @if (config('services.recaptcha.site_key'))
+                <?php if(config('services.recaptcha.site_key')): ?>
                     <div class="d-flex justify-content-center mb-3">
-                        <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+                        <div class="g-recaptcha" data-sitekey="<?php echo e(config('services.recaptcha.site_key')); ?>"></div>
                     </div>
-                @endif
+                <?php endif; ?>
 
                 <button type="submit">Sign Up</button>
             </form>
         </div>
     </div>
 </body>
-</html>
+</html><?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views\account\create.blade.php ENDPATH**/ ?>

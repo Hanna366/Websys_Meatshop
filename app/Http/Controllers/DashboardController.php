@@ -12,7 +12,14 @@ class DashboardController extends Controller
         if (!session('authenticated')) {
             return redirect('/login');
         }
-        
-        return view('dashboard.index');
+
+        $tenant = null;
+        if (app()->bound('tenant')) {
+            $tenant = app('tenant');
+        }
+
+        return view('dashboard.index', [
+            'tenant' => $tenant,
+        ]);
     }
 }
