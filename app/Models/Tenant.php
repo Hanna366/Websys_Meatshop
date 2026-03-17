@@ -4,10 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
+use Stancl\Tenancy\Database\Concerns\HasDatabase;
+use Stancl\Tenancy\Database\Concerns\HasDomains;
+use Stancl\Tenancy\Database\Concerns\InvalidatesResolverCache;
+use Stancl\Tenancy\Database\Concerns\TenantRun;
 
-class Tenant extends Model
+class Tenant extends Model implements TenantWithDatabase
 {
     use SoftDeletes;
+    use HasDatabase;
+    use HasDomains;
+    use TenantRun;
+    use InvalidatesResolverCache;
 
     protected $fillable = [
         'tenant_id',
@@ -20,6 +29,8 @@ class Tenant extends Model
         'usage',
         'limits',
         'status',
+        'payment_status',
+        'suspended_message',
         'domain',
         'db_name',
         'db_username',
@@ -44,8 +55,53 @@ class Tenant extends Model
     ];
 
     protected $attributes = [
-        'status' => 'active'
+        'status' => 'active',
+        'payment_status' => 'paid',
+        'suspended_message' => 'Please contact your administrator.'
     ];
+
+    /**
+     * Keep Stancl tenancy key on the numeric primary key to stay compatible with domains table FK.
+     */
+    public function getTenantKeyName(): string
+    {
+        return 'id';
+    }
+
+    public function getTenantKey()
+    {
+        return $this->getAttribute($this->getTenantKeyName());
+    }
+
+    /**
+     * Map Stancl internal keys to existing table columns.
+     */
+    public function getInternal(string $key)
+    {
+        $map = [
+            'db_name' => 'db_name',
+            'db_username' => 'db_username',
+            'db_password' => 'db_password',
+            'db_connection' => null,
+        ];
+
+        return array_key_exists($key, $map) && $map[$key] ? $this->getAttribute($map[$key]) : null;
+    }
+
+    public function setInternal(string $key, $value)
+    {
+        $map = [
+            'db_name' => 'db_name',
+            'db_username' => 'db_username',
+            'db_password' => 'db_password',
+        ];
+
+        if (array_key_exists($key, $map)) {
+            $this->setAttribute($map[$key], $value);
+        }
+
+        return $this;
+    }
 
     /**
      * Get the users for the tenant.

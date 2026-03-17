@@ -31,6 +31,10 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id);
         });
 
-        Route::middleware('web')->group(base_path('routes/web.php'));
+        foreach (config('tenancy.central_domains', ['127.0.0.1', 'localhost']) as $domain) {
+            Route::middleware('web')
+                ->domain($domain)
+                ->group(base_path('routes/web.php'));
+        }
     }
 }

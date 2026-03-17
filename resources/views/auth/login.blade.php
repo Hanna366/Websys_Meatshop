@@ -209,12 +209,14 @@
             </button>
         </form>
 
-        <div class="auth-divider">or</div>
+        @if (Route::has('google.redirect'))
+            <div class="auth-divider">or</div>
 
-        <a href="{{ route('google.redirect') }}" class="btn btn-google">
-            <i class="fab fa-google me-2 text-danger"></i>
-            Sign in with Google
-        </a>
+            <a href="{{ route('google.redirect') }}" class="btn btn-google">
+                <i class="fab fa-google me-2 text-danger"></i>
+                Sign in with Google
+            </a>
+        @endif
         
         <div class="alert alert-info demo-info mt-4">
             <h6><i class="fas fa-info-circle me-2"></i><strong>Demo Accounts by Subscription Plan:</strong></h6>

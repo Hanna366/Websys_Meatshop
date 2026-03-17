@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SimpleAuthController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\TenantController;
+use App\Models\Tenant;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,24 +19,32 @@ use App\Http\Controllers\SubscriptionController;
 */
 
 Route::get('/', function () {
-    // If already authenticated, redirect to dashboard
-    if (session('authenticated')) {
-        return redirect('/dashboard');
-    }
-    // Otherwise show welcome page
-    return view('welcome');
-});
+    return view('central.home', [
+        'tenants' => Tenant::orderBy('created_at', 'desc')->limit(15)->get(),
+    ]);
+})->name('central.home');
+
+Route::get('/central', function () {
+    return view('central.home', [
+        'tenants' => Tenant::orderBy('created_at', 'desc')->limit(15)->get(),
+    ]);
+})->name('central.framework');
 
 Route::get('/login', [SimpleAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [SimpleAuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [SimpleAuthController::class, 'logout'])->name('logout');
 
+// Public signup to create tenant from selected plan.
+Route::get('/account/create', [TenantController::class, 'create'])->name('tenants.create');
+Route::post('/account/create', [TenantController::class, 'store'])->name('tenants.store');
+
+// Central tenant management menu entries.
+Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
+Route::get('/tenant/{tenantId}', [TenantController::class, 'show'])->name('tenants.show');
+Route::post('/tenant/{tenantId}/status', [TenantController::class, 'updateStatus'])->name('tenants.updateStatus');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Tenant management (central app)
-    Route::get('/tenants', [\App\Http\Controllers\TenantController::class, 'index'])->name('tenants.index');
-    Route::get('/tenant/{tenantId}', [\App\Http\Controllers\TenantController::class, 'show'])->name('tenants.show');
     
     // Basic Plan Routes (Products available to all authenticated users)
     Route::get('/products', function () {

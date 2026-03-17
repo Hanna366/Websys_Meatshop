@@ -26,7 +26,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('subscription_status');
             $table->index('status');
         });
     }

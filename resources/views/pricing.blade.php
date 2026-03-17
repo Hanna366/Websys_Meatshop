@@ -251,16 +251,8 @@ let selectedPlan = '';
 let selectedPrice = 0;
 
 function selectPlan(plan, price) {
-    selectedPlan = plan;
-    selectedPrice = price;
-    
-    // Update modal content
-    document.getElementById('selectedPlanName').textContent = plan + ' Plan';
-    document.getElementById('planPrice').textContent = '$' + price.toFixed(2);
-    
-    // Show payment modal
-    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
-    modal.show();
+    const normalized = String(plan || '').toLowerCase();
+    window.location.href = '/account/create?plan=' + encodeURIComponent(normalized);
 }
 
 function contactSales() {
