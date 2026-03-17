@@ -19,7 +19,16 @@ class Tenant extends Model
         'settings',
         'usage',
         'limits',
-        'status'
+        'status',
+        'domain',
+        'db_name',
+        'db_username',
+        'db_password',
+        'plan',
+        'plan_started_at',
+        'plan_ends_at',
+        'admin_name',
+        'admin_email'
     ];
 
     protected $casts = [
@@ -28,6 +37,8 @@ class Tenant extends Model
         'settings' => 'array',
         'usage' => 'array',
         'limits' => 'array',
+        'plan_started_at' => 'datetime',
+        'plan_ends_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
@@ -185,6 +196,66 @@ class Tenant extends Model
                 'days_until_expiry' => $this->subscription['end_date'] ? 
                     ceil(now()->diffInDays($this->subscription['end_date'])) : null
             ]
+        ];
+    }
+
+    /**
+     * Get decrypted database password.
+     */
+    public function getDecryptedDbPassword(): ?string
+    {
+        if (!$this->db_password) {
+            return null;
+        }
+
+        try {
+            return decrypt($this->db_password);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get the tenant database connection configuration.
+     */
+    public function getTenantDatabaseConfig(): array
+    {
+        $defaultConnection = config('database.default');
+        $baseConfig = config("database.connections.{$defaultConnection}", []);
+
+        $driver = $baseConfig['driver'] ?? 'mysql';
+
+        if ($driver === 'sqlite') {
+            // Tenant databases are stored as sqlite files under database/tenants
+            $tenantPath = database_path('tenants');
+            if (!is_dir($tenantPath)) {
+                mkdir($tenantPath, 0755, true);
+            }
+
+            $file = $tenantPath . DIRECTORY_SEPARATOR . ($this->db_name ?? 'tenant') . '.sqlite';
+
+            return [
+                'driver' => 'sqlite',
+                'database' => $file,
+                'prefix' => '',
+                'foreign_key_constraints' => $baseConfig['foreign_key_constraints'] ?? true,
+            ];
+        }
+
+        // Default to MySQL-compatible configuration
+        return [
+            'driver' => $driver,
+            'host' => $baseConfig['host'] ?? '127.0.0.1',
+            'port' => $baseConfig['port'] ?? '3306',
+            'database' => $this->db_name,
+            'username' => $this->db_username ?? ($baseConfig['username'] ?? null),
+            'password' => $this->getDecryptedDbPassword() ?? ($baseConfig['password'] ?? null),
+            'charset' => $baseConfig['charset'] ?? 'utf8mb4',
+            'collation' => $baseConfig['collation'] ?? 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => $baseConfig['strict'] ?? true,
+            'engine' => $baseConfig['engine'] ?? null,
+            'options' => $baseConfig['options'] ?? [],
         ];
     }
 }

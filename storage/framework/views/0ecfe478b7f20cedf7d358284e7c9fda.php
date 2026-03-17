@@ -224,7 +224,7 @@
             </a>
             
             <div class="auth-buttons">
-                <a href="{{ route('login') }}" class="btn-login">
+                <a href="<?php echo e(route('login')); ?>" class="btn-login">
                     <i class="fas fa-sign-in-alt me-2"></i>
                     Login
                 </a>
@@ -242,7 +242,7 @@
         <p>Complete Point of Sale System for Your Meat Business</p>
         
         <div class="cta-buttons">
-            <a href="{{ route('login') }}" class="btn-primary">
+            <a href="<?php echo e(route('login')); ?>" class="btn-primary">
                 <i class="fas fa-rocket me-2"></i>
                 Get Started Now
             </a>
@@ -340,3 +340,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<?php /**PATH C:\Users\Rusty\Music\MeatShop\resources\views\welcome.blade.php ENDPATH**/ ?>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Services\TenantService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
@@ -18,6 +19,10 @@ class AccountController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
+            'business_name' => 'required|string|max:255',
+            'business_phone' => 'nullable|string|max:50',
+            'business_address' => 'nullable|string|max:1000',
+            'plan' => 'required|in:basic,standard,premium,enterprise',
         ];
 
         if ($recaptchaEnabled) {
@@ -61,8 +66,29 @@ class AccountController extends Controller
             $counter++;
         }
 
-        // Create the user
+        // Create the tenant in the central system and prepare its database.
+        $tenant = TenantService::createTenant([
+            'business_name' => $request->business_name,
+            'business_email' => $request->email,
+            'business_phone' => $request->business_phone,
+            'business_address' => $request->business_address,
+            'plan' => $request->plan,
+            'admin_name' => $fullName,
+            'admin_email' => $request->email,
+            'password' => $request->password,
+            'subscription' => [
+                'plan' => $request->plan,
+                'status' => 'active',
+                'starts_at' => now(),
+                'expires_at' => now()->addMonth(),
+            ],
+        ]);
+
+        // Create the user in the central system so the tenant can log in.
+        // The tenant's own database also has a users table, but we use the central
+        // users table for authentication across the platform.
         User::create([
+            'tenant_id' => $tenant->tenant_id,
             'username' => $username,
             'name' => $fullName,
             'email' => $request->email,

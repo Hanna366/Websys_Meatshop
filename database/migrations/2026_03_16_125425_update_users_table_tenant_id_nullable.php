@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // SQLite doesn't support altering column definitions without doctrine/dbal.
+        // In that case, we skip the schema change because the column is already nullable in this setup.
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->string('tenant_id')->nullable()->change();
         });

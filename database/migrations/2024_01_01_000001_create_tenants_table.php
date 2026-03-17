@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('tenant_id')->unique();
             $table->string('business_name');
             $table->string('business_email')->unique();
-            $table->string('business_phone');
-            $table->json('business_address');
+            $table->string('business_phone')->nullable();
+            $table->json('business_address')->nullable();
             $table->json('subscription');
             $table->json('settings');
             $table->json('usage');
