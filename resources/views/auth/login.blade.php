@@ -133,13 +133,6 @@
             border: none;
         }
         
-        .demo-info {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
     </style>
 </head>
 <body>
@@ -217,63 +210,6 @@
                 Sign in with Google
             </a>
         @endif
-        
-        <div class="alert alert-info demo-info mt-4">
-            <h6><i class="fas fa-info-circle me-2"></i><strong>Demo Accounts by Subscription Plan:</strong></h6>
-            
-            <div class="row mt-3">
-                <!-- Basic Plan -->
-                <div class="col-md-4 mb-3">
-                    <div class="card border-primary">
-                        <div class="card-header bg-primary text-white text-center py-2">
-                            <i class="fas fa-star me-2"></i><strong>Basic Plan</strong>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-center mb-2">
-                                <i class="fas fa-user-circle fa-2x text-primary mb-2"></i>
-                            </div>
-                            <p><strong>Email:</strong> <code>basic@meatshop.com</code></p>
-                            <p><strong>Password:</strong> <code>basic123</code></p>
-                            <small class="text-muted">Up to 100 products, Inventory tracking, Single user</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Standard Plan -->
-                <div class="col-md-4 mb-3">
-                    <div class="card border-warning">
-                        <div class="card-header bg-warning text-dark text-center py-2">
-                            <i class="fas fa-crown me-2"></i><strong>Standard Plan</strong>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-center mb-2">
-                                <i class="fas fa-user-circle fa-2x text-warning mb-2"></i>
-                            </div>
-                            <p><strong>Email:</strong> <code>standard@meatshop.com</code></p>
-                            <p><strong>Password:</strong> <code>standard123</code></p>
-                            <small class="text-muted">Unlimited products, Full POS, Up to 3 users, Customer management</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Premium Plan -->
-                <div class="col-md-4 mb-3">
-                    <div class="card border-danger">
-                        <div class="card-header bg-danger text-white text-center py-2">
-                            <i class="fas fa-gem me-2"></i><strong>Premium Plan</strong>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-center mb-2">
-                                <i class="fas fa-user-circle fa-2x text-danger mb-2"></i>
-                            </div>
-                            <p><strong>Email:</strong> <code>premium@meatshop.com</code></p>
-                            <p><strong>Password:</strong> <code>premium123</code></p>
-                            <small class="text-muted">All features, Advanced analytics, API access, Unlimited users, Priority support</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
     
     <!-- Bootstrap JS -->

@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CentralDashboardController;
 use App\Http\Controllers\SimpleAuthController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
-use App\Models\Tenant;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,17 +17,9 @@ use App\Models\Tenant;
 |
 */
 
-Route::get('/', function () {
-    return view('central.home', [
-        'tenants' => Tenant::orderBy('created_at', 'desc')->limit(15)->get(),
-    ]);
-})->name('central.home');
+Route::get('/', [CentralDashboardController::class, 'index'])->name('central.home');
 
-Route::get('/central', function () {
-    return view('central.home', [
-        'tenants' => Tenant::orderBy('created_at', 'desc')->limit(15)->get(),
-    ]);
-})->name('central.framework');
+Route::get('/central', [CentralDashboardController::class, 'index'])->name('central.framework');
 
 Route::get('/login', [SimpleAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [SimpleAuthController::class, 'login'])->name('login.post');
@@ -43,11 +35,7 @@ Route::get('/tenant/{tenantId}', [TenantController::class, 'show'])->name('tenan
 Route::post('/tenant/{tenantId}/status', [TenantController::class, 'updateStatus'])->name('tenants.updateStatus');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('central.home', [
-            'tenants' => Tenant::orderBy('created_at', 'desc')->limit(15)->get(),
-        ]);
-    })->name('dashboard');
+    Route::get('/dashboard', [CentralDashboardController::class, 'index'])->name('dashboard');
 });
 
 // Pricing page - accessible without authentication
