@@ -7,6 +7,27 @@ use Illuminate\Support\Facades\Session;
 class SubscriptionService
 {
     /**
+     * Normalize plan names from session/user input.
+     */
+    public static function normalizePlan(string $plan): string
+    {
+        return strtolower(trim($plan));
+    }
+
+    /**
+     * Map legacy feature keys to canonical plan feature keys.
+     */
+    public static function normalizeFeature(string $feature): string
+    {
+        $aliases = [
+            'pos_access' => 'pos_system',
+            'basic_reporting' => 'basic_reports',
+        ];
+
+        return $aliases[$feature] ?? $feature;
+    }
+
+    /**
      * Get current user's subscription
      */
     public static function getCurrentSubscription()
@@ -17,13 +38,15 @@ class SubscriptionService
             return null;
         }
 
-        // For demo purposes, return a default subscription
-        // In production, this would query the database
+        $plan = self::normalizePlan((string) ($user['plan'] ?? 'premium'));
+
+        // Returns a deterministic subscription snapshot derived from session state.
+        // This keeps middleware checks consistent while a DB-backed source is introduced.
         return [
             'id' => 1,
             'user_id' => $user['id'] ?? 'demo_user',
-            'plan' => 'premium',
-            'price' => 149,
+            'plan' => $plan,
+            'price' => self::getPlanPricing()[$plan] ?? 149,
             'status' => 'active',
             'starts_at' => now()->subMonth(),
             'expires_at' => now()->addMonth(),
@@ -48,7 +71,9 @@ class SubscriptionService
         }
 
         $features = self::getPlanFeatures($subscription['plan']);
-        return $features[$feature] ?? false;
+        $normalizedFeature = self::normalizeFeature((string) $feature);
+
+        return $features[$normalizedFeature] ?? false;
     }
 
     /**
@@ -56,6 +81,8 @@ class SubscriptionService
      */
     public static function getPlanFeatures($plan)
     {
+        $plan = self::normalizePlan((string) $plan);
+
         $features = [
             'basic' => [
                 'inventory_tracking' => true,
@@ -166,6 +193,8 @@ class SubscriptionService
      */
     public static function getPlanDisplayName($plan)
     {
+        $plan = self::normalizePlan((string) $plan);
+
         $names = [
             'basic' => 'Basic',
             'standard' => 'Standard',

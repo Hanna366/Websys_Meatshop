@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SimpleAuthController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
@@ -44,73 +43,17 @@ Route::get('/tenant/{tenantId}', [TenantController::class, 'show'])->name('tenan
 Route::post('/tenant/{tenantId}/status', [TenantController::class, 'updateStatus'])->name('tenants.updateStatus');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Basic Plan Routes (Products available to all authenticated users)
-    Route::get('/products', function () {
-        if (!session('authenticated')) {
-            return redirect('/login');
-        }
-        return view('products');
-    })->middleware('subscription');
-    
-    // Standard Plan Routes (require standard features)
-    Route::get('/inventory', function () {
-        if (!session('authenticated')) {
-            return redirect('/login');
-        }
-        return view('inventory');
-    })->middleware('subscription');
-    
-    Route::get('/sales', function () {
-        if (!session('authenticated')) {
-            return redirect('/login');
-        }
-        return view('sales');
-    })->middleware('subscription:pos_access');
-    
-    Route::get('/customers', function () {
-        if (!session('authenticated')) {
-            return redirect('/login');
-        }
-        return view('customers');
-    })->middleware('subscription:customer_management');
-    
-    Route::get('/suppliers', function () {
-        if (!session('authenticated')) {
-            return redirect('/login');
-        }
-        return view('suppliers');
-    })->middleware('subscription:supplier_management');
-    
-    // Premium Plan Routes (require premium features)
-    Route::get('/reports', function () {
-        if (!session('authenticated')) {
-            return redirect('/login');
-        }
-        return view('reports');
-    })->middleware('subscription:advanced_analytics');
-    
-    Route::get('/settings', function () {
-        if (!session('authenticated')) {
-            return redirect('/login');
-        }
-        return view('settings');
-    })->middleware('subscription:custom_branding');
-    
-    // Routes available to all authenticated users
-    Route::get('/profile', function () {
-        if (!session('authenticated')) {
-            return redirect('/login');
-        }
-        return view('profile');
-    });
+    Route::get('/dashboard', function () {
+        return view('central.home', [
+            'tenants' => Tenant::orderBy('created_at', 'desc')->limit(15)->get(),
+        ]);
+    })->name('dashboard');
 });
 
 // Pricing page - accessible without authentication
 Route::get('/pricing', function () {
     return view('pricing');
-});
+})->name('pricing');
 
 // Subscription routes - require authentication
 Route::middleware(['auth'])->group(function () {

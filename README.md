@@ -1,3 +1,9 @@
+# Legacy Reference (Outdated)
+
+This file contains historical notes from a previous Node/Express architecture and is no longer the runtime source of truth.
+
+Use `README-LARAVEL.md` for the current Laravel 10 implementation, setup, and deployment instructions.
+
 # 🥩 Meat Shop Inventory & POS System
 
 A comprehensive SaaS platform designed for meat shops and butcher businesses to manage inventory, sales, and daily operations efficiently.

@@ -157,42 +157,14 @@
                 <i class="fas fa-building me-2"></i>
                 Tenants
             </a>
-            <a class="nav-link" href="/products">
-                <i class="fas fa-box me-2"></i>
-                Products
-            </a>
-            <a class="nav-link" href="/inventory">
-                <i class="fas fa-warehouse me-2"></i>
-                Inventory
-            </a>
-            <a class="nav-link" href="/sales">
-                <i class="fas fa-shopping-cart me-2"></i>
-                Sales
-            </a>
-            <a class="nav-link" href="/customers">
-                <i class="fas fa-users me-2"></i>
-                Customers
-            </a>
-            <a class="nav-link" href="/suppliers">
-                <i class="fas fa-truck me-2"></i>
-                Suppliers
-            </a>
             <hr class="my-3" style="border-color: rgba(255,255,255,0.1);">
-            <a class="nav-link" href="/reports">
-                <i class="fas fa-chart-bar me-2"></i>
-                Reports
+            <a class="nav-link {{ request()->routeIs('subscription.*') ? 'active' : '' }}" href="{{ route('subscription.billing') }}">
+                <i class="fas fa-file-invoice-dollar me-2"></i>
+                Billing
             </a>
-            <a class="nav-link" href="/settings">
-                <i class="fas fa-cog me-2"></i>
-                Settings
-            </a>
-            <a class="nav-link" href="/profile">
-                <i class="fas fa-user me-2"></i>
-                Profile
-            </a>
-            <a class="nav-link bg-danger text-white" href="/pricing" style="margin-top: 10px; border-radius: 5px;">
+            <a class="nav-link" href="{{ route('pricing') }}">
                 <i class="fas fa-crown me-2"></i>
-                Upgrade Plan
+                Plans
             </a>
             <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
                 @csrf

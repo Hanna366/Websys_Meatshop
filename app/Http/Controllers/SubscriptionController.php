@@ -8,6 +8,69 @@ use App\Services\SubscriptionService;
 
 class SubscriptionController extends Controller
 {
+    public function current()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => ['subscription' => SubscriptionService::getCurrentSubscription()],
+        ]);
+    }
+
+    public function plans()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'pricing' => SubscriptionService::getPlanPricing(),
+                'hierarchy' => SubscriptionService::getPlanHierarchy(),
+            ],
+        ]);
+    }
+
+    public function usage()
+    {
+        $subscription = SubscriptionService::getCurrentSubscription();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'days_until_expiration' => SubscriptionService::getDaysUntilExpiration(),
+                'subscription' => $subscription,
+            ],
+        ]);
+    }
+
+    public function billing()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => ['history' => SubscriptionService::getBillingHistory()],
+        ]);
+    }
+
+    public function create(Request $request)
+    {
+        return $this->processSubscription($request);
+    }
+
+    public function update(Request $request)
+    {
+        return $this->processSubscription($request);
+    }
+
+    public function updatePaymentMethod(Request $request)
+    {
+        $request->validate([
+            'payment_method' => 'required|in:credit_card,gcash,paypal',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment method update endpoint scaffolded',
+            'data' => ['payment_method' => $request->payment_method],
+        ]);
+    }
+
     /**
      * Display subscription pricing page
      */

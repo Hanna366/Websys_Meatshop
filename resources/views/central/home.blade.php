@@ -1,11 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.central')
 
-@section('title', 'Central Application')
+@section('title', 'MeatShop Central')
 
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Central Application</h1>
+        <h1 class="h2">MeatShop Central</h1>
         <a href="{{ route('tenants.create') }}" class="btn btn-primary">Create Tenant</a>
     </div>
 

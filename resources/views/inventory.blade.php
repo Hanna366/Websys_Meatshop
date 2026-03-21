@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.tenant')
 
 @section('title', 'Inventory - Meat Shop POS')
 
