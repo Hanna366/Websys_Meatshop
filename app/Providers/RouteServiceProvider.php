@@ -7,7 +7,6 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvi
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -31,7 +30,27 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id);
         });
 
-        foreach (config('tenancy.central_domains', ['127.0.0.1', 'localhost']) as $domain) {
+        $centralApiRoutes = file_exists(base_path('routes/central/api.php'))
+            ? base_path('routes/central/api.php')
+            : base_path('routes/api.php');
+
+        $centralDomains = config('tenancy.central_domains', ['127.0.0.1', 'localhost']);
+
+        if (empty($centralDomains)) {
+            Route::prefix('api')
+                ->middleware('api')
+                ->group($centralApiRoutes);
+
+            Route::middleware('web')->group(base_path('routes/web.php'));
+            return;
+        }
+
+        foreach ($centralDomains as $domain) {
+            Route::prefix('api')
+                ->middleware('api')
+                ->domain($domain)
+                ->group($centralApiRoutes);
+
             Route::middleware('web')
                 ->domain($domain)
                 ->group(base_path('routes/web.php'));

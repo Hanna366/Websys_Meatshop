@@ -28,6 +28,17 @@ class TenancyServiceProvider extends ServiceProvider
             if (file_exists(base_path('routes/tenant.php'))) {
                 Route::group([], base_path('routes/tenant.php'));
             }
+
+            if (file_exists(base_path('routes/tenant/api.php'))) {
+                Route::prefix('api')
+                    ->middleware([
+                        'api',
+                        InitializeTenancyByDomain::class,
+                        PreventAccessFromCentralDomains::class,
+                        'tenant.active',
+                    ])
+                    ->group(base_path('routes/tenant/api.php'));
+            }
         });
     }
 

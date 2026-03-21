@@ -38,13 +38,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Product Routes
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']);
-        Route::get('/{product}', [ProductController::class, 'show']);
-        Route::post('/', [ProductController::class, 'store']);
-        Route::put('/{product}', [ProductController::class, 'update']);
-        Route::delete('/{product}', [ProductController::class, 'destroy']);
         Route::get('/categories', [ProductController::class, 'categories']);
         Route::get('/search', [ProductController::class, 'search']);
         Route::get('/low-stock', [ProductController::class, 'lowStock']);
+        Route::post('/', [ProductController::class, 'store']);
+        Route::get('/{product}', [ProductController::class, 'show']);
+        Route::put('/{product}', [ProductController::class, 'update']);
+        Route::delete('/{product}', [ProductController::class, 'destroy']);
     });
 
     // Inventory Routes
@@ -61,11 +61,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Sales Routes
     Route::prefix('sales')->group(function () {
         Route::get('/', [SalesController::class, 'index']);
-        Route::get('/{sale}', [SalesController::class, 'show']);
-        Route::post('/', [SalesController::class, 'process']);
-        Route::post('/{sale}/void', [SalesController::class, 'void']);
         Route::get('/summary', [SalesController::class, 'summary']);
         Route::get('/daily-report', [SalesController::class, 'dailyReport']);
+        Route::post('/', [SalesController::class, 'process']);
+        Route::get('/{sale}', [SalesController::class, 'show']);
+        Route::post('/{sale}/void', [SalesController::class, 'void']);
     });
 
     // Customer Routes
@@ -84,13 +84,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Supplier Routes
     Route::prefix('suppliers')->group(function () {
         Route::get('/', [SupplierController::class, 'index']);
-        Route::get('/{supplier}', [SupplierController::class, 'show']);
+        Route::get('/rankings', [SupplierController::class, 'rankings']);
         Route::post('/', [SupplierController::class, 'store']);
+        Route::get('/{supplier}', [SupplierController::class, 'show']);
         Route::put('/{supplier}', [SupplierController::class, 'update']);
         Route::delete('/{supplier}', [SupplierController::class, 'destroy']);
         Route::put('/{supplier}/quality-score', [SupplierController::class, 'updateQualityScore']);
         Route::get('/{supplier}/performance', [SupplierController::class, 'performance']);
-        Route::get('/rankings', [SupplierController::class, 'rankings']);
     });
 
     // Reports Routes
@@ -129,6 +129,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('tenants')->group(function () {
         Route::get('/stats', function (Request $request) {
             $tenant = $request->user()->tenant;
+
+            if (!$tenant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tenant context not found for authenticated user.',
+                ], 404);
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => ['stats' => $tenant->getStats()]
@@ -149,8 +157,20 @@ Route::middleware('auth:sanctum')->group(function () {
                 'data' => ['users' => $users]
             ]);
         });
-        Route::get('/{user}', function ($user) {
-            $userData = \App\Models\User::find($user);
+
+        Route::get('/{user}', function (Request $request, $user) {
+            $userData = \App\Models\User::where('tenant_id', $request->user()->tenant_id)
+                ->whereKey($user)
+                ->select('id', 'email', 'role', 'profile', 'status', 'created_at')
+                ->first();
+
+            if (!$userData) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found in tenant scope.',
+                ], 404);
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => ['user' => $userData]
