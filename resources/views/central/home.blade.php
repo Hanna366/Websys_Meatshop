@@ -9,6 +9,41 @@
         <a href="{{ route('tenants.create') }}" class="btn btn-primary">Create Tenant</a>
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Total Tenants</p>
+                    <h3 class="mb-0">{{ $stats['total_tenants'] ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 border-start border-4 border-success">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Active Tenants</p>
+                    <h3 class="mb-0 text-success">{{ $stats['active_tenants'] ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 border-start border-4 border-warning">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Suspended Tenants</p>
+                    <h3 class="mb-0 text-warning">{{ $stats['suspended_tenants'] ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 border-start border-4 border-danger">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Unpaid Tenants</p>
+                    <h3 class="mb-0 text-danger">{{ $stats['unpaid_tenants'] ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card shadow mb-4">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">

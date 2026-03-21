@@ -10,15 +10,8 @@ class TenantController extends Controller
 {
     public function index(Request $request)
     {
-        $user = session('user');
-
-        // Central app should always be able to list tenants for management.
-        if (!$user || ($user['role'] ?? '') === 'admin') {
-            $tenants = Tenant::orderBy('created_at', 'desc')->get();
-        } else {
-            $tenantId = $user['tenant_id'] ?? null;
-            $tenants = $tenantId ? Tenant::where('tenant_id', $tenantId)->get() : collect();
-        }
+        // This is a central management screen, so it should always show all tenants.
+        $tenants = Tenant::orderBy('created_at', 'desc')->get();
 
         return view('tenants.index', [
             'tenants' => $tenants,

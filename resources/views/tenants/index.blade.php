@@ -27,7 +27,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($tenants as $tenant)
+                        @forelse($tenants as $tenant)
                             <tr>
                                 <td>{{ $tenant->tenant_id }}</td>
                                 <td>{{ $tenant->business_name }}</td>
@@ -59,7 +59,11 @@
                                     @endif
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="11" class="text-center text-muted">No tenants found.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
