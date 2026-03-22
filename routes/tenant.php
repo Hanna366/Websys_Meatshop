@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SimpleAuthController;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -13,8 +14,18 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
     'tenant.active',
 ])->group(function () {
+    Route::get('/login', [SimpleAuthController::class, 'showLoginForm'])->name('tenant.login');
+    Route::post('/login', [SimpleAuthController::class, 'login'])->name('tenant.login.post');
+    Route::post('/logout', [SimpleAuthController::class, 'logout'])->name('tenant.logout');
+    Route::get('/forgot-password', [SimpleAuthController::class, 'showForgotPasswordForm'])->name('tenant.password.request');
+    Route::post('/forgot-password', [SimpleAuthController::class, 'sendResetLink'])->name('tenant.password.email');
+    Route::get('/reset-password/{token}', [SimpleAuthController::class, 'showResetPasswordForm'])->name('tenant.password.reset');
+    Route::post('/reset-password', [SimpleAuthController::class, 'resetPassword'])->name('tenant.password.update');
+
     Route::get('/', function () {
-        return view('tenant.home', ['tenant' => tenant()]);
+        return session('authenticated')
+            ? redirect('/dashboard')
+            : redirect('/login');
     })->name('tenant.home');
 
     Route::middleware(['auth'])->group(function () {

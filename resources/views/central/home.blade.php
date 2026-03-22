@@ -68,7 +68,23 @@
                         @forelse($tenants as $tenant)
                             <tr>
                                 <td>{{ $tenant->business_name }}</td>
-                                <td>{{ $tenant->domain ?? '—' }}</td>
+                                <td>
+                                    @if(!empty($tenant->domain))
+                                        @php
+                                            $rawDomain = trim((string) $tenant->domain);
+                                            $normalizedDomain = preg_replace('#^https?://#i', '', $rawDomain);
+                                            $normalizedDomain = rtrim($normalizedDomain, '/');
+                                            $normalizedDomain = str_ireplace('locasthost', 'localhost', $normalizedDomain);
+                                            $scheme = request()->isSecure() ? 'https' : 'http';
+                                            $hasPort = preg_match('/:\\d+$/', $normalizedDomain) === 1;
+                                            $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
+                                            $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort;
+                                        @endphp
+                                        <a href="{{ $tenantUrl }}" target="_blank" rel="noopener noreferrer">{{ $normalizedDomain }}</a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>{{ is_array($tenant->business_address) ? implode(', ', $tenant->business_address) : ($tenant->business_address ?: '—') }}</td>
                                 <td>{{ $tenant->admin_name ?? '—' }}</td>
                                 <td>{{ $tenant->admin_email ?? $tenant->business_email }}</td>

@@ -40,6 +40,15 @@
                     <hr>
 
                     <h6 class="mb-3">Customize Tenant</h6>
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     <form method="POST" action="{{ route('tenants.updateStatus', $tenant->tenant_id) }}">
                         @csrf
                         <div class="mb-2">

@@ -86,35 +86,35 @@
         </div>
 
         <nav class="nav flex-column">
-            <a class="nav-link {{ request()->routeIs('tenant.dashboard') ? 'active' : '' }}" href="{{ route('tenant.dashboard') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.dashboard') ? 'active' : '' }}" href="/dashboard">
                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
             </a>
-            <a class="nav-link {{ request()->routeIs('tenant.products') ? 'active' : '' }}" href="{{ route('tenant.products') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.products') ? 'active' : '' }}" href="/products">
                 <i class="fas fa-box me-2"></i>Products
             </a>
-            <a class="nav-link {{ request()->routeIs('tenant.inventory') ? 'active' : '' }}" href="{{ route('tenant.inventory') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.inventory') ? 'active' : '' }}" href="/inventory">
                 <i class="fas fa-warehouse me-2"></i>Inventory
             </a>
-            <a class="nav-link {{ request()->routeIs('tenant.sales') ? 'active' : '' }}" href="{{ route('tenant.sales') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.sales') ? 'active' : '' }}" href="/sales">
                 <i class="fas fa-shopping-cart me-2"></i>Sales
             </a>
-            <a class="nav-link {{ request()->routeIs('tenant.customers') ? 'active' : '' }}" href="{{ route('tenant.customers') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.customers') ? 'active' : '' }}" href="/customers">
                 <i class="fas fa-users me-2"></i>Customers
             </a>
-            <a class="nav-link {{ request()->routeIs('tenant.suppliers') ? 'active' : '' }}" href="{{ route('tenant.suppliers') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.suppliers') ? 'active' : '' }}" href="/suppliers">
                 <i class="fas fa-truck me-2"></i>Suppliers
             </a>
-            <a class="nav-link {{ request()->routeIs('tenant.reports') ? 'active' : '' }}" href="{{ route('tenant.reports') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.reports') ? 'active' : '' }}" href="/reports">
                 <i class="fas fa-chart-bar me-2"></i>Reports
             </a>
-            <a class="nav-link {{ request()->routeIs('tenant.settings') ? 'active' : '' }}" href="{{ route('tenant.settings') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.settings') ? 'active' : '' }}" href="/settings">
                 <i class="fas fa-cog me-2"></i>Settings
             </a>
-            <a class="nav-link {{ request()->routeIs('tenant.profile') ? 'active' : '' }}" href="{{ route('tenant.profile') }}">
+            <a class="nav-link {{ request()->routeIs('tenant.profile') ? 'active' : '' }}" href="/profile">
                 <i class="fas fa-user me-2"></i>Profile
             </a>
             <hr class="my-2" style="border-color: rgba(255,255,255,0.2);">
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
+            <form action="/logout" method="POST" class="m-0">
                 @csrf
                 <button type="submit" class="nav-link text-start w-100 border-0 bg-transparent">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout

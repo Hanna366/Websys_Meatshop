@@ -24,6 +24,10 @@ Route::get('/central', [CentralDashboardController::class, 'index'])->name('cent
 Route::get('/login', [SimpleAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [SimpleAuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [SimpleAuthController::class, 'logout'])->name('logout');
+Route::get('/forgot-password', [SimpleAuthController::class, 'showForgotPasswordForm'])->name('password.request');
+Route::post('/forgot-password', [SimpleAuthController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [SimpleAuthController::class, 'showResetPasswordForm'])->name('password.reset');
+Route::post('/reset-password', [SimpleAuthController::class, 'resetPassword'])->name('password.update');
 
 // Public signup to create tenant from selected plan.
 Route::get('/account/create', [TenantController::class, 'create'])->name('tenants.create');

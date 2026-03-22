@@ -4,10 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - Meat Shop POS</title>
-    <?php if(config('services.recaptcha.site_key')): ?>
-        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <?php endif; ?>
-    
+            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+        
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -142,42 +140,18 @@
             <h1>Meat Shop POS</h1>
         </div>
         
-        <?php if(session('error')): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <?php echo e(session('error')); ?>
-
-            </div>
-        <?php endif; ?>
-
-        <?php if(session('status')): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle me-2"></i>
-                <?php echo e(session('status')); ?>
-
-            </div>
-        <?php endif; ?>
-
-        <?php if($errors->any()): ?>
-            <div class="alert alert-danger">
-                <ul class="mb-0 ps-3">
-                    <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <li><?php echo e($error); ?></li>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                </ul>
-            </div>
-        <?php endif; ?>
         
-        <form method="POST" action="/login">
-            <?php echo csrf_field(); ?>
-            <div class="mb-3">
+                
+        
+        <form method="POST" action="http://localhost:8000/login">
+            <input type="hidden" name="_token" value="lPgDaCY2fTBG3Y9LxALHSRCANUa7qDJpFr8CfkJ2" autocomplete="off">            <div class="mb-3">
                 <label for="email" class="form-label fw-bold">Email Address</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0">
                         <i class="fas fa-envelope text-muted"></i>
                     </span>
                     <input type="email" class="form-control border-start-0" id="email" name="email" 
-                           placeholder="Enter your email" value="<?php echo e(old('email')); ?>" required>
+                           placeholder="Enter your email" value="" required>
                 </div>
             </div>
             
@@ -199,34 +173,19 @@
                 </label>
             </div>
 
-            <div class="mb-3 text-end">
-                <a href="/forgot-password" class="text-decoration-none">Forgot password?</a>
-            </div>
-
-            <?php if(config('services.recaptcha.site_key')): ?>
-                <div class="d-flex justify-content-center mb-3">
-                    <div class="g-recaptcha" data-sitekey="<?php echo e(config('services.recaptcha.site_key')); ?>"></div>
+                            <div class="d-flex justify-content-center mb-3">
+                    <div class="g-recaptcha" data-sitekey="6LcHb4wsAAAAALuV1N-x5l4Zju7hEweTFMWkGo_d"></div>
                 </div>
-            <?php endif; ?>
-            
+                        
             <button type="submit" class="btn btn-login">
                 <i class="fas fa-sign-in-alt me-2"></i>
                 Sign In
             </button>
         </form>
 
-        <?php if(Route::has('google.redirect')): ?>
-            <div class="auth-divider">or</div>
-
-            <a href="<?php echo e(route('google.redirect')); ?>" class="btn btn-google">
-                <i class="fab fa-google me-2 text-danger"></i>
-                Sign in with Google
-            </a>
-        <?php endif; ?>
-    </div>
+            </div>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/auth/login.blade.php ENDPATH**/ ?>
