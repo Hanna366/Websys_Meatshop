@@ -149,6 +149,13 @@
             </div>
         @endif
 
+        @if(session('status'))
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                {{ session('status') }}
+            </div>
+        @endif
+
         @if($errors->any())
             <div class="alert alert-danger">
                 <ul class="mb-0 ps-3">
@@ -159,7 +166,7 @@
             </div>
         @endif
         
-        <form method="POST" action="{{ route('login.post') }}">
+        <form method="POST" action="/login">
             @csrf
             <div class="mb-3">
                 <label for="email" class="form-label fw-bold">Email Address</label>
@@ -188,6 +195,10 @@
                 <label class="form-check-label" for="remember">
                     Remember me
                 </label>
+            </div>
+
+            <div class="mb-3 text-end">
+                <a href="/forgot-password" class="text-decoration-none">Forgot password?</a>
             </div>
 
             @if (config('services.recaptcha.site_key'))

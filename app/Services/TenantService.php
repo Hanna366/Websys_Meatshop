@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class TenantService
@@ -33,6 +34,8 @@ class TenantService
                 $counter++;
                 $domain = $baseSlug . '-' . $counter . '.' . $root;
             }
+        } elseif (Schema::hasTable('domains')) {
+            self::releaseDomainFromDeletedTenants($domain);
         }
 
         $dbName = self::generateDatabaseName($tenantId);
@@ -183,6 +186,24 @@ class TenantService
         $domain = array_key_exists('domain', $payload) ? $payload['domain'] : null;
         unset($payload['domain']);
 
+        if ($domain !== null && $domain !== '') {
+            if (Schema::hasTable('domains')) {
+                self::releaseDomainFromDeletedTenants($domain);
+            }
+
+            $domainInUse = Tenant::query()
+                ->where('domain', $domain)
+                ->where('id', '!=', $tenant->id)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if ($domainInUse) {
+                throw ValidationException::withMessages([
+                    'domain' => 'The domain has already been taken by another tenant.',
+                ]);
+            }
+        }
+
         $tenant->fill($payload);
 
         if ($domain !== null && $domain !== '') {
@@ -199,6 +220,22 @@ class TenantService
         }
 
         return $tenant;
+    }
+
+    /**
+     * Free a domain if it only belongs to soft-deleted tenants.
+     */
+    private static function releaseDomainFromDeletedTenants(string $domain): void
+    {
+        $deletedTenantIds = Tenant::onlyTrashed()->pluck('id');
+
+        if ($deletedTenantIds->isEmpty()) {
+            return;
+        }
+
+        Domain::where('domain', $domain)
+            ->whereIn('tenant_id', $deletedTenantIds)
+            ->delete();
     }
 
     /**

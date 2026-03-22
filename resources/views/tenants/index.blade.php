@@ -32,7 +32,23 @@
                                 <td>{{ $tenant->tenant_id }}</td>
                                 <td>{{ $tenant->business_name }}</td>
                                 <td>{{ is_array($tenant->business_address) ? implode(', ', $tenant->business_address) : $tenant->business_address }}</td>
-                                <td>{{ $tenant->domain }}</td>
+                                <td>
+                                    @if(!empty($tenant->domain))
+                                        @php
+                                            $rawDomain = trim((string) $tenant->domain);
+                                            $normalizedDomain = preg_replace('#^https?://#i', '', $rawDomain);
+                                            $normalizedDomain = rtrim($normalizedDomain, '/');
+                                            $normalizedDomain = str_ireplace('locasthost', 'localhost', $normalizedDomain);
+                                            $scheme = request()->isSecure() ? 'https' : 'http';
+                                            $hasPort = preg_match('/:\\d+$/', $normalizedDomain) === 1;
+                                            $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
+                                            $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort;
+                                        @endphp
+                                        <a href="{{ $tenantUrl }}" target="_blank" rel="noopener noreferrer">{{ $normalizedDomain }}</a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>{{ $tenant->admin_name ?? '—' }}</td>
                                 <td>{{ $tenant->admin_email ?? $tenant->business_email }}</td>
                                 <td>{{ ucfirst($tenant->plan ?? 'basic') }}</td>
@@ -41,6 +57,19 @@
                                 <td>{{ optional($tenant->plan_ends_at)->format('Y-m-d') ?? '—' }}</td>
                                 <td>
                                     <a href="/tenant/{{ $tenant->tenant_id }}" class="btn btn-sm btn-outline-primary">Customize</a>
+                                    @if(!empty($tenant->domain))
+                                        @php
+                                            $rawDomain = trim((string) $tenant->domain);
+                                            $normalizedDomain = preg_replace('#^https?://#i', '', $rawDomain);
+                                            $normalizedDomain = rtrim($normalizedDomain, '/');
+                                            $normalizedDomain = str_ireplace('locasthost', 'localhost', $normalizedDomain);
+                                            $scheme = request()->isSecure() ? 'https' : 'http';
+                                            $hasPort = preg_match('/:\\d+$/', $normalizedDomain) === 1;
+                                            $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
+                                            $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort;
+                                        @endphp
+                                        <a href="{{ $tenantUrl }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">Open Tenant</a>
+                                    @endif
                                     @if(($tenant->status ?? 'active') === 'active')
                                         <form method="POST" action="{{ route('tenants.updateStatus', $tenant->tenant_id) }}" class="d-inline">
                                             @csrf
