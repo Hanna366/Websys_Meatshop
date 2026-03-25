@@ -1,213 +1,84 @@
 
 
 <?php $__env->startSection('title', 'Customers - Meat Shop POS'); ?>
+<?php $__env->startSection('page_title', 'Customers'); ?>
+<?php $__env->startSection('page_subtitle', 'Track loyal buyers, spending trends, and customer engagement'); ?>
 
-<?php $__env->startSection('content'); ?>
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Customer Management</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                <?php if(session('permissions.customer_management')): ?>
-                <button type="button" class="btn btn-sm btn-primary" onclick="showAddCustomerModal()">
-                    <i class="fas fa-plus me-1"></i> Add Customer
-                </button>
-                <?php else: ?>
-                <button type="button" class="btn btn-sm btn-primary" disabled title="Customer management requires Standard plan or higher.">
-                    <i class="fas fa-plus me-1"></i> Add Customer
-                </button>
-                <?php endif; ?>
-                
-                <?php if(session('permissions.data_export')): ?>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportCustomers()">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                <?php else: ?>
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                <?php endif; ?>
-            </div>
-            <?php if(!session('permissions.customer_management')): ?>
-            <div class="alert alert-warning mb-0">
-                <small><i class="fas fa-exclamation-triangle me-1"></i>
-                Customer management requires Standard plan or higher. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
+<?php $__env->startSection('header_actions'); ?>
+    <?php if(session('permissions.data_export')): ?>
+        <button type="button" onclick="notify('Customer export started.', 'success')" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+            <i data-lucide="file-down" class="h-4 w-4"></i>
+            Export
+        </button>
+    <?php endif; ?>
 
-    <!-- Customer Stats -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Customers</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">156</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active This Month</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">43</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">New This Week</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">12</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-user-plus fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">VIP Customers</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">28</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-star fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Customers Table -->
-    <div class="card">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-primary">Customer List</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Customer ID</th>
-                            <th>Name</th>
-                            <th>Contact</th>
-                            <th>Total Orders</th>
-                            <th>Total Spent</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>#C001</td>
-                            <td>John Martinez</td>
-                            <td>+63 912 3456</td>
-                            <td>24</td>
-                            <td class="text-end fw-bold">₱45,680</td>
-                            <td><span class="badge bg-success">Active</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#C002</td>
-                            <td>Maria Santos</td>
-                            <td>+63 915 7890</td>
-                            <td>18</td>
-                            <td class="text-end fw-bold">₱32,450</td>
-                            <td><span class="badge bg-success">Active</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#C003</td>
-                            <td>Roberto Cruz</td>
-                            <td>+63 918 2345</td>
-                            <td>31</td>
-                            <td class="text-end fw-bold">₱67,890</td>
-                            <td><span class="badge bg-warning">VIP</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#C004</td>
-                            <td>Linda Reyes</td>
-                            <td>+63 917 4567</td>
-                            <td>12</td>
-                            <td class="text-end fw-bold">₱23,120</td>
-                            <td><span class="badge bg-success">Active</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#C005</td>
-                            <td>Carlos Mendoza</td>
-                            <td>+63 916 8901</td>
-                            <td>45</td>
-                            <td class="text-end fw-bold">₱89,340</td>
-                            <td><span class="badge bg-warning">VIP</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+    <?php if(session('permissions.customer_management')): ?>
+        <button type="button" onclick="notify('New customer form will open here.', 'info')" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
+            <i data-lucide="user-plus" class="h-4 w-4"></i>
+            Add Customer
+        </button>
+    <?php endif; ?>
 <?php $__env->stopSection(); ?>
 
+<?php $__env->startSection('content'); ?>
+<section class="space-y-6">
+    <?php if(!session('permissions.customer_management')): ?>
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Customer management requires Standard plan or higher. <a href="/pricing" class="font-semibold underline">Upgrade now</a>.
+        </div>
+    <?php endif; ?>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Customers</p><p class="mt-2 text-2xl font-bold text-slate-900">156</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Active This Month</p><p class="mt-2 text-2xl font-bold text-emerald-600">43</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">New This Week</p><p class="mt-2 text-2xl font-bold text-indigo-600">12</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">VIP Customers</p><p class="mt-2 text-2xl font-bold text-amber-600">28</p></article>
+    </div>
+
+    <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="heading-font text-lg font-semibold text-slate-900">Customer List</h2>
+            <input id="customerSearch" type="text" placeholder="Search customer..." class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none ring-0 transition focus:border-indigo-300 focus:shadow-sm sm:w-56">
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead>
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th class="px-3 py-3">ID</th>
+                        <th class="px-3 py-3">Name</th>
+                        <th class="px-3 py-3">Contact</th>
+                        <th class="px-3 py-3">Orders</th>
+                        <th class="px-3 py-3">Total Spent</th>
+                        <th class="px-3 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTable" class="divide-y divide-slate-100 text-slate-700">
+                    <tr><td class="px-3 py-3">#C001</td><td class="px-3 py-3 font-medium">John Martinez</td><td class="px-3 py-3">+63 912 3456</td><td class="px-3 py-3">24</td><td class="px-3 py-3 font-semibold">PHP 45,680</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
+                    <tr><td class="px-3 py-3">#C003</td><td class="px-3 py-3 font-medium">Roberto Cruz</td><td class="px-3 py-3">+63 918 2345</td><td class="px-3 py-3">31</td><td class="px-3 py-3 font-semibold">PHP 67,890</td><td class="px-3 py-3"><span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">VIP</span></td></tr>
+                    <tr><td class="px-3 py-3">#C005</td><td class="px-3 py-3 font-medium">Carlos Mendoza</td><td class="px-3 py-3">+63 916 8901</td><td class="px-3 py-3">45</td><td class="px-3 py-3 font-semibold">PHP 89,340</td><td class="px-3 py-3"><span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">VIP</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startPush('scripts'); ?>
+<script>
+function notify(message, icon = 'success') {
+    if (window.Swal) {
+        Swal.fire({ toast: true, position: 'top-end', timer: 2300, showConfirmButton: false, icon, title: message });
+        return;
+    }
+    alert(message);
+}
+
+document.getElementById('customerSearch')?.addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('#customersTable tr').forEach((row) => {
+        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+    });
+});
+</script>
+<?php $__env->stopPush(); ?>
 <?php echo $__env->make('layouts.tenant', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views\customers.blade.php ENDPATH**/ ?>

@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>MeatShop POS - @yield('title', 'Branch Dashboard')</title>
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title>MeatShop POS - <?php echo $__env->yieldContent('title', 'Branch Dashboard'); ?></title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -111,7 +111,7 @@
             }
         }
     </style>
-    @stack('styles')
+    <?php echo $__env->yieldPushContent('styles'); ?>
 </head>
 <body class="text-slate-900 antialiased">
     <div class="flex min-h-screen">
@@ -126,47 +126,47 @@
                         <p class="mb-0 text-xs text-white/75">Tenant Workspace</p>
                     </div>
                 </div>
-                @if(tenant())
-                    <p class="mb-0 text-sm text-white/75">{{ tenant()->business_name ?? tenant()->tenant_id }}</p>
-                @elseif(session('user.name'))
-                    <p class="mb-0 text-sm text-white/75">{{ session('user.name') }}</p>
-                @endif
+                <?php if(tenant()): ?>
+                    <p class="mb-0 text-sm text-white/75"><?php echo e(tenant()->business_name ?? tenant()->tenant_id); ?></p>
+                <?php elseif(session('user.name')): ?>
+                    <p class="mb-0 text-sm text-white/75"><?php echo e(session('user.name')); ?></p>
+                <?php endif; ?>
             </div>
 
             <nav class="space-y-2">
-                <a class="nav-item {{ request()->routeIs('tenant.dashboard') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/dashboard">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.dashboard') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/dashboard">
                     <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
                     Dashboard
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.products') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/products">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.products') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/products">
                     <i data-lucide="package" class="h-4 w-4"></i>
                     Products
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.inventory') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/inventory">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.inventory') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/inventory">
                     <i data-lucide="warehouse" class="h-4 w-4"></i>
                     Inventory
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.sales') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/sales">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.sales') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/sales">
                     <i data-lucide="shopping-cart" class="h-4 w-4"></i>
                     Sales
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.customers') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/customers">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.customers') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/customers">
                     <i data-lucide="users" class="h-4 w-4"></i>
                     Customers
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.suppliers') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/suppliers">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.suppliers') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/suppliers">
                     <i data-lucide="truck" class="h-4 w-4"></i>
                     Suppliers
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.reports') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/reports">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.reports') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/reports">
                     <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
                     Reports
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.settings') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/settings">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.settings') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/settings">
                     <i data-lucide="settings" class="h-4 w-4"></i>
                     Settings
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.profile') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/profile">
+                <a class="nav-item <?php echo e(request()->routeIs('tenant.profile') ? 'active' : ''); ?> flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/profile">
                     <i data-lucide="user-circle" class="h-4 w-4"></i>
                     Profile
                 </a>
@@ -174,7 +174,7 @@
 
             <div class="mt-6 border-t border-white/20 pt-4">
                 <form action="/logout" method="POST" class="m-0">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <button type="submit" class="nav-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium">
                         <i data-lucide="log-out" class="h-4 w-4"></i>
                         Logout
@@ -191,13 +191,13 @@
                             <i data-lucide="menu" class="h-5 w-5"></i>
                         </button>
                         <div>
-                            <h1 class="heading-font mb-0 text-2xl font-semibold tracking-tight text-slate-900">@yield('page_title', 'Dashboard')</h1>
-                            <p class="mb-0 text-sm text-slate-500">@yield('page_subtitle', 'Branch operations overview and daily POS activity')</p>
+                            <h1 class="heading-font mb-0 text-2xl font-semibold tracking-tight text-slate-900"><?php echo $__env->yieldContent('page_title', 'Dashboard'); ?></h1>
+                            <p class="mb-0 text-sm text-slate-500"><?php echo $__env->yieldContent('page_subtitle', 'Branch operations overview and daily POS activity'); ?></p>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2 sm:gap-3">
-                        @yield('header_actions')
+                        <?php echo $__env->yieldContent('header_actions'); ?>
                         <a href="/pricing" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
                             <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
                             <span class="hidden sm:inline">Upgrade Plan</span>
@@ -207,7 +207,7 @@
             </header>
 
             <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                @yield('content')
+                <?php echo $__env->yieldContent('content'); ?>
             </main>
         </div>
     </div>
@@ -222,6 +222,7 @@
             document.getElementById('tenantSidebar')?.classList.toggle('show');
         });
     </script>
-    @stack('scripts')
+    <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
 </html>
+<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/layouts/tenant.blade.php ENDPATH**/ ?>

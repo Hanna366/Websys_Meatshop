@@ -1,274 +1,145 @@
 @extends('layouts.tenant')
 
 @section('title', 'Sales - Meat Shop POS')
+@section('page_title', 'Sales')
+@section('page_subtitle', 'Monitor transactions, payment channels, and daily branch revenue')
+
+@section('header_actions')
+    @if(session('permissions.data_export'))
+        <button type="button" onclick="exportSales()" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+            <i data-lucide="file-down" class="h-4 w-4"></i>
+            Export
+        </button>
+    @endif
+
+    @if(session('permissions.pos_access'))
+        <button type="button" onclick="showNewSaleModal()" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            New Sale
+        </button>
+    @endif
+@endsection
 
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Sales Management</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                @if(session('permissions.pos_access'))
-                <button type="button" class="btn btn-sm btn-primary" onclick="showNewSaleModal()">
-                    <i class="fas fa-plus me-1"></i> New Sale
-                </button>
-                @else
-                <button type="button" class="btn btn-sm btn-primary" disabled title="POS functionality requires Standard plan or higher.">
-                    <i class="fas fa-plus me-1"></i> New Sale
-                </button>
-                @endif
-                
-                @if(session('permissions.data_export'))
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSales()">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                @else
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                @endif
-            </div>
-            @if(!session('permissions.pos_access'))
-            <div class="alert alert-warning mb-0">
-                <small><i class="fas fa-exclamation-triangle me-1"></i>
-                POS functionality requires Standard plan or higher. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
-            </div>
-            @endif
+<section class="space-y-6">
+    @if(!session('permissions.pos_access'))
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            POS functionality requires Standard plan or higher. <a href="/pricing" class="font-semibold underline">Upgrade now</a>.
         </div>
+    @endif
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Today</p>
+            <p class="mt-2 text-2xl font-bold text-slate-900">PHP 12,450</p>
+            <p class="mt-1 text-xs text-slate-500">36 completed transactions</p>
+        </article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">This Week</p>
+            <p class="mt-2 text-2xl font-bold text-emerald-600">PHP 87,320</p>
+            <p class="mt-1 text-xs text-slate-500">+8.2% from last week</p>
+        </article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">This Month</p>
+            <p class="mt-2 text-2xl font-bold text-indigo-600">PHP 345,680</p>
+            <p class="mt-1 text-xs text-slate-500">On track for target</p>
+        </article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Transactions</p>
+            <p class="mt-2 text-2xl font-bold text-amber-600">247</p>
+            <p class="mt-1 text-xs text-slate-500">Average order PHP 1,399</p>
+        </article>
     </div>
 
-    <!-- Sales Stats -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Today's Sales</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">₱12,450</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="heading-font text-lg font-semibold text-slate-900">Recent Sales</h2>
+            <input id="salesSearch" type="text" placeholder="Search by order/customer" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none ring-0 transition focus:border-indigo-300 focus:shadow-sm sm:w-64">
         </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">This Week</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">₱87,320</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">This Month</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">₱345,680</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Transactions</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">247</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Recent Sales -->
-    <div class="card">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-primary">Recent Sales</h6>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead>
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th class="px-3 py-3">Order ID</th>
+                        <th class="px-3 py-3">Customer</th>
+                        <th class="px-3 py-3">Items</th>
+                        <th class="px-3 py-3">Total</th>
+                        <th class="px-3 py-3">Payment</th>
+                        <th class="px-3 py-3">Date</th>
+                        <th class="px-3 py-3">Status</th>
+                        <th class="px-3 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="salesTable" class="divide-y divide-slate-100 text-slate-700">
+                    <tr>
+                        <td class="px-3 py-3 font-medium">#S001</td>
+                        <td class="px-3 py-3">John Martinez</td>
+                        <td class="px-3 py-3">3 items</td>
+                        <td class="px-3 py-3 font-semibold">PHP 8,450</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Cash</span></td>
+                        <td class="px-3 py-3">2024-02-20 14:30</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Completed</span></td>
+                        <td class="px-3 py-3 text-right"><button onclick="viewSale('#S001')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">View</button></td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-3 font-medium">#S002</td>
+                        <td class="px-3 py-3">Maria Santos</td>
+                        <td class="px-3 py-3">5 items</td>
+                        <td class="px-3 py-3 font-semibold">PHP 12,340</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700">Card</span></td>
+                        <td class="px-3 py-3">2024-02-20 13:45</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Completed</span></td>
+                        <td class="px-3 py-3 text-right"><button onclick="printSale('#S002')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Receipt</button></td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-3 font-medium">#S003</td>
+                        <td class="px-3 py-3">Roberto Cruz</td>
+                        <td class="px-3 py-3">2 items</td>
+                        <td class="px-3 py-3 font-semibold">PHP 5,680</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">GCash</span></td>
+                        <td class="px-3 py-3">2024-02-20 12:20</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Completed</span></td>
+                        <td class="px-3 py-3 text-right"><button onclick="viewSale('#S003')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">View</button></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Items</th>
-                            <th>Total Amount</th>
-                            <th>Payment Method</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>#S001</td>
-                            <td>John Martinez</td>
-                            <td>3 items</td>
-                            <td class="text-end fw-bold">₱8,450</td>
-                            <td><span class="badge bg-success">Cash</span></td>
-                            <td>2024-02-20 14:30</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#S002</td>
-                            <td>Maria Santos</td>
-                            <td>5 items</td>
-                            <td class="text-end fw-bold">₱12,340</td>
-                            <td><span class="badge bg-info">Card</span></td>
-                            <td>2024-02-20 13:45</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#S003</td>
-                            <td>Roberto Cruz</td>
-                            <td>2 items</td>
-                            <td class="text-end fw-bold">₱5,680</td>
-                            <td><span class="badge bg-warning">GCash</span></td>
-                            <td>2024-02-20 12:20</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#S004</td>
-                            <td>Linda Reyes</td>
-                            <td>4 items</td>
-                            <td class="text-end fw-bold">₱9,230</td>
-                            <td><span class="badge bg-success">Cash</span></td>
-                            <td>2024-02-20 11:15</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#S005</td>
-                            <td>Carlos Mendoza</td>
-                            <td>6 items</td>
-                            <td class="text-end fw-bold">₱15,890</td>
-                            <td><span class="badge bg-info">Card</span></td>
-                            <td>2024-02-20 10:30</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info" onclick="viewSale('#S005')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary" onclick="printSale('#S005')">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+    </section>
+</section>
+@endsection
 
+@push('scripts')
 <script>
-// Sales Management Functions
+function notify(message, icon = 'success') {
+    if (window.Swal) {
+        Swal.fire({ toast: true, position: 'top-end', timer: 2400, showConfirmButton: false, icon, title: message });
+        return;
+    }
+    alert(message);
+}
+
 function showNewSaleModal() {
-    showNotification('Opening new sale form...', 'info');
-    // In real app, this would open a modal with product selection
+    notify('New sale flow will open here.', 'info');
 }
 
 function viewSale(saleId) {
-    showNotification('Viewing sale details for ' + saleId, 'info');
-    // In real app, this would open a modal with sale details
+    notify('Viewing details for ' + saleId, 'info');
 }
 
 function printSale(saleId) {
-    showNotification('Preparing receipt for ' + saleId + '...', 'info');
-    window.print();
-    // In real app, this would generate a printable receipt
+    notify('Preparing receipt for ' + saleId, 'success');
 }
 
 function exportSales() {
-    const sales = [
-        { id: '#S001', customer: 'Juan Santos', items: 3, total: '₱8,450', payment: 'Cash', date: '2024-02-20 14:30', status: 'Completed' },
-        { id: '#S002', customer: 'Maria Reyes', items: 5, total: '₱12,890', payment: 'Card', date: '2024-02-20 13:45', status: 'Completed' },
-        { id: '#S003', customer: 'Roberto Cruz', items: 2, total: '₱5,670', payment: 'Cash', date: '2024-02-20 12:20', status: 'Completed' },
-        { id: '#S004', customer: 'Ana Martinez', items: 8, total: '₱18,340', payment: 'Card', date: '2024-02-20 11:15', status: 'Completed' },
-        { id: '#S005', customer: 'Carlos Mendoza', items: 6, total: '₱15,890', payment: 'Card', date: '2024-02-20 10:30', status: 'Completed' }
-    ];
-    
-    const dataStr = JSON.stringify(sales, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = 'sales_export_' + new Date().toISOString().split('T')[0] + '.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    
-    showNotification('Sales data exported successfully!', 'success');
+    notify('Sales export started.', 'success');
 }
 
-// Show notification function
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-    notification.style.zIndex = '9999';
-    notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
-        ${message}
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
+document.getElementById('salesSearch')?.addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('#salesTable tr').forEach((row) => {
+        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+    });
+});
 </script>
-@endsection
+@endpush

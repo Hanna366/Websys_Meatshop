@@ -1,42 +1,42 @@
-@extends('layouts.tenant')
 
-@section('title', 'Products - Meat Shop POS')
-@section('page_title', 'Products')
-@section('page_subtitle', 'Manage meat cuts, byproducts, and pricing across your branch')
 
-@section('header_actions')
-    @if(session('permissions.csv_export'))
+<?php $__env->startSection('title', 'Products - Meat Shop POS'); ?>
+<?php $__env->startSection('page_title', 'Products'); ?>
+<?php $__env->startSection('page_subtitle', 'Manage meat cuts, byproducts, and pricing across your branch'); ?>
+
+<?php $__env->startSection('header_actions'); ?>
+    <?php if(session('permissions.csv_export')): ?>
         <button type="button" onclick="exportProducts('csv')" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
             <i data-lucide="download" class="h-4 w-4"></i>
             Export CSV
         </button>
-    @else
+    <?php else: ?>
         <button type="button" disabled title="Export requires Standard plan or higher." class="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400">
             <i data-lucide="download" class="h-4 w-4"></i>
             Export CSV
         </button>
-    @endif
+    <?php endif; ?>
 
-    @if(session('permissions.max_products') == -1 || session('permissions.max_products') > 50)
+    <?php if(session('permissions.max_products') == -1 || session('permissions.max_products') > 50): ?>
         <button type="button" onclick="showAddProductModal()" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
             <i data-lucide="plus" class="h-4 w-4"></i>
             Add Product
         </button>
-    @else
+    <?php else: ?>
         <button type="button" disabled title="Product limit reached. Upgrade to add more products." class="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-slate-300 px-4 py-2 text-sm font-semibold text-white">
             <i data-lucide="plus" class="h-4 w-4"></i>
             Add Product
         </button>
-    @endif
-@endsection
+    <?php endif; ?>
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="space-y-6">
-    @if(session('permissions.max_products') != -1)
+    <?php if(session('permissions.max_products') != -1): ?>
         <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Product cap: <span class="font-semibold">{{ session('permissions.max_products') }}</span>. Upgrade to manage a broader catalog.
+            Product cap: <span class="font-semibold"><?php echo e(session('permissions.max_products')); ?></span>. Upgrade to manage a broader catalog.
         </div>
-    @endif
+    <?php endif; ?>
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
@@ -144,9 +144,9 @@
         </div>
     </section>
 </section>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 function toast(message, icon = 'success') {
     if (window.Swal) {
@@ -203,4 +203,5 @@ document.getElementById('stockFilter')?.addEventListener('change', function () {
     });
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.tenant', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/products.blade.php ENDPATH**/ ?>

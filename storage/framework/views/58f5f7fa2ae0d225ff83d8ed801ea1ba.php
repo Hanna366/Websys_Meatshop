@@ -1,213 +1,84 @@
 
 
 <?php $__env->startSection('title', 'Suppliers - Meat Shop POS'); ?>
+<?php $__env->startSection('page_title', 'Suppliers'); ?>
+<?php $__env->startSection('page_subtitle', 'Manage vendor relationships, status, and incoming deliveries'); ?>
 
-<?php $__env->startSection('content'); ?>
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Supplier Management</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                <?php if(session('permissions.supplier_management')): ?>
-                <button type="button" class="btn btn-sm btn-primary" onclick="showAddSupplierModal()">
-                    <i class="fas fa-plus me-1"></i> Add Supplier
-                </button>
-                <?php else: ?>
-                <button type="button" class="btn btn-sm btn-primary" disabled title="Supplier management requires Standard plan or higher.">
-                    <i class="fas fa-plus me-1"></i> Add Supplier
-                </button>
-                <?php endif; ?>
-                
-                <?php if(session('permissions.data_export')): ?>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportSuppliers()">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                <?php else: ?>
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                <?php endif; ?>
-            </div>
-            <?php if(!session('permissions.supplier_management')): ?>
-            <div class="alert alert-warning mb-0">
-                <small><i class="fas fa-exclamation-triangle me-1"></i>
-                Supplier management requires Standard plan or higher. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
+<?php $__env->startSection('header_actions'); ?>
+    <?php if(session('permissions.data_export')): ?>
+        <button type="button" onclick="notify('Supplier export started.', 'success')" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+            <i data-lucide="file-down" class="h-4 w-4"></i>
+            Export
+        </button>
+    <?php endif; ?>
 
-    <!-- Supplier Stats -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Suppliers</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-truck fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">15</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Pending Orders</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">7</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Deliveries Today</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">3</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-box fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Suppliers Table -->
-    <div class="card">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-primary">Supplier List</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Supplier ID</th>
-                            <th>Company Name</th>
-                            <th>Contact Person</th>
-                            <th>Phone</th>
-                            <th>Products</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>#S001</td>
-                            <td>Beef Masters Inc.</td>
-                            <td>Antonio Dela Cruz</td>
-                            <td>+63 912 3456</td>
-                            <td>Beef Products</td>
-                            <td><span class="badge bg-success">Active</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#S002</td>
-                            <td>Pork Producers Co.</td>
-                            <td>Maria Rodriguez</td>
-                            <td>+63 915 7890</td>
-                            <td>Pork Products</td>
-                            <td><span class="badge bg-success">Active</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#S003</td>
-                            <td>Fresh Farms Ltd.</td>
-                            <td>Roberto Santos</td>
-                            <td>+63 918 2345</td>
-                            <td>Beef</td>
-                            <td><span class="badge bg-warning">Pending</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#S004</td>
-                            <td>Lamb Valley Farms</td>
-                            <td>Linda Thompson</td>
-                            <td>+63 917 4567</td>
-                            <td>Lamb Products</td>
-                            <td><span class="badge bg-success">Active</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#S005</td>
-                            <td>Quality Meats Supply</td>
-                            <td>Carlos Mendez</td>
-                            <td>+63 916 8901</td>
-                            <td>Mixed Products</td>
-                            <td><span class="badge bg-success">Active</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+    <?php if(session('permissions.supplier_management')): ?>
+        <button type="button" onclick="notify('New supplier form will open here.', 'info')" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            Add Supplier
+        </button>
+    <?php endif; ?>
 <?php $__env->stopSection(); ?>
 
+<?php $__env->startSection('content'); ?>
+<section class="space-y-6">
+    <?php if(!session('permissions.supplier_management')): ?>
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Supplier management requires Standard plan or higher. <a href="/pricing" class="font-semibold underline">Upgrade now</a>.
+        </div>
+    <?php endif; ?>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Suppliers</p><p class="mt-2 text-2xl font-bold text-slate-900">18</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Active</p><p class="mt-2 text-2xl font-bold text-emerald-600">15</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending Orders</p><p class="mt-2 text-2xl font-bold text-indigo-600">7</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Deliveries Today</p><p class="mt-2 text-2xl font-bold text-amber-600">3</p></article>
+    </div>
+
+    <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="heading-font text-lg font-semibold text-slate-900">Supplier List</h2>
+            <input id="supplierSearch" type="text" placeholder="Search supplier..." class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none ring-0 transition focus:border-indigo-300 focus:shadow-sm sm:w-56">
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead>
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th class="px-3 py-3">ID</th>
+                        <th class="px-3 py-3">Company</th>
+                        <th class="px-3 py-3">Contact</th>
+                        <th class="px-3 py-3">Phone</th>
+                        <th class="px-3 py-3">Products</th>
+                        <th class="px-3 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="suppliersTable" class="divide-y divide-slate-100 text-slate-700">
+                    <tr><td class="px-3 py-3">#S001</td><td class="px-3 py-3 font-medium">Beef Masters Inc.</td><td class="px-3 py-3">Antonio Dela Cruz</td><td class="px-3 py-3">+63 912 3456</td><td class="px-3 py-3">Beef Products</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
+                    <tr><td class="px-3 py-3">#S003</td><td class="px-3 py-3 font-medium">Fresh Farms Ltd.</td><td class="px-3 py-3">Roberto Santos</td><td class="px-3 py-3">+63 918 2345</td><td class="px-3 py-3">Beef</td><td class="px-3 py-3"><span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Pending</span></td></tr>
+                    <tr><td class="px-3 py-3">#S005</td><td class="px-3 py-3 font-medium">Quality Meats Supply</td><td class="px-3 py-3">Carlos Mendez</td><td class="px-3 py-3">+63 916 8901</td><td class="px-3 py-3">Mixed Products</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startPush('scripts'); ?>
+<script>
+function notify(message, icon = 'success') {
+    if (window.Swal) {
+        Swal.fire({ toast: true, position: 'top-end', timer: 2300, showConfirmButton: false, icon, title: message });
+        return;
+    }
+    alert(message);
+}
+
+document.getElementById('supplierSearch')?.addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('#suppliersTable tr').forEach((row) => {
+        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+    });
+});
+</script>
+<?php $__env->stopPush(); ?>
 <?php echo $__env->make('layouts.tenant', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views\suppliers.blade.php ENDPATH**/ ?>

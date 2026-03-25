@@ -1,387 +1,114 @@
 
 
 <?php $__env->startSection('title', 'Settings - Meat Shop POS'); ?>
+<?php $__env->startSection('page_title', 'Settings'); ?>
+<?php $__env->startSection('page_subtitle', 'Configure branch preferences, users, backups, and operations defaults'); ?>
 
-<?php $__env->startSection('content'); ?>
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">System Settings</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-primary">
-                    <i class="fas fa-save me-1"></i> Save Changes
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-undo me-1"></i> Reset
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Navigation -->
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Settings Menu</h6>
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="#general" class="list-group-item list-group-item-action active">
-                        <i class="fas fa-cog me-2"></i> General Settings
-                    </a>
-                    <a href="#business" class="list-group-item list-group-item-action">
-                        <i class="fas fa-store me-2"></i> Business Info
-                    </a>
-                    <a href="#tax" class="list-group-item list-group-item-action">
-                        <i class="fas fa-receipt me-2"></i> Tax & Currency
-                    </a>
-                    <a href="#inventory" class="list-group-item list-group-item-action">
-                        <i class="fas fa-boxes me-2"></i> Inventory
-                    </a>
-                    <a href="#users" class="list-group-item list-group-item-action">
-                        <i class="fas fa-users me-2"></i> User Management
-                    </a>
-                    <a href="#backup" class="list-group-item list-group-item-action">
-                        <i class="fas fa-database me-2"></i> Backup & Restore
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-9">
-            <!-- General Settings -->
-            <div class="card mb-4" id="general">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">General Settings</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Shop Name</label>
-                                <input type="text" class="form-control" value="Meat Shop POS" />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Shop Email</label>
-                                <input type="email" class="form-control" value="admin@meatshop.com" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control" value="+63 912 3456" />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Address</label>
-                                <input type="text" class="form-control" value="123 Market Street, Manila" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Time Zone</label>
-                                <select class="form-select">
-                                    <option value="UTC+8" selected>Asia/Manila (UTC+8)</option>
-                                    <option value="UTC+9">Asia/Tokyo (UTC+9)</option>
-                                    <option value="UTC+7">Asia/Bangkok (UTC+7)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Date Format</label>
-                                <select class="form-select">
-                                    <option value="Y-m-d" selected>YYYY-MM-DD</option>
-                                    <option value="d/m/Y">DD/MM/YYYY</option>
-                                    <option value="m/d/Y">MM/DD/YYYY</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Business Info -->
-            <div class="card mb-4" id="business">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Business Information</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Business Name</label>
-                                <input type="text" class="form-control" value="Premium Meat Shop Inc." />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Business Type</label>
-                                <select class="form-select">
-                                    <option value="retail" selected>Retail</option>
-                                    <option value="wholesale">Wholesale</option>
-                                    <option value="both">Both</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Tax ID / VAT Number</label>
-                                <input type="text" class="form-control" value="123-456-789-000" />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Business License</label>
-                                <input type="text" class="form-control" value="BL-2024-12345" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label class="form-label">Business Description</label>
-                                <textarea class="form-control" rows="3">Premium quality meat products serving the community since 2010. We offer the finest cuts of beef, pork, poultry, and lamb with competitive prices and excellent customer service.</textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tax & Currency -->
-            <div class="card mb-4" id="tax">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Tax & Currency Settings</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Currency</label>
-                                <select class="form-select">
-                                    <option value="PHP" selected>Philippine Peso (₱)</option>
-                                    <option value="USD">US Dollar ($)</option>
-                                    <option value="EUR">Euro (€)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Currency Symbol Position</label>
-                                <select class="form-select">
-                                    <option value="before" selected>Before (₱100.00)</option>
-                                    <option value="after">After (100.00₱)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">VAT Rate (%)</label>
-                                <input type="number" class="form-control" value="12" step="0.1" />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Service Charge (%)</label>
-                                <input type="number" class="form-control" value="0" step="0.1" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="taxIncluded" checked>
-                                <label class="form-check-label" for="taxIncluded">
-                                    Include tax in product prices
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Inventory Settings -->
-            <div class="card mb-4" id="inventory">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Inventory Settings</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Low Stock Alert (%)</label>
-                                <input type="number" class="form-control" value="20" min="1" max="100" />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Out of Stock Alert</label>
-                                <select class="form-select">
-                                    <option value="email" selected>Email Notification</option>
-                                    <option value="sms">SMS Notification</option>
-                                    <option value="both">Both</option>
-                                    <option value="none">None</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="autoReorder" checked>
-                                <label class="form-check-label" for="autoReorder">
-                                    Enable automatic reorder suggestions
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="trackExpiry" checked>
-                                <label class="form-check-label" for="trackExpiry">
-                                    Track product expiry dates
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="batchTracking">
-                                <label class="form-check-label" for="batchTracking">
-                                    Enable batch tracking
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- User Management -->
-            <div class="card mb-4" id="users">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">User Management</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>admin</td>
-                                    <td>admin@meatshop.com</td>
-                                    <td><span class="badge bg-danger">Administrator</span></td>
-                                    <td><span class="badge bg-success">Active</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>cashier1</td>
-                                    <td>cashier1@meatshop.com</td>
-                                    <td><span class="badge bg-primary">Cashier</span></td>
-                                    <td><span class="badge bg-success">Active</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>manager</td>
-                                    <td>manager@meatshop.com</td>
-                                    <td><span class="badge bg-warning">Manager</span></td>
-                                    <td><span class="badge bg-success">Active</span></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <button type="button" class="btn btn-primary mt-3">
-                        <i class="fas fa-user-plus me-1"></i> Add New User
-                    </button>
-                </div>
-            </div>
-
-            <!-- Backup & Restore -->
-            <div class="card mb-4" id="backup">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Backup & Restore</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Manual Backup</h6>
-                            <p class="text-muted">Create a backup of your data</p>
-                            <button type="button" class="btn btn-primary">
-                                <i class="fas fa-download me-1"></i> Download Backup
-                            </button>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Restore Backup</h6>
-                            <p class="text-muted">Restore from a backup file</p>
-                            <input type="file" class="form-control mb-2" accept=".sql,.json">
-                            <button type="button" class="btn btn-warning">
-                                <i class="fas fa-upload me-1"></i> Restore Backup
-                            </button>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <h6>Automatic Backup Settings</h6>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="autoBackup" checked>
-                                <label class="form-check-label" for="autoBackup">
-                                    Enable automatic backups
-                                </label>
-                            </div>
-                            <div class="row mt-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Backup Frequency</label>
-                                    <select class="form-select">
-                                        <option value="daily" selected>Daily</option>
-                                        <option value="weekly">Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Retention Period</label>
-                                    <select class="form-select">
-                                        <option value="7" selected>7 days</option>
-                                        <option value="30">30 days</option>
-                                        <option value="90">90 days</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<?php $__env->startSection('header_actions'); ?>
+    <button type="button" onclick="notify('Settings reset to last saved values.', 'info')" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+        <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+        Reset
+    </button>
+    <button type="button" onclick="notify('Settings saved successfully.', 'success')" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
+        <i data-lucide="save" class="h-4 w-4"></i>
+        Save Changes
+    </button>
 <?php $__env->stopSection(); ?>
 
+<?php $__env->startSection('content'); ?>
+<section class="grid gap-6 lg:grid-cols-12">
+    <aside class="lg:col-span-3">
+        <div class="sticky top-24 rounded-3xl border border-white/70 bg-white/90 p-4 shadow-card">
+            <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Sections</p>
+            <nav class="space-y-1 text-sm">
+                <a href="#general" class="block rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-slate-100">General</a>
+                <a href="#business" class="block rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-slate-100">Business</a>
+                <a href="#tax" class="block rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-slate-100">Tax and Currency</a>
+                <a href="#inventory" class="block rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-slate-100">Inventory</a>
+                <a href="#users" class="block rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-slate-100">Users</a>
+                <a href="#backup" class="block rounded-xl px-3 py-2 font-medium text-slate-700 hover:bg-slate-100">Backup</a>
+            </nav>
+        </div>
+    </aside>
+
+    <div class="space-y-6 lg:col-span-9">
+        <section id="general" class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+            <h2 class="heading-font mb-4 text-lg font-semibold text-slate-900">General Settings</h2>
+            <div class="grid gap-4 md:grid-cols-2">
+                <input class="rounded-xl border border-slate-200 px-3 py-2.5" value="Meat Shop POS" placeholder="Shop Name">
+                <input class="rounded-xl border border-slate-200 px-3 py-2.5" value="admin@meatshop.com" placeholder="Shop Email">
+                <input class="rounded-xl border border-slate-200 px-3 py-2.5" value="+63 912 3456" placeholder="Phone">
+                <input class="rounded-xl border border-slate-200 px-3 py-2.5" value="123 Market Street, Manila" placeholder="Address">
+            </div>
+        </section>
+
+        <section id="business" class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+            <h2 class="heading-font mb-4 text-lg font-semibold text-slate-900">Business Information</h2>
+            <div class="grid gap-4 md:grid-cols-2">
+                <input class="rounded-xl border border-slate-200 px-3 py-2.5" value="Premium Meat Shop Inc.">
+                <select class="rounded-xl border border-slate-200 px-3 py-2.5"><option selected>Retail</option><option>Wholesale</option><option>Both</option></select>
+                <input class="rounded-xl border border-slate-200 px-3 py-2.5" value="123-456-789-000">
+                <input class="rounded-xl border border-slate-200 px-3 py-2.5" value="BL-2024-12345">
+            </div>
+            <textarea class="mt-4 w-full rounded-xl border border-slate-200 px-3 py-2.5" rows="3">Premium quality meat products serving the community since 2010.</textarea>
+        </section>
+
+        <section id="tax" class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+            <h2 class="heading-font mb-4 text-lg font-semibold text-slate-900">Tax and Currency</h2>
+            <div class="grid gap-4 md:grid-cols-2">
+                <select class="rounded-xl border border-slate-200 px-3 py-2.5"><option selected>Philippine Peso (PHP)</option><option>USD</option><option>EUR</option></select>
+                <select class="rounded-xl border border-slate-200 px-3 py-2.5"><option selected>Before (PHP 100.00)</option><option>After (100.00 PHP)</option></select>
+                <input type="number" class="rounded-xl border border-slate-200 px-3 py-2.5" value="12" step="0.1" placeholder="VAT Rate">
+                <input type="number" class="rounded-xl border border-slate-200 px-3 py-2.5" value="0" step="0.1" placeholder="Service Charge">
+            </div>
+        </section>
+
+        <section id="inventory" class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+            <h2 class="heading-font mb-4 text-lg font-semibold text-slate-900">Inventory Controls</h2>
+            <div class="grid gap-4 md:grid-cols-2">
+                <input type="number" class="rounded-xl border border-slate-200 px-3 py-2.5" value="20" min="1" max="100" placeholder="Low Stock Alert %">
+                <select class="rounded-xl border border-slate-200 px-3 py-2.5"><option selected>Email Notification</option><option>SMS Notification</option><option>Both</option><option>None</option></select>
+            </div>
+            <div class="mt-4 space-y-2 text-sm text-slate-700">
+                <label class="flex items-center gap-2"><input type="checkbox" checked class="rounded border-slate-300"> Enable automatic reorder suggestions</label>
+                <label class="flex items-center gap-2"><input type="checkbox" checked class="rounded border-slate-300"> Track product expiry dates</label>
+                <label class="flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300"> Enable batch tracking</label>
+            </div>
+        </section>
+
+        <section id="users" class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+            <div class="mb-4 flex items-center justify-between"><h2 class="heading-font text-lg font-semibold text-slate-900">User Management</h2><button type="button" onclick="notify('Add user flow coming next.', 'info')" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Add User</button></div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead><tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"><th class="px-3 py-3">Username</th><th class="px-3 py-3">Email</th><th class="px-3 py-3">Role</th><th class="px-3 py-3">Status</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        <tr><td class="px-3 py-3">admin</td><td class="px-3 py-3">admin@meatshop.com</td><td class="px-3 py-3"><span class="rounded-full bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-700">Administrator</span></td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
+                        <tr><td class="px-3 py-3">cashier1</td><td class="px-3 py-3">cashier1@meatshop.com</td><td class="px-3 py-3"><span class="rounded-full bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-700">Cashier</span></td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="backup" class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+            <h2 class="heading-font mb-4 text-lg font-semibold text-slate-900">Backup and Restore</h2>
+            <div class="grid gap-4 md:grid-cols-2">
+                <div class="rounded-2xl border border-slate-200 p-4"><p class="mb-1 text-sm font-semibold text-slate-800">Manual Backup</p><p class="mb-3 text-xs text-slate-500">Create and download a backup snapshot.</p><button type="button" onclick="notify('Backup download started.', 'success')" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Download Backup</button></div>
+                <div class="rounded-2xl border border-slate-200 p-4"><p class="mb-1 text-sm font-semibold text-slate-800">Restore</p><p class="mb-3 text-xs text-slate-500">Upload an SQL or JSON backup file.</p><input type="file" class="mb-3 block w-full text-sm"><button type="button" onclick="notify('Restore initiated.', 'warning')" class="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">Restore Backup</button></div>
+            </div>
+        </section>
+    </div>
+</section>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startPush('scripts'); ?>
+<script>
+function notify(message, icon = 'success') {
+    if (window.Swal) {
+        Swal.fire({ toast: true, position: 'top-end', timer: 2300, showConfirmButton: false, icon, title: message });
+        return;
+    }
+    alert(message);
+}
+</script>
+<?php $__env->stopPush(); ?>
 <?php echo $__env->make('layouts.tenant', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views\settings.blade.php ENDPATH**/ ?>

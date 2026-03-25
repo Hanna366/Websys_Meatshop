@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PricingService;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function __construct(private readonly ProductService $products)
+    public function __construct(
+        private readonly ProductService $products,
+        private readonly PricingService $pricing
+    )
     {
     }
 
@@ -153,5 +157,66 @@ class ProductController extends Controller
         $products = $this->products->lowStock((string) $user?->tenant_id);
 
         return response()->json(['success' => true, 'data' => ['products' => $products]]);
+    }
+
+    public function currentPrice(Request $request, string $product): JsonResponse
+    {
+        $validated = $request->validate([
+            'channel' => 'nullable|string|max:50',
+            'quantity' => 'nullable|numeric|min:0.001',
+        ]);
+
+        $user = $request->user();
+        if (!$user || !$user->tenant_id) {
+            return response()->json(['success' => false, 'message' => 'Tenant context is required.'], 401);
+        }
+
+        $productModel = $this->products->findForTenant((string) $user->tenant_id, $product);
+        if (!$productModel) {
+            return response()->json(['success' => false, 'message' => 'Product not found.'], 404);
+        }
+
+        $resolved = $this->pricing->resolveCurrentPrice(
+            (string) $user->tenant_id,
+            (int) $productModel->id,
+            (string) ($validated['channel'] ?? 'retail'),
+            isset($validated['quantity']) ? (float) $validated['quantity'] : null,
+        );
+
+        if (!$resolved) {
+            $fallback = (float) ($productModel->pricing['price_per_unit'] ?? 0);
+            if ($fallback <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No active published price found for this product.',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'product_id' => $productModel->id,
+                    'product_code' => $productModel->product_code,
+                    'price' => $fallback,
+                    'currency' => 'PHP',
+                    'source' => 'product_pricing_fallback',
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'product_id' => $productModel->id,
+                'product_code' => $productModel->product_code,
+                'price' => $resolved['price'],
+                'currency' => $resolved['currency'],
+                'price_list_code' => $resolved['price_list_code'],
+                'price_list_name' => $resolved['price_list_name'],
+                'effective_from' => $resolved['effective_from'],
+                'effective_to' => $resolved['effective_to'],
+                'source' => 'price_list',
+            ],
+        ]);
     }
 }

@@ -1,326 +1,188 @@
 @extends('layouts.tenant')
 
+@section('title', 'Dashboard')
+@section('page_title', 'Dashboard')
+@section('page_subtitle', 'Track branch performance, sales flow, and stock health')
+
+@section('header_actions')
+    <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" onclick="exportDashboard()">
+        <i data-lucide="download" class="h-4 w-4"></i>
+        Export
+    </button>
+    <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" onclick="printDashboard()">
+        <i data-lucide="printer" class="h-4 w-4"></i>
+        Print
+    </button>
+@endsection
+
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <div>
-            <h1 class="h2">Dashboard</h1>
-            @if(session('user'))
-                <div class="alert alert-info mb-2">
-                    <i class="fas fa-user me-2"></i>
-                    Welcome back, <strong>{{ session('user.name') }}</strong>! | 
-                    Email: <strong>{{ session('user.email') }}</strong> | 
-                    Plan: <span class="badge bg-{{ session('user.plan') == 'Premium' ? 'danger' : (session('user.plan') == 'Standard' ? 'warning' : 'primary') }} text-white">
-                        {{ session('user.plan') }}
-                    </span>
-                </div>
-            @endif
-
-            @if(isset($tenant) && $tenant)
-                <div class="alert alert-secondary mb-2">
-                    <i class="fas fa-building me-2"></i>
-                    Tenant: <strong>{{ $tenant->business_name }}</strong> | Domain: <strong>{{ $tenant->domain }}</strong>
-                </div>
-            @endif
-        </div>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportDashboard()">
-                    <i class="fas fa-download me-1"></i>Export
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="printDashboard()">
-                    <i class="fas fa-print me-1"></i>Print
-                </button>
+<div class="space-y-6">
+    <section class="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="heading-font mb-1 text-lg font-semibold text-slate-900">Welcome back{{ session('user.name') ? ', ' . session('user.name') : '' }}</h2>
+                <p class="mb-0 text-sm text-slate-500">{{ session('user.email', 'No email available') }}</p>
             </div>
-            @if(session('user'))
-                <a href="/pricing" class="btn btn-sm btn-danger">
-                    <i class="fas fa-crown me-1"></i>
-                    Upgrade Plan
-                </a>
-            @endif
-        </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Today's Sales</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">$12,456</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="flex flex-wrap gap-2">
+                @if(isset($tenant) && $tenant)
+                    <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">Branch: {{ $tenant->business_name ?? $tenant->tenant_id }}</span>
+                @endif
+                <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Plan: {{ session('user.plan', ucfirst($tenant->plan ?? 'Basic')) }}</span>
             </div>
         </div>
+    </section>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Products</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">245</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-box fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+    <section class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <article class="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition hover:-translate-y-0.5 hover:shadow-xl">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-slate-500">Today's Sales</p>
+                    <h3 class="heading-font text-3xl font-semibold text-slate-900">$12,456</h3>
                 </div>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                    <i data-lucide="dollar-sign" class="h-5 w-5"></i>
+                </span>
             </div>
-        </div>
+            <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r from-indigo-500/60 to-indigo-100"></div>
+        </article>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Low Stock Items</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">8</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
+        <article class="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition hover:-translate-y-0.5 hover:shadow-xl">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-slate-500">Products</p>
+                    <h3 class="heading-font text-3xl font-semibold text-emerald-700">245</h3>
                 </div>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                    <i data-lucide="package" class="h-5 w-5"></i>
+                </span>
+            </div>
+            <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r from-emerald-500/60 to-emerald-100"></div>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition hover:-translate-y-0.5 hover:shadow-xl">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-slate-500">Low Stock Items</p>
+                    <h3 class="heading-font text-3xl font-semibold text-amber-600">8</h3>
+                </div>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                    <i data-lucide="triangle-alert" class="h-5 w-5"></i>
+                </span>
+            </div>
+            <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r from-amber-500/60 to-amber-100"></div>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition hover:-translate-y-0.5 hover:shadow-xl">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-slate-500">Customers</p>
+                    <h3 class="heading-font text-3xl font-semibold text-teal-700">1,234</h3>
+                </div>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+                    <i data-lucide="users" class="h-5 w-5"></i>
+                </span>
+            </div>
+            <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r from-teal-500/60 to-teal-100"></div>
+        </article>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
+        <div class="flex items-center justify-between border-b border-slate-200/70 px-5 py-4">
+            <div>
+                <h3 class="heading-font mb-0 text-lg font-semibold text-slate-900">Recent Sales</h3>
+                <p class="mb-0 text-sm text-slate-500">Latest orders processed by this branch.</p>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Customers</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">1,234</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                        <th class="px-5 py-3.5 font-semibold">Order ID</th>
+                        <th class="px-5 py-3.5 font-semibold">Customer</th>
+                        <th class="px-5 py-3.5 font-semibold">Products</th>
+                        <th class="px-5 py-3.5 font-semibold">Total</th>
+                        <th class="px-5 py-3.5 font-semibold">Status</th>
+                        <th class="px-5 py-3.5 font-semibold">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    @php
+                        $sales = [
+                            ['id' => 'ORD-001', 'customer' => 'John Smith', 'products' => 'Beef, Chicken, Pork', 'total' => '$156.78', 'status' => 'Completed', 'date' => '2024-02-20'],
+                            ['id' => 'ORD-002', 'customer' => 'Sarah Johnson', 'products' => 'Lamb, Turkey', 'total' => '$89.45', 'status' => 'Processing', 'date' => '2024-02-20'],
+                            ['id' => 'ORD-003', 'customer' => 'Mike Wilson', 'products' => 'Beef, Pork', 'total' => '$234.12', 'status' => 'Completed', 'date' => '2024-02-19'],
+                            ['id' => 'ORD-004', 'customer' => 'Emily Davis', 'products' => 'Chicken, Fish', 'total' => '$67.89', 'status' => 'Pending', 'date' => '2024-02-19'],
+                            ['id' => 'ORD-005', 'customer' => 'Robert Brown', 'products' => 'Beef, Lamb, Turkey', 'total' => '$312.45', 'status' => 'Completed', 'date' => '2024-02-18'],
+                        ];
+                    @endphp
 
-    <!-- Recent Sales Table -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-primary">Recent Sales</h6>
-            <div class="dropdown no-arrow">
-                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
-                    <a class="dropdown-item" href="#">View All</a>
-                    <a class="dropdown-item" href="#">Export Data</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="#">New Sale</a>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Products</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Date</th>
+                    @forelse($sales as $sale)
+                        @php
+                            $statusClass = [
+                                'Completed' => 'bg-emerald-50 text-emerald-700',
+                                'Processing' => 'bg-amber-50 text-amber-700',
+                                'Pending' => 'bg-sky-50 text-sky-700',
+                            ][$sale['status']] ?? 'bg-slate-100 text-slate-700';
+                        @endphp
+                        <tr class="transition hover:bg-indigo-50/40">
+                            <td class="px-5 py-4 font-semibold text-slate-900">#{{ $sale['id'] }}</td>
+                            <td class="px-5 py-4">{{ $sale['customer'] }}</td>
+                            <td class="px-5 py-4 text-slate-600">{{ $sale['products'] }}</td>
+                            <td class="px-5 py-4 font-medium">{{ $sale['total'] }}</td>
+                            <td class="px-5 py-4"><span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ $sale['status'] }}</span></td>
+                            <td class="px-5 py-4 text-slate-600">{{ $sale['date'] }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
+                    @empty
                         <tr>
-                            <td>#ORD-001</td>
-                            <td>John Smith</td>
-                            <td>Beef, Chicken, Pork</td>
-                            <td>$156.78</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>2024-02-20</td>
+                            <td colspan="6" class="px-5 py-10 text-center text-sm text-slate-500">No sales yet. Start processing transactions to see activity.</td>
                         </tr>
-                        <tr>
-                            <td>#ORD-002</td>
-                            <td>Sarah Johnson</td>
-                            <td>Lamb, Turkey</td>
-                            <td>$89.45</td>
-                            <td><span class="badge bg-warning">Processing</span></td>
-                            <td>2024-02-20</td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-003</td>
-                            <td>Mike Wilson</td>
-                            <td>Beef, Pork</td>
-                            <td>$234.12</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>2024-02-19</td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-004</td>
-                            <td>Emily Davis</td>
-                            <td>Chicken, Fish</td>
-                            <td>$67.89</td>
-                            <td><span class="badge bg-info">Pending</span></td>
-                            <td>2024-02-19</td>
-                        </tr>
-                        <tr>
-                            <td>#ORD-005</td>
-                            <td>Robert Brown</td>
-                            <td>Beef, Lamb, Turkey</td>
-                            <td>$312.45</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                            <td>2024-02-18</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
-    </div>
-
-    <!-- Charts Row -->
-    <div class="row">
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Sales Overview</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="salesChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Product Categories</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="categoryChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+    </section>
 </div>
+@endsection
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@push('scripts')
 <script>
-    // Sales Chart
-    const salesCtx = document.getElementById('salesChart').getContext('2d');
-    new Chart(salesCtx, {
-        type: 'line',
-        data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            datasets: [{
-                label: 'Sales',
-                data: [1200, 1900, 3000, 5000, 2000, 3000, 4500],
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
-            }]
-        }
-    });
-
-    // Category Chart
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Beef', 'Chicken', 'Pork', 'Lamb', 'Turkey', 'Fish'],
-            datasets: [{
-                data: [30, 25, 20, 10, 10, 5],
-                backgroundColor: [
-                    '#FF6384',
-                    '#36A2EB',
-                    '#FFCE56',
-                    '#4BC0C0',
-                    '#9966FF',
-                    '#FF9F40'
-                ]
-            }]
-        }
-    });
-
-    // Export Dashboard Function
     function exportDashboard() {
-        const data = {
+        const payload = {
             user: @if(session('user')) {
                 email: '{{ session('user.email') }}',
                 plan: '{{ session('user.plan') }}'
             } @else null @endif,
-            timestamp: new Date().toISOString(),
+            exported_at: new Date().toISOString(),
             stats: {
-                todaySales: '₱12,456',
+                today_sales: '$12,456',
                 products: 245,
-                customers: 128,
-                orders: 89
+                low_stock_items: 8,
+                customers: 1234
             }
         };
-        
-        const dataStr = JSON.stringify(data, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = 'dashboard_export_' + new Date().toISOString().split('T')[0] + '.json';
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-        
-        // Show success message
-        showNotification('Dashboard data exported successfully!', 'success');
-    }
 
-    // Print Dashboard Function
-    function printDashboard() {
-        window.print();
-        showNotification('Print dialog opened', 'info');
-    }
+        const dataStr = JSON.stringify(payload, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const fileName = 'tenant_dashboard_export_' + new Date().toISOString().split('T')[0] + '.json';
 
-    // Show notification function
-    function showNotification(message, type) {
-        const swalConfig = {
+        const link = document.createElement('a');
+        link.setAttribute('href', dataUri);
+        link.setAttribute('download', fileName);
+        link.click();
+
+        Swal.fire({
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-        };
-        
-        if (type === 'success') {
-            Swal.fire({
-                ...swalConfig,
-                icon: 'success',
-                title: message
-            });
-        } else if (type === 'error') {
-            Swal.fire({
-                ...swalConfig,
-                icon: 'error',
-                title: message
-            });
-        } else {
-            Swal.fire({
-                ...swalConfig,
-                icon: 'info',
-                title: message
-            });
-        }
+            timer: 2500,
+            icon: 'success',
+            title: 'Dashboard exported successfully.'
+        });
+    }
+
+    function printDashboard() {
+        window.print();
     }
 </script>
-@endsection
+@endpush

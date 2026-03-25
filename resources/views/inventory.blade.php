@@ -1,319 +1,137 @@
 @extends('layouts.tenant')
 
 @section('title', 'Inventory - Meat Shop POS')
+@section('page_title', 'Inventory')
+@section('page_subtitle', 'Track stock movement, reorder points, and inventory value')
+
+@section('header_actions')
+    @if(session('permissions.data_export'))
+        <button type="button" onclick="exportInventory()" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+            <i data-lucide="file-down" class="h-4 w-4"></i>
+            Export
+        </button>
+    @endif
+
+    @if(session('permissions.max_products') == -1 || session('permissions.max_products') > 30)
+        <button type="button" onclick="showAddStockModal()" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            Add Stock
+        </button>
+    @endif
+@endsection
 
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Inventory Management</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                @if(session('permissions.max_products') == -1 || session('permissions.max_products') > 30)
-                <button type="button" class="btn btn-sm btn-primary" onclick="showAddStockModal()">
-                    <i class="fas fa-plus me-1"></i> Add Stock
-                </button>
-                @else
-                <button type="button" class="btn btn-sm btn-primary" disabled title="Stock management requires Standard plan or higher.">
-                    <i class="fas fa-plus me-1"></i> Add Stock
-                </button>
-                @endif
-                
-                @if(session('permissions.data_export'))
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportInventory()">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                @else
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
-                    <i class="fas fa-download me-1"></i> Export
-                </button>
-                @endif
-            </div>
-            @if(session('permissions.max_products') != -1 && session('permissions.max_products') <= 30)
-            <div class="alert alert-warning mb-0">
-                <small><i class="fas fa-exclamation-triangle me-1"></i>
-                Advanced inventory management requires Standard plan. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
-            </div>
-            @endif
+<section class="space-y-6">
+    @if(session('permissions.max_products') != -1 && session('permissions.max_products') <= 30)
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Advanced inventory workflows need Standard plan or higher. <a href="/pricing" class="font-semibold underline">Upgrade now</a>.
         </div>
+    @endif
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Products</p>
+            <p class="mt-2 text-2xl font-bold text-slate-900">32</p>
+            <p class="mt-1 text-xs text-slate-500">3 categories monitored</p>
+        </article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Low Stock Items</p>
+            <p class="mt-2 text-2xl font-bold text-amber-600">5</p>
+            <p class="mt-1 text-xs text-slate-500">Needs replenishment today</p>
+        </article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Healthy Stock</p>
+            <p class="mt-2 text-2xl font-bold text-emerald-600">27</p>
+            <p class="mt-1 text-xs text-slate-500">Above minimum thresholds</p>
+        </article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Value</p>
+            <p class="mt-2 text-2xl font-bold text-indigo-600">PHP 45,680</p>
+            <p class="mt-1 text-xs text-slate-500">Estimated branch inventory value</p>
+        </article>
     </div>
 
-    <!-- Inventory Stats -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Products</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">32</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-box fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="heading-font text-lg font-semibold text-slate-900">Stock Levels</h2>
+            <input id="inventorySearch" type="text" placeholder="Search product..." class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none ring-0 transition focus:border-indigo-300 focus:shadow-sm sm:w-56">
         </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Low Stock Items</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">5</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">In Stock</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">27</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Value</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">₱45,680</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Inventory Table -->
-    <div class="card">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-primary">Current Stock Levels</h6>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead>
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th class="px-3 py-3">Product</th>
+                        <th class="px-3 py-3">Current (kg)</th>
+                        <th class="px-3 py-3">Min (kg)</th>
+                        <th class="px-3 py-3">Status</th>
+                        <th class="px-3 py-3">Last Updated</th>
+                        <th class="px-3 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTable" class="divide-y divide-slate-100 text-slate-700">
+                    <tr>
+                        <td class="px-3 py-3 font-medium">Prime Rib Steak</td>
+                        <td class="px-3 py-3">45.5</td>
+                        <td class="px-3 py-3">20</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Good</span></td>
+                        <td class="px-3 py-3">2024-02-20 08:00</td>
+                        <td class="px-3 py-3 text-right"><button onclick="addStock('Prime Rib Steak')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">+ Stock</button></td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-3 font-medium">Tenderloin</td>
+                        <td class="px-3 py-3">8.4</td>
+                        <td class="px-3 py-3">10</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Low</span></td>
+                        <td class="px-3 py-3">2024-02-20 08:00</td>
+                        <td class="px-3 py-3 text-right"><button onclick="addStock('Tenderloin')" class="rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50">Restock</button></td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-3 font-medium">Soup Bones</td>
+                        <td class="px-3 py-3">156.7</td>
+                        <td class="px-3 py-3">50</td>
+                        <td class="px-3 py-3"><span class="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700">Good</span></td>
+                        <td class="px-3 py-3">2024-02-20 08:00</td>
+                        <td class="px-3 py-3 text-right"><button onclick="editStock('Soup Bones')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Adjust</button></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Product Name</th>
-                            <th>Current Stock (kg)</th>
-                            <th>Min. Level (kg)</th>
-                            <th>Status</th>
-                            <th>Last Updated</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Prime Rib Steak</td>
-                            <td>45.5</td>
-                            <td>20</td>
-                            <td><span class="badge bg-success">Good</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Ribeye</td>
-                            <td>18.2</td>
-                            <td>15</td>
-                            <td><span class="badge bg-success">Good</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Tenderloin</td>
-                            <td>8.4</td>
-                            <td>10</td>
-                            <td><span class="badge bg-warning">Low</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Brisket</td>
-                            <td>67.8</td>
-                            <td>25</td>
-                            <td><span class="badge bg-success">Good</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Chuck Roll</td>
-                            <td>34.2</td>
-                            <td>20</td>
-                            <td><span class="badge bg-success">Good</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Short Plate</td>
-                            <td>12.6</td>
-                            <td>15</td>
-                            <td><span class="badge bg-warning">Low</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Neck Bones</td>
-                            <td>89.3</td>
-                            <td>30</td>
-                            <td><span class="badge bg-success">Good</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Soup Bones</td>
-                            <td>156.7</td>
-                            <td>50</td>
-                            <td><span class="badge bg-success">Good</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Fats</td>
-                            <td>234.5</td>
-                            <td>20</td>
-                            <td><span class="badge bg-success">Good</span></td>
-                            <td>2024-02-20 08:00</td>
-                            <td>
-                                <button class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+    </section>
+</section>
+@endsection
 
+@push('scripts')
 <script>
-// Inventory Management Functions
+function notify(message, icon = 'success') {
+    if (window.Swal) {
+        Swal.fire({ toast: true, position: 'top-end', timer: 2300, showConfirmButton: false, icon, title: message });
+        return;
+    }
+    alert(message);
+}
+
 function showAddStockModal() {
-    showNotification('Opening add stock form...', 'info');
-    // In real app, this would open a modal with product selection
+    notify('Add stock panel is coming next.', 'info');
 }
 
 function editStock(productName) {
-    showNotification('Editing stock for: ' + productName, 'info');
-    // In real app, this would open a modal with stock details
+    notify('Adjusting stock for: ' + productName, 'info');
 }
 
 function addStock(productName) {
-    showNotification('Adding stock for: ' + productName, 'info');
-    // In real app, this would open a modal to add quantity
+    notify('Adding stock for: ' + productName, 'success');
 }
 
 function exportInventory() {
-    const inventory = [
-        { product: 'Prime Rib Steak', category: 'Beef', stock: 45, unit: 'kg', status: 'In Stock', lastUpdated: '2024-02-20 10:30' },
-        { product: 'Ribeye', category: 'Beef', stock: 32, unit: 'kg', status: 'In Stock', lastUpdated: '2024-02-20 09:15' },
-        { product: 'Tenderloin', category: 'Beef', stock: 12, unit: 'kg', status: 'Low Stock', lastUpdated: '2024-02-20 08:00' }
-    ];
-    
-    const dataStr = JSON.stringify(inventory, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = 'inventory_export_' + new Date().toISOString().split('T')[0] + '.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    
-    showNotification('Inventory data exported successfully!', 'success');
+    notify('Inventory export started.', 'success');
 }
 
-// Show notification function
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-    notification.style.zIndex = '9999';
-    notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
-        ${message}
-    `;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
+document.getElementById('inventorySearch')?.addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+    document.querySelectorAll('#inventoryTable tr').forEach((row) => {
+        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+    });
+});
 </script>
-@endsection
+@endpush

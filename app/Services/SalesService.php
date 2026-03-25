@@ -13,6 +13,10 @@ use Illuminate\Support\Str;
 
 class SalesService
 {
+    public function __construct(private readonly PricingService $pricing)
+    {
+    }
+
     public function listForTenant(string $tenantId, int $perPage = 50): LengthAwarePaginator
     {
         return $this->scopedQuery($tenantId)
@@ -55,6 +59,13 @@ class SalesService
                 }
 
                 if ($unitPrice <= 0) {
+                    $resolved = $this->pricing->resolveCurrentPrice($tenantId, (int) $product->id, 'retail', $quantity);
+                    if ($resolved) {
+                        $unitPrice = (float) $resolved['price'];
+                    }
+                }
+
+                if ($unitPrice <= 0) {
                     $unitPrice = (float) ($product->pricing['price_per_unit'] ?? 0);
                 }
 
@@ -72,6 +83,8 @@ class SalesService
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
                     'line_total' => $lineTotal,
+                    'price_source' => isset($resolved) && $resolved ? 'price_list' : 'product_pricing_fallback',
+                    'price_list_code' => $resolved['price_list_code'] ?? null,
                 ];
             }
 

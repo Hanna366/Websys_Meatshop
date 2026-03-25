@@ -15,7 +15,9 @@ class Product extends Model
         'name',
         'description',
         'category',
+        'category_id',
         'subcategory',
+        'uom_id',
         'pricing',
         'inventory',
         'batch_tracking',
@@ -23,8 +25,10 @@ class Product extends Model
         'supplier_info',
         'images',
         'tags',
+        'metadata',
         'barcode',
         'status',
+        'is_active',
         'created_by',
         'updated_by',
     ];
@@ -37,7 +41,31 @@ class Product extends Model
         'supplier_info' => 'array',
         'images' => 'array',
         'tags' => 'array',
+        'metadata' => 'array',
+        'is_active' => 'bool',
     ];
+
+    public function categoryRef()
+    {
+        return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    public function unitOfMeasure()
+    {
+        return $this->belongsTo(UnitOfMeasure::class, 'uom_id');
+    }
+
+    public function priceListItems()
+    {
+        return $this->hasMany(PriceListItem::class);
+    }
+
+    public function priceLists()
+    {
+        return $this->belongsToMany(PriceList::class, 'price_list_items')
+            ->withPivot(['price', 'min_qty', 'max_qty'])
+            ->withTimestamps();
+    }
 
     public function batches()
     {
