@@ -42,7 +42,7 @@
                                             $scheme = request()->isSecure() ? 'https' : 'http';
                                             $hasPort = preg_match('/:\\d+$/', $normalizedDomain) === 1;
                                             $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
-                                            $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort;
+                                            $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort . '/login?force_login=1';
                                         @endphp
                                         <a href="{{ $tenantUrl }}" target="_blank" rel="noopener noreferrer">{{ $normalizedDomain }}</a>
                                     @else
@@ -66,7 +66,7 @@
                                             $scheme = request()->isSecure() ? 'https' : 'http';
                                             $hasPort = preg_match('/:\\d+$/', $normalizedDomain) === 1;
                                             $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
-                                            $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort;
+                                            $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort . '/login?force_login=1';
                                         @endphp
                                         <a href="{{ $tenantUrl }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">Open Tenant</a>
                                     @endif

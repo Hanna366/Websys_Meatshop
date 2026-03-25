@@ -23,9 +23,7 @@ Route::middleware([
     Route::post('/reset-password', [SimpleAuthController::class, 'resetPassword'])->name('tenant.password.update');
 
     Route::get('/', function () {
-        return session('authenticated')
-            ? redirect('/dashboard')
-            : redirect('/login');
+        return redirect('/login');
     })->name('tenant.home');
 
     Route::middleware(['auth'])->group(function () {

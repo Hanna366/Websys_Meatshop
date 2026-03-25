@@ -1,12 +1,12 @@
-@extends('layouts.central')
 
-@section('title', 'MeatShop Central')
 
-@section('content')
+<?php $__env->startSection('title', 'MeatShop Central'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">MeatShop Central</h1>
-        <a href="{{ route('tenants.create') }}" class="btn btn-primary">Create Tenant</a>
+        <a href="<?php echo e(route('tenants.create')); ?>" class="btn btn-primary">Create Tenant</a>
     </div>
 
     <div class="row g-3 mb-4">
@@ -14,7 +14,7 @@
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
                     <p class="text-muted mb-1">Total Tenants</p>
-                    <h3 class="mb-0">{{ $stats['total_tenants'] ?? 0 }}</h3>
+                    <h3 class="mb-0"><?php echo e($stats['total_tenants'] ?? 0); ?></h3>
                 </div>
             </div>
         </div>
@@ -22,7 +22,7 @@
             <div class="card shadow-sm border-0 h-100 border-start border-4 border-success">
                 <div class="card-body">
                     <p class="text-muted mb-1">Active Tenants</p>
-                    <h3 class="mb-0 text-success">{{ $stats['active_tenants'] ?? 0 }}</h3>
+                    <h3 class="mb-0 text-success"><?php echo e($stats['active_tenants'] ?? 0); ?></h3>
                 </div>
             </div>
         </div>
@@ -30,7 +30,7 @@
             <div class="card shadow-sm border-0 h-100 border-start border-4 border-warning">
                 <div class="card-body">
                     <p class="text-muted mb-1">Suspended Tenants</p>
-                    <h3 class="mb-0 text-warning">{{ $stats['suspended_tenants'] ?? 0 }}</h3>
+                    <h3 class="mb-0 text-warning"><?php echo e($stats['suspended_tenants'] ?? 0); ?></h3>
                 </div>
             </div>
         </div>
@@ -38,7 +38,7 @@
             <div class="card shadow-sm border-0 h-100 border-start border-4 border-danger">
                 <div class="card-body">
                     <p class="text-muted mb-1">Unpaid Tenants</p>
-                    <h3 class="mb-0 text-danger">{{ $stats['unpaid_tenants'] ?? 0 }}</h3>
+                    <h3 class="mb-0 text-danger"><?php echo e($stats['unpaid_tenants'] ?? 0); ?></h3>
                 </div>
             </div>
         </div>
@@ -48,7 +48,7 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">Tenant Table</h5>
-                <a href="{{ route('tenants.index') }}" class="btn btn-outline-primary btn-sm">Open Full Table</a>
+                <a href="<?php echo e(route('tenants.index')); ?>" class="btn btn-outline-primary btn-sm">Open Full Table</a>
             </div>
 
             <div class="table-responsive">
@@ -65,12 +65,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($tenants as $tenant)
+                        <?php $__empty_1 = true; $__currentLoopData = $tenants; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tenant): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                             <tr>
-                                <td>{{ $tenant->business_name }}</td>
+                                <td><?php echo e($tenant->business_name); ?></td>
                                 <td>
-                                    @if(!empty($tenant->domain))
-                                        @php
+                                    <?php if(!empty($tenant->domain)): ?>
+                                        <?php
                                             $rawDomain = trim((string) $tenant->domain);
                                             $normalizedDomain = preg_replace('#^https?://#i', '', $rawDomain);
                                             $normalizedDomain = rtrim($normalizedDomain, '/');
@@ -79,25 +79,25 @@
                                             $hasPort = preg_match('/:\\d+$/', $normalizedDomain) === 1;
                                             $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
                                             $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort . '/login?force_login=1';
-                                        @endphp
-                                        <a href="{{ $tenantUrl }}" target="_blank" rel="noopener noreferrer">{{ $normalizedDomain }}</a>
-                                    @else
+                                        ?>
+                                        <a href="<?php echo e($tenantUrl); ?>" target="_blank" rel="noopener noreferrer"><?php echo e($normalizedDomain); ?></a>
+                                    <?php else: ?>
                                         <span class="text-muted">-</span>
-                                    @endif
+                                    <?php endif; ?>
                                 </td>
-                                <td>{{ is_array($tenant->business_address) ? implode(', ', $tenant->business_address) : ($tenant->business_address ?: '—') }}</td>
-                                <td>{{ $tenant->admin_name ?? '—' }}</td>
-                                <td>{{ $tenant->admin_email ?? $tenant->business_email }}</td>
-                                <td>{{ ucfirst($tenant->plan ?? 'basic') }}</td>
+                                <td><?php echo e(is_array($tenant->business_address) ? implode(', ', $tenant->business_address) : ($tenant->business_address ?: '—')); ?></td>
+                                <td><?php echo e($tenant->admin_name ?? '—'); ?></td>
+                                <td><?php echo e($tenant->admin_email ?? $tenant->business_email); ?></td>
+                                <td><?php echo e(ucfirst($tenant->plan ?? 'basic')); ?></td>
                                 <td>
-                                    <a href="{{ route('tenants.show', $tenant->tenant_id) }}" class="btn btn-sm btn-outline-primary">Customize</a>
+                                    <a href="<?php echo e(route('tenants.show', $tenant->tenant_id)); ?>" class="btn btn-sm btn-outline-primary">Customize</a>
                                 </td>
                             </tr>
-                        @empty
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                             <tr>
                                 <td colspan="7" class="text-center text-muted">No tenants yet. Create your first tenant.</td>
                             </tr>
-                        @endforelse
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -111,4 +111,6 @@
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.central', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/central/home.blade.php ENDPATH**/ ?>
