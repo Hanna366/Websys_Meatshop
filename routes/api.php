@@ -108,7 +108,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/current', [SubscriptionController::class, 'current']);
         Route::get('/plans', [SubscriptionController::class, 'plans']);
         Route::get('/usage', [SubscriptionController::class, 'usage']);
-        Route::get('/billing', [SubscriptionController::class, 'billing']);
+        Route::get('/billing', [SubscriptionController::class, 'billingData']);
         Route::post('/', [SubscriptionController::class, 'create']);
         Route::put('/plan', [SubscriptionController::class, 'update']);
         Route::put('/payment-method', [SubscriptionController::class, 'updatePaymentMethod']);

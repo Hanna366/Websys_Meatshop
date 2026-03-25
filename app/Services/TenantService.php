@@ -51,6 +51,18 @@ class TenantService
             $dbPasswordPlain = $connectionConfig['password'] ?? '';
         }
 
+        $now = now();
+        $planStartedAt = $data['plan_started_at'] ?? $now;
+        $planEndsAt = $data['plan_ends_at'] ?? $now->copy()->addMonth();
+        $billingCycle = $data['billing_cycle'] ?? 'monthly';
+        $subscriptionPayload = array_merge([
+            'plan' => $data['plan'] ?? 'basic',
+            'status' => 'active',
+            'billing_cycle' => $billingCycle,
+            'current_period_start' => $planStartedAt instanceof \Carbon\CarbonInterface ? $planStartedAt->toDateString() : (string) $planStartedAt,
+            'current_period_end' => $planEndsAt instanceof \Carbon\CarbonInterface ? $planEndsAt->toDateString() : (string) $planEndsAt,
+        ], $data['subscription'] ?? []);
+
         // Store the tenant record (password stored encrypted)
         $tenant = Tenant::create([
             'tenant_id' => $tenantId,
@@ -58,7 +70,7 @@ class TenantService
             'business_email' => $data['business_email'] ?? $data['email'] ?? null,
             'business_phone' => $data['business_phone'] ?? null,
             'business_address' => $data['business_address'] ?? null,
-            'subscription' => $data['subscription'] ?? [],
+            'subscription' => $subscriptionPayload,
             'settings' => $data['settings'] ?? [],
             'usage' => $data['usage'] ?? [],
             'limits' => $data['limits'] ?? [],
@@ -70,8 +82,8 @@ class TenantService
             'db_username' => $dbUsername,
             'db_password' => encrypt($dbPasswordPlain),
             'plan' => $data['plan'] ?? 'basic',
-            'plan_started_at' => $data['plan_started_at'] ?? now(),
-            'plan_ends_at' => $data['plan_ends_at'] ?? now()->addMonth(),
+            'plan_started_at' => $planStartedAt,
+            'plan_ends_at' => $planEndsAt,
             'admin_name' => $data['admin_name'] ?? null,
             'admin_email' => $data['admin_email'] ?? null,
         ]);
@@ -218,6 +230,105 @@ class TenantService
                 ['domain' => $tenant->domain]
             );
         }
+
+        return $tenant;
+    }
+
+    /**
+     * Update central tenant business/profile fields.
+     */
+    public static function updateTenantProfile(string $tenantId, array $payload): Tenant
+    {
+        $tenant = Tenant::where('tenant_id', $tenantId)->firstOrFail();
+
+        $domain = array_key_exists('domain', $payload) ? $payload['domain'] : null;
+        unset($payload['domain']);
+
+        if ($domain !== null && $domain !== '') {
+            if (Schema::hasTable('domains')) {
+                self::releaseDomainFromDeletedTenants($domain);
+            }
+
+            $domainInUse = Tenant::query()
+                ->where('domain', $domain)
+                ->where('id', '!=', $tenant->id)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if ($domainInUse) {
+                throw ValidationException::withMessages([
+                    'domain' => 'The domain has already been taken by another tenant.',
+                ]);
+            }
+
+            $payload['domain'] = $domain;
+        }
+
+        $tenant->fill($payload);
+        $tenant->save();
+
+        if (Schema::hasTable('domains') && !empty($tenant->domain)) {
+            Domain::updateOrCreate(
+                ['tenant_id' => $tenant->id],
+                ['domain' => $tenant->domain]
+            );
+        }
+
+        return $tenant;
+    }
+
+    /**
+     * Update tenant subscription/plan state and billing period tracking.
+     */
+    public static function updateTenantSubscription(string $tenantId, array $payload): Tenant
+    {
+        $tenant = Tenant::where('tenant_id', $tenantId)->firstOrFail();
+
+        $now = now();
+        $billingCycle = $payload['billing_cycle'] ?? 'monthly';
+        $periodStart = isset($payload['current_period_start'])
+            ? \Carbon\Carbon::parse((string) $payload['current_period_start'])
+            : $now->copy();
+        $periodEnd = isset($payload['current_period_end'])
+            ? \Carbon\Carbon::parse((string) $payload['current_period_end'])
+            : ($billingCycle === 'annual' ? $periodStart->copy()->addYear() : $periodStart->copy()->addMonth());
+
+        $status = $payload['subscription_status'] ?? 'active';
+        $plan = $payload['plan'] ?? ($tenant->plan ?? 'basic');
+
+        $existingSubscription = is_array($tenant->subscription) ? $tenant->subscription : [];
+
+        $tenant->plan = $plan;
+        $tenant->plan_started_at = $periodStart;
+        $tenant->plan_ends_at = $periodEnd;
+        $tenant->status = $payload['tenant_status'] ?? $tenant->status;
+        $tenant->payment_status = $payload['payment_status'] ?? $tenant->payment_status;
+
+        $tenant->subscription = array_merge($existingSubscription, [
+            'plan' => $plan,
+            'status' => $status,
+            'billing_cycle' => $billingCycle,
+            'current_period_start' => $periodStart->toDateString(),
+            'current_period_end' => $periodEnd->toDateString(),
+            'updated_at' => $now->toDateTimeString(),
+        ]);
+
+        if ($status === 'expired') {
+            $tenant->payment_status = 'overdue';
+            if (empty($tenant->suspended_message)) {
+                $tenant->suspended_message = 'Subscription expired. Please renew to restore access.';
+            }
+        }
+
+        if ($status === 'unpaid') {
+            $tenant->payment_status = 'unpaid';
+        }
+
+        if ($status === 'active' && in_array($tenant->payment_status, ['unpaid', 'overdue'], true)) {
+            $tenant->payment_status = 'paid';
+        }
+
+        $tenant->save();
 
         return $tenant;
     }

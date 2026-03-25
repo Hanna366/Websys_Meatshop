@@ -145,4 +145,4 @@
     </script>
 </body>
 </html>
-<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/layouts/tenant.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views\layouts\tenant.blade.php ENDPATH**/ ?>

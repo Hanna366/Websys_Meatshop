@@ -8,6 +8,37 @@ use App\Services\SubscriptionService;
 
 class SubscriptionController extends Controller
 {
+    /**
+     * Central billing page (web).
+     */
+    public function billingPage()
+    {
+        $subscription = SubscriptionService::getCurrentSubscription();
+        $billingHistory = SubscriptionService::getBillingHistory();
+
+        return view('subscription.billing', [
+            'subscription' => $subscription,
+            'billingHistory' => $billingHistory,
+        ]);
+    }
+
+    /**
+     * Billing data endpoint (JSON).
+     */
+    public function billingData()
+    {
+        $subscription = SubscriptionService::getCurrentSubscription();
+        $billingHistory = SubscriptionService::getBillingHistory();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'subscription' => $subscription,
+                'history' => $billingHistory,
+            ],
+        ]);
+    }
+
     public function current()
     {
         return response()->json([
@@ -42,10 +73,8 @@ class SubscriptionController extends Controller
 
     public function billing()
     {
-        return response()->json([
-            'success' => true,
-            'data' => ['history' => SubscriptionService::getBillingHistory()],
-        ]);
+        // Backward-compatible alias for existing API consumers.
+        return $this->billingData();
     }
 
     public function create(Request $request)
@@ -210,16 +239,8 @@ class SubscriptionController extends Controller
      */
     public function billingHistory()
     {
-        // Check if user is authenticated
-        if (!session('authenticated')) {
-            return response()->json(['error' => 'User not authenticated'], 401);
-        }
-
-        $billingHistory = SubscriptionService::getBillingHistory();
-
-        return response()->json([
-            'billing_history' => $billingHistory
-        ]);
+        // Backward-compatible alias for older callers.
+        return $this->billingData();
     }
 
     /**

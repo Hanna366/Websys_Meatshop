@@ -36,24 +36,23 @@ Route::post('/account/create', [TenantController::class, 'store'])->name('tenant
 // Central tenant management menu entries.
 Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
 Route::get('/tenant/{tenantId}', [TenantController::class, 'show'])->name('tenants.show');
+Route::post('/tenant/{tenantId}', [TenantController::class, 'update'])->name('tenants.update');
 Route::post('/tenant/{tenantId}/status', [TenantController::class, 'updateStatus'])->name('tenants.updateStatus');
+Route::post('/tenant/{tenantId}/subscription', [TenantController::class, 'updateSubscription'])->name('tenants.updateSubscription');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [CentralDashboardController::class, 'index'])->name('dashboard');
 });
 
-// Pricing page - accessible without authentication
-Route::get('/pricing', function () {
-    return view('pricing');
-})->name('pricing');
-
 // Subscription routes - require authentication
 Route::middleware(['auth'])->group(function () {
+    Route::get('/pricing', [SubscriptionController::class, 'index'])->name('pricing');
     Route::post('/subscription/process', [SubscriptionController::class, 'processSubscription'])->name('subscription.process');
     Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
     Route::post('/subscription/renew', [SubscriptionController::class, 'renew'])->name('subscription.renew');
     Route::get('/subscription/status', [SubscriptionController::class, 'status'])->name('subscription.status');
-    Route::get('/subscription/billing', [SubscriptionController::class, 'billingHistory'])->name('subscription.billing');
+    Route::get('/subscription/billing', [SubscriptionController::class, 'billingPage'])->name('subscription.billing');
+    Route::get('/subscription/billing/data', [SubscriptionController::class, 'billingData'])->name('subscription.billing.data');
     Route::put('/subscription/settings', [SubscriptionController::class, 'updateSettings'])->name('subscription.settings');
 });
 

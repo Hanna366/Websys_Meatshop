@@ -2,8 +2,71 @@
 
 namespace App\Services;
 
+use App\Models\Tenant;
+use App\Notifications\TenantExpirationAlertNotification;
+use App\Notifications\TenantPaymentReminderNotification;
+use App\Notifications\TenantSignupConfirmationNotification;
+use App\Notifications\TenantStatusChangedNotification;
+use App\Notifications\TenantSubscriptionUpdatedNotification;
+use Illuminate\Support\Facades\Notification;
+
 class NotificationService
 {
+    private function tenantRecipientEmail(Tenant $tenant): ?string
+    {
+        return $tenant->admin_email ?: $tenant->business_email;
+    }
+
+    public function sendTenantSignupConfirmation(Tenant $tenant): void
+    {
+        $recipient = $this->tenantRecipientEmail($tenant);
+        if (!$recipient) {
+            return;
+        }
+
+        Notification::route('mail', $recipient)->notify(new TenantSignupConfirmationNotification($tenant));
+    }
+
+    public function sendTenantStatusChanged(Tenant $tenant): void
+    {
+        $recipient = $this->tenantRecipientEmail($tenant);
+        if (!$recipient) {
+            return;
+        }
+
+        Notification::route('mail', $recipient)->notify(new TenantStatusChangedNotification($tenant));
+    }
+
+    public function sendSubscriptionUpdated(Tenant $tenant): void
+    {
+        $recipient = $this->tenantRecipientEmail($tenant);
+        if (!$recipient) {
+            return;
+        }
+
+        Notification::route('mail', $recipient)->notify(new TenantSubscriptionUpdatedNotification($tenant));
+    }
+
+    public function sendPaymentReminder(Tenant $tenant): void
+    {
+        $recipient = $this->tenantRecipientEmail($tenant);
+        if (!$recipient) {
+            return;
+        }
+
+        Notification::route('mail', $recipient)->notify(new TenantPaymentReminderNotification($tenant));
+    }
+
+    public function sendExpirationAlert(Tenant $tenant): void
+    {
+        $recipient = $this->tenantRecipientEmail($tenant);
+        if (!$recipient) {
+            return;
+        }
+
+        Notification::route('mail', $recipient)->notify(new TenantExpirationAlertNotification($tenant));
+    }
+
     public function settings(string $tenantId): array
     {
         return session("notification_settings.{$tenantId}", [

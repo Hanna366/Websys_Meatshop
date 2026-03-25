@@ -3,112 +3,154 @@
 @section('title', 'MeatShop Central')
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">MeatShop Central</h1>
-        <a href="{{ route('tenants.create') }}" class="btn btn-primary">Create Tenant</a>
-    </div>
+<div class="space-y-6">
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <article class="group rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-slate-500">Total Tenants</p>
+                    <h3 class="heading-font text-3xl font-semibold text-slate-900">{{ $stats['total_tenants'] ?? 0 }}</h3>
+                </div>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                    <i data-lucide="users" class="h-5 w-5"></i>
+                </span>
+            </div>
+            <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r from-indigo-500/60 to-indigo-100"></div>
+        </article>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body">
-                    <p class="text-muted mb-1">Total Tenants</p>
-                    <h3 class="mb-0">{{ $stats['total_tenants'] ?? 0 }}</h3>
+        <article class="group rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-slate-500">Active Tenants</p>
+                    <h3 class="heading-font text-3xl font-semibold text-emerald-700">{{ $stats['active_tenants'] ?? 0 }}</h3>
                 </div>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                    <i data-lucide="badge-check" class="h-5 w-5"></i>
+                </span>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100 border-start border-4 border-success">
-                <div class="card-body">
-                    <p class="text-muted mb-1">Active Tenants</p>
-                    <h3 class="mb-0 text-success">{{ $stats['active_tenants'] ?? 0 }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100 border-start border-4 border-warning">
-                <div class="card-body">
-                    <p class="text-muted mb-1">Suspended Tenants</p>
-                    <h3 class="mb-0 text-warning">{{ $stats['suspended_tenants'] ?? 0 }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100 border-start border-4 border-danger">
-                <div class="card-body">
-                    <p class="text-muted mb-1">Unpaid Tenants</p>
-                    <h3 class="mb-0 text-danger">{{ $stats['unpaid_tenants'] ?? 0 }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
+            <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r from-emerald-500/60 to-emerald-100"></div>
+        </article>
 
-    <div class="card shadow mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Tenant Table</h5>
-                <a href="{{ route('tenants.index') }}" class="btn btn-outline-primary btn-sm">Open Full Table</a>
+        <article class="group rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-slate-500">Suspended Tenants</p>
+                    <h3 class="heading-font text-3xl font-semibold text-amber-600">{{ $stats['suspended_tenants'] ?? 0 }}</h3>
+                </div>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                    <i data-lucide="shield-alert" class="h-5 w-5"></i>
+                </span>
+            </div>
+            <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r from-amber-500/60 to-amber-100"></div>
+        </article>
+
+        <article class="group rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="mb-1 text-sm font-medium text-slate-500">Unpaid Tenants</p>
+                    <h3 class="heading-font text-3xl font-semibold text-rose-600">{{ $stats['unpaid_tenants'] ?? 0 }}</h3>
+                </div>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
+                    <i data-lucide="wallet-cards" class="h-5 w-5"></i>
+                </span>
+            </div>
+            <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r from-rose-500/60 to-rose-100"></div>
+        </article>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
+        <div class="flex flex-col gap-4 border-b border-slate-200/70 px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="heading-font mb-0 text-lg font-semibold text-slate-900">Tenant Table</h2>
+                <p class="mb-0 text-sm text-slate-500">Manage tenant access, plans, and quick domain launch.</p>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Domain</th>
-                            <th>Address</th>
-                            <th>Administrator</th>
-                            <th>Admin Email</th>
-                            <th>Pricing Model</th>
-                            <th>Action</th>
+            <div class="flex items-center gap-2">
+                <div class="relative">
+                    <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                    <input id="tenantSearch" type="text" class="h-10 w-72 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100" placeholder="Search tenants...">
+                </div>
+                <a href="{{ route('tenants.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                    <i data-lucide="table" class="h-4 w-4"></i>
+                    Open Full Table
+                </a>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm" id="tenantTable">
+                <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                        <th class="px-5 py-3.5 font-semibold">Name</th>
+                        <th class="px-5 py-3.5 font-semibold">Domain</th>
+                        <th class="px-5 py-3.5 font-semibold">Address</th>
+                        <th class="px-5 py-3.5 font-semibold">Administrator</th>
+                        <th class="px-5 py-3.5 font-semibold">Admin Email</th>
+                        <th class="px-5 py-3.5 font-semibold">Pricing Model</th>
+                        <th class="px-5 py-3.5 text-right font-semibold">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    @forelse($tenants as $tenant)
+                        <tr class="tenant-row transition duration-150 hover:bg-indigo-50/40">
+                            <td class="px-5 py-4 font-medium text-slate-900">{{ $tenant->business_name }}</td>
+                            <td class="px-5 py-4">
+                                @if(!empty($tenant->domain))
+                                    @php
+                                        $rawDomain = trim((string) $tenant->domain);
+                                        $normalizedDomain = preg_replace('#^https?://#i', '', $rawDomain);
+                                        $normalizedDomain = rtrim($normalizedDomain, '/');
+                                        $normalizedDomain = str_ireplace('locasthost', 'localhost', $normalizedDomain);
+                                        $scheme = request()->isSecure() ? 'https' : 'http';
+                                        $hasPort = preg_match('/:\\d+$/', $normalizedDomain) === 1;
+                                        $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
+                                        $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort . '/login?force_login=1';
+                                    @endphp
+                                    <a href="{{ $tenantUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">
+                                        {{ $normalizedDomain }}
+                                        <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                                    </a>
+                                @else
+                                    <span class="text-slate-400">-</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-4 text-slate-600">{{ is_array($tenant->business_address) ? implode(', ', $tenant->business_address) : ($tenant->business_address ?: '—') }}</td>
+                            <td class="px-5 py-4">{{ $tenant->admin_name ?? '—' }}</td>
+                            <td class="px-5 py-4 text-slate-600">{{ $tenant->admin_email ?? $tenant->business_email }}</td>
+                            <td class="px-5 py-4">
+                                <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{{ ucfirst($tenant->plan ?? 'basic') }}</span>
+                            </td>
+                            <td class="px-5 py-4 text-right">
+                                <a href="{{ route('tenants.show', $tenant->tenant_id) }}" class="inline-flex items-center gap-1 rounded-xl border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-600 hover:text-white">
+                                    Open Tenant
+                                    <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+                                </a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($tenants as $tenant)
-                            <tr>
-                                <td>{{ $tenant->business_name }}</td>
-                                <td>
-                                    @if(!empty($tenant->domain))
-                                        @php
-                                            $rawDomain = trim((string) $tenant->domain);
-                                            $normalizedDomain = preg_replace('#^https?://#i', '', $rawDomain);
-                                            $normalizedDomain = rtrim($normalizedDomain, '/');
-                                            $normalizedDomain = str_ireplace('locasthost', 'localhost', $normalizedDomain);
-                                            $scheme = request()->isSecure() ? 'https' : 'http';
-                                            $hasPort = preg_match('/:\\d+$/', $normalizedDomain) === 1;
-                                            $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
-                                            $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort . '/login?force_login=1';
-                                        @endphp
-                                        <a href="{{ $tenantUrl }}" target="_blank" rel="noopener noreferrer">{{ $normalizedDomain }}</a>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>{{ is_array($tenant->business_address) ? implode(', ', $tenant->business_address) : ($tenant->business_address ?: '—') }}</td>
-                                <td>{{ $tenant->admin_name ?? '—' }}</td>
-                                <td>{{ $tenant->admin_email ?? $tenant->business_email }}</td>
-                                <td>{{ ucfirst($tenant->plan ?? 'basic') }}</td>
-                                <td>
-                                    <a href="{{ route('tenants.show', $tenant->tenant_id) }}" class="btn btn-sm btn-outline-primary">Customize</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted">No tenants yet. Create your first tenant.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-5 py-10 text-center text-sm text-slate-500">No tenants yet. Create your first tenant.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
-    </div>
+    </section>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <p class="mb-1"><strong>Tenant host format:</strong> ramcar.localhost:8000</p>
-            <p class="mb-0 text-muted">Run: php artisan serve --host=127.0.0.1 --port=8000</p>
-        </div>
-    </div>
+    <section class="rounded-2xl border border-dashed border-slate-300 bg-white/70 px-5 py-4 text-sm text-slate-600">
+        <p class="mb-1 font-medium text-slate-700">Tenant host format: <span class="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">ramcar.localhost:8000</span></p>
+        <p class="mb-0">Run: <span class="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">php artisan serve --host=127.0.0.1 --port=8000</span></p>
+    </section>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.getElementById('tenantSearch')?.addEventListener('input', function (event) {
+        const query = event.target.value.trim().toLowerCase();
+        document.querySelectorAll('#tenantTable .tenant-row').forEach(function (row) {
+            row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+        });
+    });
+</script>
+@endpush
