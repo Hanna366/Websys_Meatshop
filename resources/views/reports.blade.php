@@ -1,317 +1,131 @@
 @extends('layouts.tenant')
 
 @section('title', 'Reports - Meat Shop POS')
+@section('page_title', 'Reports')
+@section('page_subtitle', 'Analyze sales performance, inventory flow, and category trends')
+
+@section('header_actions')
+    @if(session('permissions.advanced_analytics'))
+        <button type="button" onclick="generateAdvancedReport()" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
+            <i data-lucide="line-chart" class="h-4 w-4"></i>
+            Advanced Report
+        </button>
+        <button type="button" onclick="exportReports()" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+            <i data-lucide="file-down" class="h-4 w-4"></i>
+            Export
+        </button>
+    @else
+        <button type="button" disabled title="Advanced analytics requires Premium plan." class="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-slate-300 px-4 py-2 text-sm font-semibold text-white">
+            <i data-lucide="line-chart" class="h-4 w-4"></i>
+            Advanced Report
+        </button>
+    @endif
+@endsection
 
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Reports & Analytics</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-                @if(session('permissions.advanced_analytics'))
-                <button type="button" class="btn btn-sm btn-primary" onclick="generateAdvancedReport()">
-                    <i class="fas fa-chart-line me-1"></i> Advanced Report
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportReports()">
-                    <i class="fas fa-download me-1"></i> Export Reports
-                </button>
-                @else
-                <button type="button" class="btn btn-sm btn-primary" disabled title="Advanced analytics requires Premium plan.">
-                    <i class="fas fa-chart-line me-1"></i> Advanced Report
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Export requires Standard plan or higher.">
-                    <i class="fas fa-download me-1"></i> Export Reports
-                </button>
-                @endif
-            </div>
-            @if(!session('permissions.advanced_analytics'))
-            <div class="alert alert-warning mb-0">
-                <small><i class="fas fa-exclamation-triangle me-1"></i>
-                Advanced analytics and reporting require Premium plan. <a href="/pricing" class="alert-link">Upgrade now</a>.</small>
-            </div>
-            @endif
+<section class="space-y-6">
+    @if(!session('permissions.advanced_analytics'))
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Advanced analytics and report exports require Premium plan. <a href="/pricing" class="font-semibold underline">Upgrade now</a>.
         </div>
+    @endif
+
+    <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+        <h2 class="heading-font mb-4 text-lg font-semibold text-slate-900">Filters</h2>
+        <div class="grid gap-3 md:grid-cols-4">
+            <select class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-indigo-300">
+                <option>Today</option><option>This Week</option><option>This Month</option><option>This Year</option>
+            </select>
+            <select class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-indigo-300">
+                <option>Sales Report</option><option>Inventory Report</option><option>Customer Report</option><option>Financial Summary</option>
+            </select>
+            <select class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:border-indigo-300">
+                <option>All Categories</option><option>Beef</option><option>Pork</option><option>Poultry</option><option>Byproducts</option>
+            </select>
+            <button type="button" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Apply</button>
+        </div>
+    </section>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Revenue</p><p class="mt-2 text-2xl font-bold text-slate-900">PHP 345,680</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Sales</p><p class="mt-2 text-2xl font-bold text-emerald-600">247</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Avg Sale</p><p class="mt-2 text-2xl font-bold text-indigo-600">PHP 1,400</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Top Product</p><p class="mt-2 text-2xl font-bold text-amber-600">Prime Rib</p></article>
     </div>
 
-    <!-- Report Filters -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-primary">Report Filters</h6>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-3">
-                    <label class="form-label">Date Range</label>
-                    <select class="form-select">
-                        <option value="today">Today</option>
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="quarter">This Quarter</option>
-                        <option value="year">This Year</option>
-                        <option value="custom">Custom Range</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Report Type</label>
-                    <select class="form-select">
-                        <option value="sales">Sales Report</option>
-                        <option value="inventory">Inventory Report</option>
-                        <option value="customers">Customer Report</option>
-                        <option value="products">Product Performance</option>
-                        <option value="financial">Financial Summary</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Category</label>
-                    <select class="form-select">
-                        <option value="all">All Categories</option>
-                        <option value="beef">Beef</option>
-                        <option value="pork">Pork</option>
-                        <option value="poultry">Poultry</option>
-                        <option value="lamb">Lamb</option>
-                        <option value="byproducts">Byproducts</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="button" class="btn btn-primary w-100">
-                        <i class="fas fa-filter me-1"></i> Apply Filters
-                    </button>
-                </div>
-            </div>
-        </div>
+    <div class="grid gap-6 lg:grid-cols-3">
+        <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card lg:col-span-2">
+            <h3 class="mb-4 text-base font-semibold text-slate-800">Sales Trend</h3>
+            <canvas id="salesChart" height="120"></canvas>
+        </section>
+        <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+            <h3 class="mb-4 text-base font-semibold text-slate-800">Category Split</h3>
+            <canvas id="categoryChart" height="120"></canvas>
+        </section>
     </div>
 
-    <!-- Report Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Revenue</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">₱345,680</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+        <h3 class="mb-4 text-base font-semibold text-slate-800">Detailed Sales</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead><tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"><th class="px-3 py-3">Date</th><th class="px-3 py-3">Product</th><th class="px-3 py-3">Qty (kg)</th><th class="px-3 py-3">Unit Price</th><th class="px-3 py-3">Total</th><th class="px-3 py-3">Customer</th><th class="px-3 py-3">Status</th></tr></thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    <tr><td class="px-3 py-3">2024-02-20</td><td class="px-3 py-3">Prime Rib Steak</td><td class="px-3 py-3">15.5</td><td class="px-3 py-3">PHP 2,870</td><td class="px-3 py-3 font-semibold">PHP 44,485</td><td class="px-3 py-3">John Martinez</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Completed</span></td></tr>
+                    <tr><td class="px-3 py-3">2024-02-20</td><td class="px-3 py-3">Ribeye</td><td class="px-3 py-3">8.2</td><td class="px-3 py-3">PHP 3,570</td><td class="px-3 py-3 font-semibold">PHP 29,274</td><td class="px-3 py-3">Maria Santos</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Completed</span></td></tr>
+                    <tr><td class="px-3 py-3">2024-02-19</td><td class="px-3 py-3">Brisket</td><td class="px-3 py-3">22.8</td><td class="px-3 py-3">PHP 980</td><td class="px-3 py-3 font-semibold">PHP 22,344</td><td class="px-3 py-3">Linda Reyes</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Completed</span></td></tr>
+                </tbody>
+            </table>
         </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Sales</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">247</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Avg. Sale Value</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">₱1,400</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Top Product</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">Prime Rib</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-trophy fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </section>
+</section>
+@endsection
 
-    <!-- Charts Section -->
-    <div class="row">
-        <div class="col-xl-8 col-lg-7">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Sales Trend</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="salesChart" width="400" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-4 col-lg-5">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">Product Categories</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="categoryChart" width="400" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Detailed Report Table -->
-    <div class="card">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-primary">Detailed Sales Report</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Product</th>
-                            <th>Quantity (kg)</th>
-                            <th>Unit Price</th>
-                            <th>Total Amount</th>
-                            <th>Customer</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>2024-02-20</td>
-                            <td>Prime Rib Steak</td>
-                            <td>15.5</td>
-                            <td>₱2,870</td>
-                            <td class="text-end fw-bold">₱44,485</td>
-                            <td>John Martinez</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                        </tr>
-                        <tr>
-                            <td>2024-02-20</td>
-                            <td>Ribeye</td>
-                            <td>8.2</td>
-                            <td>₱3,570</td>
-                            <td class="text-end fw-bold">₱29,274</td>
-                            <td>Maria Santos</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                        </tr>
-                        <tr>
-                            <td>2024-02-20</td>
-                            <td>Tenderloin</td>
-                            <td>4.3</td>
-                            <td>₱4,020</td>
-                            <td class="text-end fw-bold">₱17,286</td>
-                            <td>Roberto Cruz</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                        </tr>
-                        <tr>
-                            <td>2024-02-20</td>
-                            <td>Brisket</td>
-                            <td>22.8</td>
-                            <td>₱980</td>
-                            <td class="text-end fw-bold">₱22,344</td>
-                            <td>Linda Reyes</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                        </tr>
-                        <tr>
-                            <td>2024-02-20</td>
-                            <td>Chuck Roll</td>
-                            <td>18.5</td>
-                            <td>₱1,870</td>
-                            <td class="text-end fw-bold">₱34,595</td>
-                            <td>Carlos Mendoza</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                        </tr>
-                        <tr>
-                            <td>2024-02-19</td>
-                            <td>Short Plate</td>
-                            <td>12.3</td>
-                            <td>₱1,020</td>
-                            <td class="text-end fw-bold">₱12,546</td>
-                            <td>Antonio Dela Cruz</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                        </tr>
-                        <tr>
-                            <td>2024-02-19</td>
-                            <td>Oyster Blade</td>
-                            <td>9.8</td>
-                            <td>₱1,720</td>
-                            <td class="text-end fw-bold">₱16,856</td>
-                            <td>Rosa Martinez</td>
-                            <td><span class="badge bg-success">Completed</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Sales Trend Chart
-    const salesCtx = document.getElementById('salesChart').getContext('2d');
+function toast(message, icon = 'success') {
+    if (window.Swal) {
+        Swal.fire({ toast: true, position: 'top-end', timer: 2300, showConfirmButton: false, icon, title: message });
+        return;
+    }
+    alert(message);
+}
+
+function generateAdvancedReport() { toast('Generating advanced report...', 'info'); }
+function exportReports() { toast('Report export started.', 'success'); }
+
+const salesCtx = document.getElementById('salesChart');
+if (salesCtx && window.Chart) {
     new Chart(salesCtx, {
         type: 'line',
         data: {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
             datasets: [{
-                label: 'Sales (₱)',
+                label: 'Sales (PHP)',
                 data: [12500, 19800, 15200, 22300, 18900, 24600, 31200],
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.4
+                borderColor: 'rgb(37, 99, 235)',
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                tension: 0.35,
+                fill: true
             }]
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            }
-        }
+        options: { responsive: true, plugins: { legend: { display: false } } }
     });
+}
 
-    // Category Chart
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+const categoryCtx = document.getElementById('categoryChart');
+if (categoryCtx && window.Chart) {
     new Chart(categoryCtx, {
         type: 'doughnut',
         data: {
             labels: ['Beef', 'Pork', 'Poultry', 'Lamb', 'Byproducts'],
             datasets: [{
                 data: [45, 25, 15, 10, 5],
-                backgroundColor: [
-                    'rgba(220, 53, 69, 0.8)',
-                    'rgba(255, 159, 64, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(255, 193, 7, 0.8)'
-                ]
+                backgroundColor: ['#dc2626', '#f97316', '#3b82f6', '#eab308', '#14b8a6']
             }]
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                }
-            }
-        }
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
+}
 </script>
-@endsection
+@endpush
