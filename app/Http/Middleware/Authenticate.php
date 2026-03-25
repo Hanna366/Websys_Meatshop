@@ -16,8 +16,10 @@ class Authenticate
      */
     public function handle(Request $request, Closure $next)
     {
-        // Check if user is authenticated via session
-        if (!session('authenticated')) {
+        $sessionContext = (string) session('auth_context', '');
+
+        // Require authentication for the active context (central or specific tenant).
+        if (!session('authenticated') || $sessionContext !== $this->currentAuthContext()) {
             return redirect('/login');
         }
 
@@ -28,5 +30,14 @@ class Authenticate
             ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('Expires', 'Sat, 01 Jan 1990 00:00:00 GMT');
+    }
+
+    private function currentAuthContext(): string
+    {
+        if (app()->bound('tenant') && tenant()) {
+            return 'tenant:' . tenant()->tenant_id;
+        }
+
+        return 'central';
     }
 }

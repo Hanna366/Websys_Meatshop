@@ -12,10 +12,26 @@ use Illuminate\Support\Str;
 
 class SimpleAuthController extends Controller
 {
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
-        // If already authenticated, redirect to dashboard
-        if (session('authenticated')) {
+        $currentContext = $this->currentAuthContext();
+
+        if ($request->boolean('force_login')) {
+            session()->forget(['authenticated', 'auth_context', 'user']);
+            return view('auth.login');
+        }
+
+        // Tenant domains should always show the login screen when opened.
+        if (str_starts_with($currentContext, 'tenant:')) {
+            if (session('authenticated') && session('auth_context') === $currentContext) {
+                session()->forget(['authenticated', 'auth_context', 'user']);
+            }
+
+            return view('auth.login');
+        }
+
+        // Redirect only when authenticated for this exact context (central).
+        if (session('authenticated') && session('auth_context') === $currentContext) {
             return redirect('/dashboard');
         }
         
@@ -54,6 +70,7 @@ class SimpleAuthController extends Controller
 
             session([
                 'authenticated' => true,
+                'auth_context' => $this->currentAuthContext(),
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -191,5 +208,14 @@ class SimpleAuthController extends Controller
         session()->invalidate();
         session()->regenerateToken();
         return redirect('/login');
+    }
+
+    private function currentAuthContext(): string
+    {
+        if (app()->bound('tenant') && tenant()) {
+            return 'tenant:' . tenant()->tenant_id;
+        }
+
+        return 'central';
     }
 }
