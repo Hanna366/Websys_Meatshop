@@ -1,9 +1,9 @@
-@extends('layouts.central')
 
-@section('title', 'Plans')
 
-@section('content')
-@php
+<?php $__env->startSection('title', 'Plans'); ?>
+
+<?php $__env->startSection('content'); ?>
+<?php
     $plans = [
         [
             'id' => 'basic',
@@ -78,7 +78,7 @@
             'check' => 'text-rose-600',
         ],
     ];
-@endphp
+?>
 
 <div class="mx-auto w-full max-w-6xl space-y-6 p-6">
     <section class="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
@@ -96,7 +96,7 @@
                     Annual
                     <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Save 15%</span>
                 </button>
-                <a href="{{ route('subscription.billing') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                <a href="<?php echo e(route('subscription.billing')); ?>" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
                     <i data-lucide="receipt-text" class="h-4 w-4"></i>
                     Manage Billing
                 </a>
@@ -105,58 +105,59 @@
     </section>
 
     <section class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        @foreach($plans as $plan)
-            @php
+        <?php $__currentLoopData = $plans; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $plan): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php
                 $accent = $accentClasses[$plan['accent']];
-            @endphp
-            <article class="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-xl {{ $plan['popular'] ? 'ring-2 ring-rose-300/60' : '' }}">
-                @if($plan['popular'])
+            ?>
+            <article class="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-xl <?php echo e($plan['popular'] ? 'ring-2 ring-rose-300/60' : ''); ?>">
+                <?php if($plan['popular']): ?>
                     <div class="absolute right-4 top-4 rounded-full bg-gradient-to-r from-rose-500 to-indigo-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">Most Popular</div>
-                @endif
+                <?php endif; ?>
 
                 <div class="mb-5">
-                    <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold {{ $accent['badge'] }}">{{ $plan['tag'] }}</span>
-                    <h3 class="heading-font mt-3 text-2xl font-semibold text-slate-900">{{ $plan['name'] }}</h3>
-                    <p class="mt-1 text-sm text-slate-500">{{ $plan['description'] }}</p>
+                    <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold <?php echo e($accent['badge']); ?>"><?php echo e($plan['tag']); ?></span>
+                    <h3 class="heading-font mt-3 text-2xl font-semibold text-slate-900"><?php echo e($plan['name']); ?></h3>
+                    <p class="mt-1 text-sm text-slate-500"><?php echo e($plan['description']); ?></p>
                 </div>
 
                 <div class="mb-5">
                     <div class="flex items-end gap-1">
-                        <span class="price heading-font text-4xl font-semibold text-slate-900" data-monthly="{{ $plan['price_monthly'] }}" data-annual="{{ $plan['price_annual'] }}">${{ $plan['price_monthly'] }}</span>
+                        <span class="price heading-font text-4xl font-semibold text-slate-900" data-monthly="<?php echo e($plan['price_monthly']); ?>" data-annual="<?php echo e($plan['price_annual']); ?>">$<?php echo e($plan['price_monthly']); ?></span>
                         <span class="mb-1 text-sm text-slate-500">/month</span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500">Billed monthly. Annual saves about 15%.</p>
-                    <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r {{ $accent['ring'] }}"></div>
+                    <div class="mt-4 h-1.5 rounded-full bg-gradient-to-r <?php echo e($accent['ring']); ?>"></div>
                 </div>
 
                 <ul class="space-y-2.5 text-sm">
-                    @foreach($plan['features'] as $feature)
-                        <li class="flex items-start gap-2.5 {{ $feature['included'] ? 'text-slate-700' : 'text-slate-400' }}">
-                            @if($feature['included'])
-                                <i data-lucide="check-circle-2" class="mt-0.5 h-4 w-4 shrink-0 {{ $accent['check'] }}"></i>
-                            @else
+                    <?php $__currentLoopData = $plan['features']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $feature): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <li class="flex items-start gap-2.5 <?php echo e($feature['included'] ? 'text-slate-700' : 'text-slate-400'); ?>">
+                            <?php if($feature['included']): ?>
+                                <i data-lucide="check-circle-2" class="mt-0.5 h-4 w-4 shrink-0 <?php echo e($accent['check']); ?>"></i>
+                            <?php else: ?>
                                 <i data-lucide="minus-circle" class="mt-0.5 h-4 w-4 shrink-0 text-slate-300"></i>
-                            @endif
-                            <span>{{ $feature['label'] }}</span>
+                            <?php endif; ?>
+                            <span><?php echo e($feature['label']); ?></span>
                         </li>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </ul>
 
                 <div class="mt-6 flex items-center gap-2">
-                    <button type="button" class="inline-flex flex-1 items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold transition {{ $accent['button'] }}" onclick="selectPlan('{{ $plan['id'] }}')">
-                        Choose {{ $plan['name'] }}
+                    <button type="button" class="inline-flex flex-1 items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold transition <?php echo e($accent['button']); ?>" onclick="selectPlan('<?php echo e($plan['id']); ?>')">
+                        Choose <?php echo e($plan['name']); ?>
+
                     </button>
                     <button type="button" class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700" aria-label="View plan details">
                         <i data-lucide="chevron-right" class="h-4 w-4"></i>
                     </button>
                 </div>
             </article>
-        @endforeach
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </section>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
     function selectPlan(plan) {
         const normalized = String(plan || '').toLowerCase();
@@ -191,4 +192,6 @@
         setBillingMode('annual');
     });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.central', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views\pricing.blade.php ENDPATH**/ ?>

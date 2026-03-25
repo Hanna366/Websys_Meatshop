@@ -231,4 +231,4 @@
     <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
 </html>
-<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/layouts/central.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views\layouts\central.blade.php ENDPATH**/ ?>
