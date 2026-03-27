@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Services\PricingService;
 use App\Services\ProductService;
+use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ProductController extends Controller
 {
@@ -62,6 +65,22 @@ class ProductController extends Controller
         $user = $request->user();
         if (!$user || !$user->tenant_id) {
             return response()->json(['success' => false, 'message' => 'Tenant context is required.'], 401);
+        }
+
+        $currentProductCount = Schema::hasColumn('products', 'tenant_id')
+            ? Product::where('tenant_id', (string) $user->tenant_id)->count()
+            : Product::count();
+
+        if (!SubscriptionService::isWithinLimit('max_products', $currentProductCount + 1)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product limit reached for your current plan. Upgrade to add more products.',
+                'data' => [
+                    'limit_key' => 'max_products',
+                    'current_count' => $currentProductCount,
+                    'plan' => SubscriptionService::resolveCurrentPlan(),
+                ],
+            ], 403);
         }
 
         $product = $this->products->createForTenant((string) $user->tenant_id, (int) $user->id, $validated);

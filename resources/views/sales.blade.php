@@ -4,15 +4,21 @@
 @section('page_title', 'Sales')
 @section('page_subtitle', 'Monitor transactions, payment channels, and daily branch revenue')
 
+@php
+    $canExportSales = \App\Services\SubscriptionService::hasFeature('data_export')
+        || \App\Services\SubscriptionService::hasFeature('export_csv');
+    $canAccessPos = \App\Services\SubscriptionService::hasFeature('pos_access');
+@endphp
+
 @section('header_actions')
-    @if(session('permissions.data_export'))
+    @if($canExportSales)
         <button type="button" onclick="exportSales()" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
             <i data-lucide="file-down" class="h-4 w-4"></i>
             Export
         </button>
     @endif
 
-    @if(session('permissions.pos_access'))
+    @if($canAccessPos)
         <button type="button" onclick="showNewSaleModal()" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
             <i data-lucide="plus" class="h-4 w-4"></i>
             New Sale
@@ -22,7 +28,7 @@
 
 @section('content')
 <section class="space-y-6">
-    @if(!session('permissions.pos_access'))
+    @if(!$canAccessPos)
         <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             POS functionality requires Standard plan or higher. <a href="/pricing" class="font-semibold underline">Upgrade now</a>.
         </div>
@@ -31,23 +37,23 @@
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Today</p>
-            <p class="mt-2 text-2xl font-bold text-slate-900">PHP 12,450</p>
-            <p class="mt-1 text-xs text-slate-500">36 completed transactions</p>
+            <p class="mt-2 text-2xl font-bold text-slate-900">PHP {{ number_format((float) data_get($salesStats ?? [], 'today_revenue', 0), 2) }}</p>
+            <p class="mt-1 text-xs text-slate-500">Completed sales for today</p>
         </article>
         <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">This Week</p>
-            <p class="mt-2 text-2xl font-bold text-emerald-600">PHP 87,320</p>
-            <p class="mt-1 text-xs text-slate-500">+8.2% from last week</p>
+            <p class="mt-2 text-2xl font-bold text-emerald-600">PHP {{ number_format((float) data_get($salesStats ?? [], 'week_revenue', 0), 2) }}</p>
+            <p class="mt-1 text-xs text-slate-500">Current week revenue</p>
         </article>
         <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">This Month</p>
-            <p class="mt-2 text-2xl font-bold text-indigo-600">PHP 345,680</p>
-            <p class="mt-1 text-xs text-slate-500">On track for target</p>
+            <p class="mt-2 text-2xl font-bold text-indigo-600">PHP {{ number_format((float) data_get($salesStats ?? [], 'month_revenue', 0), 2) }}</p>
+            <p class="mt-1 text-xs text-slate-500">Current month revenue</p>
         </article>
         <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Transactions</p>
-            <p class="mt-2 text-2xl font-bold text-amber-600">247</p>
-            <p class="mt-1 text-xs text-slate-500">Average order PHP 1,399</p>
+            <p class="mt-2 text-2xl font-bold text-amber-600">{{ number_format((int) data_get($salesStats ?? [], 'month_transactions', 0)) }}</p>
+            <p class="mt-1 text-xs text-slate-500">Average order PHP {{ number_format((float) data_get($salesStats ?? [], 'average_order', 0), 2) }}</p>
         </article>
     </div>
 
@@ -72,36 +78,32 @@
                     </tr>
                 </thead>
                 <tbody id="salesTable" class="divide-y divide-slate-100 text-slate-700">
-                    <tr>
-                        <td class="px-3 py-3 font-medium">#S001</td>
-                        <td class="px-3 py-3">John Martinez</td>
-                        <td class="px-3 py-3">3 items</td>
-                        <td class="px-3 py-3 font-semibold">PHP 8,450</td>
-                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Cash</span></td>
-                        <td class="px-3 py-3">2024-02-20 14:30</td>
-                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Completed</span></td>
-                        <td class="px-3 py-3 text-right"><button onclick="viewSale('#S001')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">View</button></td>
-                    </tr>
-                    <tr>
-                        <td class="px-3 py-3 font-medium">#S002</td>
-                        <td class="px-3 py-3">Maria Santos</td>
-                        <td class="px-3 py-3">5 items</td>
-                        <td class="px-3 py-3 font-semibold">PHP 12,340</td>
-                        <td class="px-3 py-3"><span class="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700">Card</span></td>
-                        <td class="px-3 py-3">2024-02-20 13:45</td>
-                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Completed</span></td>
-                        <td class="px-3 py-3 text-right"><button onclick="printSale('#S002')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Receipt</button></td>
-                    </tr>
-                    <tr>
-                        <td class="px-3 py-3 font-medium">#S003</td>
-                        <td class="px-3 py-3">Roberto Cruz</td>
-                        <td class="px-3 py-3">2 items</td>
-                        <td class="px-3 py-3 font-semibold">PHP 5,680</td>
-                        <td class="px-3 py-3"><span class="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">GCash</span></td>
-                        <td class="px-3 py-3">2024-02-20 12:20</td>
-                        <td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Completed</span></td>
-                        <td class="px-3 py-3 text-right"><button onclick="viewSale('#S003')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">View</button></td>
-                    </tr>
+                    @forelse(($salesRows ?? collect()) as $sale)
+                        @php
+                            $saleCode = $sale->sale_code ?: ('SAL-' . $sale->id);
+                            $itemsCount = collect($sale->items ?? [])->count();
+                            $status = ucfirst((string) ($sale->status ?? 'pending'));
+                            $statusClass = [
+                                'Completed' => 'bg-emerald-100 text-emerald-700',
+                                'Pending' => 'bg-amber-100 text-amber-700',
+                                'Voided' => 'bg-rose-100 text-rose-700',
+                            ][$status] ?? 'bg-slate-100 text-slate-700';
+                        @endphp
+                        <tr>
+                            <td class="px-3 py-3 font-medium">#{{ $saleCode }}</td>
+                            <td class="px-3 py-3">{{ data_get($salesCustomerNames ?? [], (string) $sale->customer_id, 'Walk-in Customer') }}</td>
+                            <td class="px-3 py-3">{{ $itemsCount }} item{{ $itemsCount === 1 ? '' : 's' }}</td>
+                            <td class="px-3 py-3 font-semibold">PHP {{ number_format((float) ($sale->grand_total ?? $sale->total ?? 0), 2) }}</td>
+                            <td class="px-3 py-3"><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">N/A</span></td>
+                            <td class="px-3 py-3">{{ optional($sale->created_at)->format('Y-m-d H:i') ?? '-' }}</td>
+                            <td class="px-3 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">{{ $status }}</span></td>
+                            <td class="px-3 py-3 text-right"><button onclick="viewSale('#{{ $saleCode }}')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">View</button></td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="px-3 py-8 text-center text-sm text-slate-500">No sales found for this tenant yet.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

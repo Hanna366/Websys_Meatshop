@@ -144,8 +144,16 @@
                         <p class="mb-0 text-xs text-white/75">SaaS Operations Hub</p>
                     </div>
                 </div>
-                @if(session('user.name'))
-                    <p class="mb-0 text-sm text-white/75">{{ session('user.name') }}</p>
+                @php
+                    $displayName = session('user.name');
+                    $sessionUserId = session('user.id');
+
+                    if ($sessionUserId) {
+                        $displayName = \App\Models\User::query()->whereKey($sessionUserId)->value('name') ?? $displayName;
+                    }
+                @endphp
+                @if($displayName)
+                    <p class="mb-0 text-sm text-white/75">{{ $displayName }}</p>
                 @endif
             </div>
 

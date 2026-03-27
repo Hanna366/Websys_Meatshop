@@ -49,6 +49,8 @@ class SimpleAuthController extends Controller
         $user = User::where('email', $credentials['email'])->first();
 
         if ($user && Hash::check($credentials['password'], $user->password)) {
+            $currentTenant = null;
+
             if (app()->bound('tenant')) {
                 $currentTenant = tenant();
 
@@ -59,12 +61,15 @@ class SimpleAuthController extends Controller
                 }
             }
 
-            $tenant = $user->tenant;
+            // In tenant context, always trust the active resolved tenant.
+            // The user->tenant relation can be unavailable when the user comes from tenant DB.
+            $tenant = $currentTenant ?? $user->tenant;
             $plan = 'Basic';
             $features = ['Up to 100 products', 'Inventory tracking', 'Single user'];
 
             if ($tenant) {
-                $plan = ucfirst($tenant->plan ?? 'basic');
+                $tenantPlan = (string) ($tenant->plan ?? data_get($tenant->subscription, 'plan', 'basic'));
+                $plan = ucfirst(strtolower($tenantPlan));
                 $features = [];
             }
 

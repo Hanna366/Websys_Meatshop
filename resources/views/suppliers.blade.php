@@ -4,15 +4,21 @@
 @section('page_title', 'Suppliers')
 @section('page_subtitle', 'Manage vendor relationships, status, and incoming deliveries')
 
+@php
+    $canExportSuppliers = \App\Services\SubscriptionService::hasFeature('data_export')
+        || \App\Services\SubscriptionService::hasFeature('export_csv');
+    $canManageSuppliers = \App\Services\SubscriptionService::hasFeature('supplier_management');
+@endphp
+
 @section('header_actions')
-    @if(session('permissions.data_export'))
+    @if($canExportSuppliers)
         <button type="button" onclick="notify('Supplier export started.', 'success')" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
             <i data-lucide="file-down" class="h-4 w-4"></i>
             Export
         </button>
     @endif
 
-    @if(session('permissions.supplier_management'))
+    @if($canManageSuppliers)
         <button type="button" onclick="notify('New supplier form will open here.', 'info')" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
             <i data-lucide="plus" class="h-4 w-4"></i>
             Add Supplier
@@ -22,17 +28,17 @@
 
 @section('content')
 <section class="space-y-6">
-    @if(!session('permissions.supplier_management'))
+    @if(!$canManageSuppliers)
         <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Supplier management requires Standard plan or higher. <a href="/pricing" class="font-semibold underline">Upgrade now</a>.
         </div>
     @endif
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Suppliers</p><p class="mt-2 text-2xl font-bold text-slate-900">18</p></article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Active</p><p class="mt-2 text-2xl font-bold text-emerald-600">15</p></article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending Orders</p><p class="mt-2 text-2xl font-bold text-indigo-600">7</p></article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Deliveries Today</p><p class="mt-2 text-2xl font-bold text-amber-600">3</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Suppliers</p><p class="mt-2 text-2xl font-bold text-slate-900">{{ number_format((int) data_get($supplierStats ?? [], 'total', 0)) }}</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Active</p><p class="mt-2 text-2xl font-bold text-emerald-600">{{ number_format((int) data_get($supplierStats ?? [], 'active', 0)) }}</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending Orders</p><p class="mt-2 text-2xl font-bold text-indigo-600">{{ number_format((int) data_get($supplierStats ?? [], 'pending', 0)) }}</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Deliveries Today</p><p class="mt-2 text-2xl font-bold text-amber-600">{{ number_format((int) data_get($supplierStats ?? [], 'deliveries_today', 0)) }}</p></article>
     </div>
 
     <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
@@ -53,9 +59,34 @@
                     </tr>
                 </thead>
                 <tbody id="suppliersTable" class="divide-y divide-slate-100 text-slate-700">
-                    <tr><td class="px-3 py-3">#S001</td><td class="px-3 py-3 font-medium">Beef Masters Inc.</td><td class="px-3 py-3">Antonio Dela Cruz</td><td class="px-3 py-3">+63 912 3456</td><td class="px-3 py-3">Beef Products</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
-                    <tr><td class="px-3 py-3">#S003</td><td class="px-3 py-3 font-medium">Fresh Farms Ltd.</td><td class="px-3 py-3">Roberto Santos</td><td class="px-3 py-3">+63 918 2345</td><td class="px-3 py-3">Beef</td><td class="px-3 py-3"><span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Pending</span></td></tr>
-                    <tr><td class="px-3 py-3">#S005</td><td class="px-3 py-3 font-medium">Quality Meats Supply</td><td class="px-3 py-3">Carlos Mendez</td><td class="px-3 py-3">+63 916 8901</td><td class="px-3 py-3">Mixed Products</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
+                    @forelse(($supplierRows ?? collect()) as $supplier)
+                        @php
+                            $companyName = (string) ($supplier->name ?? data_get($supplier->business_info, 'name', 'Supplier #' . $supplier->id));
+                            $contactName = (string) (data_get($supplier->details, 'contact_person')
+                                ?? data_get($supplier->business_details, 'contact_person')
+                                ?? data_get($supplier->business_info, 'name', '-'));
+                            $phone = (string) ($supplier->phone ?? data_get($supplier->business_info, 'phone', '-'));
+                            $products = data_get($supplier->product_categories, '0')
+                                ? implode(', ', array_slice((array) $supplier->product_categories, 0, 2))
+                                : ((string) (data_get($supplier->details, 'product_line') ?? 'N/A'));
+                            $status = ucfirst((string) ($supplier->status ?? 'active'));
+                            $statusClass = strtolower($status) === 'active'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : (strtolower($status) === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700');
+                        @endphp
+                        <tr>
+                            <td class="px-3 py-3">#{{ $supplier->supplier_code ?: ('SUP-' . $supplier->id) }}</td>
+                            <td class="px-3 py-3 font-medium">{{ $companyName }}</td>
+                            <td class="px-3 py-3">{{ $contactName !== '' ? $contactName : '-' }}</td>
+                            <td class="px-3 py-3">{{ $phone !== '' ? $phone : '-' }}</td>
+                            <td class="px-3 py-3">{{ $products !== '' ? $products : 'N/A' }}</td>
+                            <td class="px-3 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">{{ $status }}</span></td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-3 py-8 text-center text-sm text-slate-500">No suppliers found for this tenant yet.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

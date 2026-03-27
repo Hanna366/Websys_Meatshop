@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,28 @@ class Authenticate
         // Require authentication for the active context (central or specific tenant).
         if (!session('authenticated') || $sessionContext !== $this->currentAuthContext()) {
             return redirect('/login');
+        }
+
+        $sessionUserId = session('user.id');
+        if ($sessionUserId) {
+            $freshUser = User::query()->select(['id', 'name', 'email', 'role', 'tenant_id'])->find($sessionUserId);
+
+            if (!$freshUser) {
+                session()->invalidate();
+                session()->regenerateToken();
+
+                return redirect('/login');
+            }
+
+            session(['user' => [
+                'id' => $freshUser->id,
+                'name' => $freshUser->name,
+                'email' => $freshUser->email,
+                'role' => $freshUser->role,
+                'tenant_id' => $freshUser->tenant_id,
+                'plan' => session('user.plan', 'Basic'),
+                'features' => session('user.features', []),
+            ]]);
         }
 
         $response = $next($request);

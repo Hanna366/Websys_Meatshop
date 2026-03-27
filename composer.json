@@ -14,6 +14,7 @@
         "laravel/socialite": "^5.25",
         "laravel/tinker": "^2.8",
         "maatwebsite/excel": "^3.1",
+        "stancl/tenancy": "^3.9",
         "spatie/laravel-permission": "^5.11"
     },
     "require-dev": {

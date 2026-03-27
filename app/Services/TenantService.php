@@ -19,6 +19,7 @@ class TenantService
      */
     public static function createTenant(array $data): Tenant
     {
+        $plan = SubscriptionService::normalizePlan((string) ($data['plan'] ?? 'basic'));
         $tenantId = Str::uuid()->toString();
         $defaultConnection = config('database.default');
         $connectionConfig = config("database.connections.{$defaultConnection}", []);
@@ -56,12 +57,15 @@ class TenantService
         $planEndsAt = $data['plan_ends_at'] ?? $now->copy()->addMonth();
         $billingCycle = $data['billing_cycle'] ?? 'monthly';
         $subscriptionPayload = array_merge([
-            'plan' => $data['plan'] ?? 'basic',
+            'plan' => $plan,
             'status' => 'active',
             'billing_cycle' => $billingCycle,
             'current_period_start' => $planStartedAt instanceof \Carbon\CarbonInterface ? $planStartedAt->toDateString() : (string) $planStartedAt,
             'current_period_end' => $planEndsAt instanceof \Carbon\CarbonInterface ? $planEndsAt->toDateString() : (string) $planEndsAt,
         ], $data['subscription'] ?? []);
+
+        $planLimits = SubscriptionService::getPlanLimits($plan);
+        $limitsPayload = array_merge($planLimits, is_array($data['limits'] ?? null) ? $data['limits'] : []);
 
         // Store the tenant record (password stored encrypted)
         $tenant = Tenant::create([
@@ -73,7 +77,7 @@ class TenantService
             'subscription' => $subscriptionPayload,
             'settings' => $data['settings'] ?? [],
             'usage' => $data['usage'] ?? [],
-            'limits' => $data['limits'] ?? [],
+            'limits' => $limitsPayload,
             'status' => $data['status'] ?? 'active',
             'payment_status' => $data['payment_status'] ?? 'paid',
             'suspended_message' => $data['suspended_message'] ?? 'Please contact your administrator.',
@@ -81,7 +85,7 @@ class TenantService
             'db_name' => $dbName,
             'db_username' => $dbUsername,
             'db_password' => encrypt($dbPasswordPlain),
-            'plan' => $data['plan'] ?? 'basic',
+            'plan' => $plan,
             'plan_started_at' => $planStartedAt,
             'plan_ends_at' => $planEndsAt,
             'admin_name' => $data['admin_name'] ?? null,
@@ -98,6 +102,7 @@ class TenantService
 
         // Run tenant migrations
         self::runTenantMigrations($tenant);
+        self::runTenantSeeders($tenant);
 
         // Create initial admin user on tenant database
         $adminPassword = $data['password'] ?? Str::random(16);
@@ -294,7 +299,7 @@ class TenantService
             : ($billingCycle === 'annual' ? $periodStart->copy()->addYear() : $periodStart->copy()->addMonth());
 
         $status = $payload['subscription_status'] ?? 'active';
-        $plan = $payload['plan'] ?? ($tenant->plan ?? 'basic');
+        $plan = SubscriptionService::normalizePlan((string) ($payload['plan'] ?? ($tenant->plan ?? 'basic')));
 
         $existingSubscription = is_array($tenant->subscription) ? $tenant->subscription : [];
 
@@ -312,6 +317,11 @@ class TenantService
             'current_period_end' => $periodEnd->toDateString(),
             'updated_at' => $now->toDateTimeString(),
         ]);
+
+        $managedLimits = SubscriptionService::getPlanLimits($plan);
+        $existingLimits = is_array($tenant->limits) ? $tenant->limits : [];
+        $customLimitKeys = array_diff_key($existingLimits, $managedLimits);
+        $tenant->limits = array_merge($managedLimits, $customLimitKeys);
 
         if ($status === 'expired') {
             $tenant->payment_status = 'overdue';
@@ -375,6 +385,30 @@ class TenantService
             }
 
             throw $e;
+        }
+    }
+
+    /**
+     * Seed initial catalog and pricing data for a newly provisioned tenant.
+     */
+    public static function runTenantSeeders(Tenant $tenant): void
+    {
+        $tenantConfig = $tenant->getTenantDatabaseConfig();
+        config(['database.connections.tenant' => $tenantConfig]);
+        config(['seeding.tenant_id' => (string) $tenant->tenant_id]);
+
+        DB::purge('tenant');
+
+        tenancy()->initialize($tenant);
+
+        try {
+            Artisan::call('db:seed', [
+                '--database' => 'tenant',
+                '--class' => \Database\Seeders\KitayamaRetail2025Seeder::class,
+                '--force' => true,
+            ]);
+        } finally {
+            tenancy()->end();
         }
     }
 }

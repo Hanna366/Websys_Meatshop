@@ -16,6 +16,11 @@
 @endsection
 
 @section('content')
+@php
+    $tenantPlan = isset($tenant) && $tenant
+        ? ucfirst(strtolower((string) ($tenant->plan ?? data_get($tenant->subscription, 'plan', 'basic'))))
+        : null;
+@endphp
 <div class="space-y-6">
     <section class="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card">
         <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -27,7 +32,7 @@
                 @if(isset($tenant) && $tenant)
                     <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">Branch: {{ $tenant->business_name ?? $tenant->tenant_id }}</span>
                 @endif
-                <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Plan: {{ session('user.plan', ucfirst($tenant->plan ?? 'Basic')) }}</span>
+                <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Plan: {{ $tenantPlan ?? session('user.plan', 'Basic') }}</span>
             </div>
         </div>
     </section>
@@ -37,7 +42,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="mb-1 text-sm font-medium text-slate-500">Today's Sales</p>
-                    <h3 class="heading-font text-3xl font-semibold text-slate-900">$12,456</h3>
+                    <h3 class="heading-font text-3xl font-semibold text-slate-900">PHP {{ number_format((float) data_get($dashboardStats ?? [], 'today_sales', 0), 2) }}</h3>
                 </div>
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
                     <i data-lucide="dollar-sign" class="h-5 w-5"></i>
@@ -50,7 +55,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="mb-1 text-sm font-medium text-slate-500">Products</p>
-                    <h3 class="heading-font text-3xl font-semibold text-emerald-700">245</h3>
+                    <h3 class="heading-font text-3xl font-semibold text-emerald-700">{{ number_format((int) data_get($dashboardStats ?? [], 'products', 0)) }}</h3>
                 </div>
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
                     <i data-lucide="package" class="h-5 w-5"></i>
@@ -63,7 +68,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="mb-1 text-sm font-medium text-slate-500">Low Stock Items</p>
-                    <h3 class="heading-font text-3xl font-semibold text-amber-600">8</h3>
+                    <h3 class="heading-font text-3xl font-semibold text-amber-600">{{ number_format((int) data_get($dashboardStats ?? [], 'low_stock_items', 0)) }}</h3>
                 </div>
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
                     <i data-lucide="triangle-alert" class="h-5 w-5"></i>
@@ -76,7 +81,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="mb-1 text-sm font-medium text-slate-500">Customers</p>
-                    <h3 class="heading-font text-3xl font-semibold text-teal-700">1,234</h3>
+                    <h3 class="heading-font text-3xl font-semibold text-teal-700">{{ number_format((int) data_get($dashboardStats ?? [], 'customers', 0)) }}</h3>
                 </div>
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
                     <i data-lucide="users" class="h-5 w-5"></i>
@@ -107,31 +112,22 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
-                    @php
-                        $sales = [
-                            ['id' => 'ORD-001', 'customer' => 'John Smith', 'products' => 'Beef, Chicken, Pork', 'total' => '$156.78', 'status' => 'Completed', 'date' => '2024-02-20'],
-                            ['id' => 'ORD-002', 'customer' => 'Sarah Johnson', 'products' => 'Lamb, Turkey', 'total' => '$89.45', 'status' => 'Processing', 'date' => '2024-02-20'],
-                            ['id' => 'ORD-003', 'customer' => 'Mike Wilson', 'products' => 'Beef, Pork', 'total' => '$234.12', 'status' => 'Completed', 'date' => '2024-02-19'],
-                            ['id' => 'ORD-004', 'customer' => 'Emily Davis', 'products' => 'Chicken, Fish', 'total' => '$67.89', 'status' => 'Pending', 'date' => '2024-02-19'],
-                            ['id' => 'ORD-005', 'customer' => 'Robert Brown', 'products' => 'Beef, Lamb, Turkey', 'total' => '$312.45', 'status' => 'Completed', 'date' => '2024-02-18'],
-                        ];
-                    @endphp
-
-                    @forelse($sales as $sale)
+                    @forelse($recentSales ?? [] as $sale)
                         @php
                             $statusClass = [
                                 'Completed' => 'bg-emerald-50 text-emerald-700',
                                 'Processing' => 'bg-amber-50 text-amber-700',
                                 'Pending' => 'bg-sky-50 text-sky-700',
+                                'Voided' => 'bg-rose-50 text-rose-700',
                             ][$sale['status']] ?? 'bg-slate-100 text-slate-700';
                         @endphp
                         <tr class="transition hover:bg-indigo-50/40">
                             <td class="px-5 py-4 font-semibold text-slate-900">#{{ $sale['id'] }}</td>
                             <td class="px-5 py-4">{{ $sale['customer'] }}</td>
                             <td class="px-5 py-4 text-slate-600">{{ $sale['products'] }}</td>
-                            <td class="px-5 py-4 font-medium">{{ $sale['total'] }}</td>
+                            <td class="px-5 py-4 font-medium">PHP {{ number_format((float) $sale['total'], 2) }}</td>
                             <td class="px-5 py-4"><span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ $sale['status'] }}</span></td>
-                            <td class="px-5 py-4 text-slate-600">{{ $sale['date'] }}</td>
+                            <td class="px-5 py-4 text-slate-600">{{ $sale['date'] ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -155,10 +151,10 @@
             } @else null @endif,
             exported_at: new Date().toISOString(),
             stats: {
-                today_sales: '$12,456',
-                products: 245,
-                low_stock_items: 8,
-                customers: 1234
+                today_sales: '{{ number_format((float) data_get($dashboardStats ?? [], 'today_sales', 0), 2, '.', '') }}',
+                products: {{ (int) data_get($dashboardStats ?? [], 'products', 0) }},
+                low_stock_items: {{ (int) data_get($dashboardStats ?? [], 'low_stock_items', 0) }},
+                customers: {{ (int) data_get($dashboardStats ?? [], 'customers', 0) }}
             }
         };
 

@@ -4,16 +4,24 @@
 @section('page_title', 'Reports')
 @section('page_subtitle', 'Analyze sales performance, inventory flow, and category trends')
 
+@php
+    $canAdvancedAnalytics = \App\Services\SubscriptionService::hasFeature('advanced_analytics');
+    $canExportReports = \App\Services\SubscriptionService::hasFeature('data_export')
+        || \App\Services\SubscriptionService::hasFeature('export_csv');
+@endphp
+
 @section('header_actions')
-    @if(session('permissions.advanced_analytics'))
+    @if($canAdvancedAnalytics)
         <button type="button" onclick="generateAdvancedReport()" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
             <i data-lucide="line-chart" class="h-4 w-4"></i>
             Advanced Report
         </button>
+        @if($canExportReports)
         <button type="button" onclick="exportReports()" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
             <i data-lucide="file-down" class="h-4 w-4"></i>
             Export
         </button>
+        @endif
     @else
         <button type="button" disabled title="Advanced analytics requires Premium plan." class="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-slate-300 px-4 py-2 text-sm font-semibold text-white">
             <i data-lucide="line-chart" class="h-4 w-4"></i>
@@ -24,7 +32,7 @@
 
 @section('content')
 <section class="space-y-6">
-    @if(!session('permissions.advanced_analytics'))
+    @if(!$canAdvancedAnalytics)
         <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Advanced analytics and report exports require Premium plan. <a href="/pricing" class="font-semibold underline">Upgrade now</a>.
         </div>
@@ -47,10 +55,10 @@
     </section>
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Revenue</p><p class="mt-2 text-2xl font-bold text-slate-900">PHP 345,680</p></article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Sales</p><p class="mt-2 text-2xl font-bold text-emerald-600">247</p></article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Avg Sale</p><p class="mt-2 text-2xl font-bold text-indigo-600">PHP 1,400</p></article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Top Product</p><p class="mt-2 text-2xl font-bold text-amber-600">Prime Rib</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Revenue</p><p class="mt-2 text-2xl font-bold text-slate-900">PHP {{ number_format((float) data_get($reportStats ?? [], 'total_revenue', 0), 2) }}</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Sales</p><p class="mt-2 text-2xl font-bold text-emerald-600">{{ number_format((int) data_get($reportStats ?? [], 'total_sales', 0)) }}</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Avg Sale</p><p class="mt-2 text-2xl font-bold text-indigo-600">PHP {{ number_format((float) data_get($reportStats ?? [], 'average_sale', 0), 2) }}</p></article>
+        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Top Product</p><p class="mt-2 text-2xl font-bold text-amber-600">{{ (string) data_get($reportStats ?? [], 'top_product', 'No sales yet') }}</p></article>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
@@ -70,9 +78,28 @@
             <table class="min-w-full divide-y divide-slate-200 text-sm">
                 <thead><tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"><th class="px-3 py-3">Date</th><th class="px-3 py-3">Product</th><th class="px-3 py-3">Qty (kg)</th><th class="px-3 py-3">Unit Price</th><th class="px-3 py-3">Total</th><th class="px-3 py-3">Customer</th><th class="px-3 py-3">Status</th></tr></thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
-                    <tr><td class="px-3 py-3">2024-02-20</td><td class="px-3 py-3">Prime Rib Steak</td><td class="px-3 py-3">15.5</td><td class="px-3 py-3">PHP 2,870</td><td class="px-3 py-3 font-semibold">PHP 44,485</td><td class="px-3 py-3">John Martinez</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Completed</span></td></tr>
-                    <tr><td class="px-3 py-3">2024-02-20</td><td class="px-3 py-3">Ribeye</td><td class="px-3 py-3">8.2</td><td class="px-3 py-3">PHP 3,570</td><td class="px-3 py-3 font-semibold">PHP 29,274</td><td class="px-3 py-3">Maria Santos</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Completed</span></td></tr>
-                    <tr><td class="px-3 py-3">2024-02-19</td><td class="px-3 py-3">Brisket</td><td class="px-3 py-3">22.8</td><td class="px-3 py-3">PHP 980</td><td class="px-3 py-3 font-semibold">PHP 22,344</td><td class="px-3 py-3">Linda Reyes</td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Completed</span></td></tr>
+                    @forelse(($detailedSales ?? collect()) as $sale)
+                        @php
+                            $firstItem = collect($sale->items ?? [])->first() ?? [];
+                            $status = ucfirst((string) ($sale->status ?? 'pending'));
+                            $statusClass = $status === 'Completed'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : ($status === 'Voided' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700');
+                        @endphp
+                        <tr>
+                            <td class="px-3 py-3">{{ optional($sale->created_at)->format('Y-m-d') ?? '-' }}</td>
+                            <td class="px-3 py-3">{{ (string) ($firstItem['name'] ?? 'Mixed order') }}</td>
+                            <td class="px-3 py-3">{{ number_format((float) ($firstItem['quantity'] ?? 0), 2) }}</td>
+                            <td class="px-3 py-3">PHP {{ number_format((float) ($firstItem['unit_price'] ?? 0), 2) }}</td>
+                            <td class="px-3 py-3 font-semibold">PHP {{ number_format((float) ($sale->grand_total ?? $sale->total ?? 0), 2) }}</td>
+                            <td class="px-3 py-3">{{ data_get($salesCustomerNames ?? [], (string) $sale->customer_id, 'Walk-in Customer') }}</td>
+                            <td class="px-3 py-3"><span class="rounded-full px-2 py-1 text-xs font-semibold {{ $statusClass }}">{{ $status }}</span></td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-3 py-8 text-center text-sm text-slate-500">No completed sales data to report yet.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -94,15 +121,18 @@ function toast(message, icon = 'success') {
 function generateAdvancedReport() { toast('Generating advanced report...', 'info'); }
 function exportReports() { toast('Report export started.', 'success'); }
 
+const salesTrend = @json($salesTrend ?? []);
+const categorySplit = @json($categorySplit ?? []);
+
 const salesCtx = document.getElementById('salesChart');
 if (salesCtx && window.Chart) {
     new Chart(salesCtx, {
         type: 'line',
         data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            labels: salesTrend.map((entry) => entry.label),
             datasets: [{
                 label: 'Sales (PHP)',
-                data: [12500, 19800, 15200, 22300, 18900, 24600, 31200],
+                data: salesTrend.map((entry) => Number(entry.value || 0)),
                 borderColor: 'rgb(37, 99, 235)',
                 backgroundColor: 'rgba(37, 99, 235, 0.12)',
                 tension: 0.35,
@@ -118,9 +148,9 @@ if (categoryCtx && window.Chart) {
     new Chart(categoryCtx, {
         type: 'doughnut',
         data: {
-            labels: ['Beef', 'Pork', 'Poultry', 'Lamb', 'Byproducts'],
+            labels: categorySplit.map((entry) => entry.label),
             datasets: [{
-                data: [45, 25, 15, 10, 5],
+                data: categorySplit.map((entry) => Number(entry.value || 0)),
                 backgroundColor: ['#dc2626', '#f97316', '#3b82f6', '#eab308', '#14b8a6']
             }]
         },
