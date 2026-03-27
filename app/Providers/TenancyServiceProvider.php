@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+use Stancl\Tenancy\Resolvers\DomainTenantResolver;
+use Stancl\Tenancy\Resolvers\PathTenantResolver;
+use Stancl\Tenancy\Resolvers\RequestDataTenantResolver;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -20,6 +23,7 @@ class TenancyServiceProvider extends ServiceProvider
     {
         $this->mapRoutes();
         $this->makeTenancyMiddlewareHighestPriority();
+        $this->configureTenantResolverCache();
     }
 
     protected function mapRoutes(): void
@@ -51,6 +55,21 @@ class TenancyServiceProvider extends ServiceProvider
 
         foreach (array_reverse($tenancyMiddleware) as $middleware) {
             $this->app[Kernel::class]->prependToMiddlewarePriority($middleware);
+        }
+    }
+
+    protected function configureTenantResolverCache(): void
+    {
+        $cacheConfig = (array) config('tenancy.tenant_lookup_cache', []);
+
+        $enabled = (bool) ($cacheConfig['enabled'] ?? false);
+        $ttl = (int) ($cacheConfig['ttl'] ?? 3600);
+        $store = $cacheConfig['store'] ?? null;
+
+        foreach ([DomainTenantResolver::class, PathTenantResolver::class, RequestDataTenantResolver::class] as $resolverClass) {
+            $resolverClass::$shouldCache = $enabled;
+            $resolverClass::$cacheTTL = $ttl;
+            $resolverClass::$cacheStore = $store;
         }
     }
 }

@@ -38,20 +38,20 @@ class RouteServiceProvider extends ServiceProvider
 
         if (empty($centralDomains)) {
             Route::prefix('api')
-                ->middleware('api')
+                ->middleware(['api', 'central.domain'])
                 ->group($centralApiRoutes);
 
-            Route::middleware('web')->group(base_path('routes/web.php'));
+            Route::middleware(['web', 'central.domain'])->group(base_path('routes/web.php'));
             return;
         }
 
         foreach ($centralDomains as $domain) {
             Route::prefix('api')
-                ->middleware('api')
+                ->middleware(['api', 'central.domain'])
                 ->domain($domain)
                 ->group($centralApiRoutes);
 
-            Route::middleware('web')
+            Route::middleware(['web', 'central.domain'])
                 ->domain($domain)
                 ->group(base_path('routes/web.php'));
         }

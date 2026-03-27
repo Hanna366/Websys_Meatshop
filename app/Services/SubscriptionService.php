@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Session;
-
 class SubscriptionService
 {
     /**
@@ -11,7 +9,8 @@ class SubscriptionService
      */
     public static function normalizePlan(string $plan): string
     {
-        return strtolower(trim($plan));
+        $normalized = strtolower(trim($plan));
+        return array_key_exists($normalized, self::getPlanDefinitions()) ? $normalized : 'basic';
     }
 
     /**
@@ -22,9 +21,33 @@ class SubscriptionService
         $aliases = [
             'pos_access' => 'pos_system',
             'basic_reporting' => 'basic_reports',
+            'advanced_reporting' => 'advanced_analytics',
         ];
 
         return $aliases[$feature] ?? $feature;
+    }
+
+    /**
+     * Resolve active plan from tenant context first, then session.
+     */
+    public static function resolveCurrentPlan(): string
+    {
+        $tenant = tenant();
+
+        if ($tenant) {
+            $tenantPlan = (string) ($tenant->plan ?? data_get($tenant->subscription, 'plan', 'basic'));
+            return self::normalizePlan($tenantPlan);
+        }
+
+        return self::normalizePlan((string) data_get(session('user', []), 'plan', 'basic'));
+    }
+
+    /**
+     * Get configured plan definitions.
+     */
+    public static function getPlanDefinitions(): array
+    {
+        return (array) config('plans.definitions', []);
     }
 
     /**
@@ -32,24 +55,33 @@ class SubscriptionService
      */
     public static function getCurrentSubscription()
     {
-        $user = session('user');
-        
-        if (!$user) {
+        if (!session('authenticated')) {
             return null;
         }
 
-        $plan = self::normalizePlan((string) ($user['plan'] ?? 'premium'));
+        $plan = self::resolveCurrentPlan();
+        $priceMap = self::getPlanPricing();
+        $tenantSubscription = [];
+
+        $tenant = tenant();
+        if ($tenant) {
+            $tenantSubscription = is_array($tenant->subscription) ? $tenant->subscription : [];
+        }
+
+        $status = (string) ($tenantSubscription['status'] ?? 'active');
+        $periodStart = $tenantSubscription['current_period_start'] ?? now()->subMonth();
+        $periodEnd = $tenantSubscription['current_period_end'] ?? now()->addMonth();
 
         // Returns a deterministic subscription snapshot derived from session state.
         // This keeps middleware checks consistent while a DB-backed source is introduced.
         return [
             'id' => 1,
-            'user_id' => $user['id'] ?? 'demo_user',
+            'user_id' => data_get(session('user', []), 'id', 'demo_user'),
             'plan' => $plan,
-            'price' => self::getPlanPricing()[$plan] ?? 149,
-            'status' => 'active',
-            'starts_at' => now()->subMonth(),
-            'expires_at' => now()->addMonth(),
+            'price' => $priceMap[$plan] ?? null,
+            'status' => $status,
+            'starts_at' => $periodStart,
+            'expires_at' => $periodEnd,
             'payment_method' => 'credit_card',
             'last_payment_at' => now()->subMonth(),
             'next_billing_at' => now()->addMonth(),
@@ -73,7 +105,7 @@ class SubscriptionService
         $features = self::getPlanFeatures($subscription['plan']);
         $normalizedFeature = self::normalizeFeature((string) $feature);
 
-        return $features[$normalizedFeature] ?? false;
+        return (bool) ($features[$normalizedFeature] ?? false);
     }
 
     /**
@@ -83,70 +115,31 @@ class SubscriptionService
     {
         $plan = self::normalizePlan((string) $plan);
 
-        $features = [
-            'basic' => [
-                'inventory_tracking' => true,
-                'stock_alerts' => true,
-                'pos_system' => false,
-                'supplier_management' => false,
-                'customer_management' => false,
-                'basic_reports' => false,
-                'data_export' => false,
-                'api_access' => false,
-                'advanced_analytics' => false,
-                'custom_branding' => false,
-                'priority_support' => false,
-                'sms_notifications' => false
-            ],
-            'standard' => [
-                'inventory_tracking' => true,
-                'stock_alerts' => true,
-                'pos_system' => true,
-                'supplier_management' => true,
-                'customer_management' => true,
-                'basic_reports' => true,
-                'data_export' => true,
-                'api_access' => false,
-                'advanced_analytics' => false,
-                'custom_branding' => false,
-                'priority_support' => false,
-                'sms_notifications' => false
-            ],
-            'premium' => [
-                'inventory_tracking' => true,
-                'stock_alerts' => true,
-                'pos_system' => true,
-                'supplier_management' => true,
-                'customer_management' => true,
-                'basic_reports' => true,
-                'data_export' => true,
-                'api_access' => true,
-                'advanced_analytics' => true,
-                'custom_branding' => true,
-                'priority_support' => true,
-                'sms_notifications' => true
-            ],
-            'enterprise' => [
-                'inventory_tracking' => true,
-                'stock_alerts' => true,
-                'pos_system' => true,
-                'supplier_management' => true,
-                'customer_management' => true,
-                'basic_reports' => true,
-                'data_export' => true,
-                'api_access' => true,
-                'advanced_analytics' => true,
-                'custom_branding' => true,
-                'priority_support' => true,
-                'sms_notifications' => true,
-                'dedicated_database' => true,
-                'custom_integrations' => true,
-                'sla_support' => true,
-                'on_premise_deployment' => true
-            ]
-        ];
+        return (array) data_get(self::getPlanDefinitions(), "{$plan}.features", []);
+    }
 
-        return $features[$plan] ?? [];
+    /**
+     * Get plan limits.
+     */
+    public static function getPlanLimits(string $plan): array
+    {
+        $plan = self::normalizePlan($plan);
+        return (array) data_get(self::getPlanDefinitions(), "{$plan}.limits", []);
+    }
+
+    /**
+     * Evaluate if a usage count is within plan limit.
+     */
+    public static function isWithinLimit(string $limitKey, int $currentUsage, ?string $plan = null): bool
+    {
+        $activePlan = self::normalizePlan((string) ($plan ?? self::resolveCurrentPlan()));
+        $limitValue = self::getPlanLimits($activePlan)[$limitKey] ?? null;
+
+        if ($limitValue === null) {
+            return true;
+        }
+
+        return $currentUsage <= (int) $limitValue;
     }
 
     /**
@@ -154,7 +147,16 @@ class SubscriptionService
      */
     public static function getPlanHierarchy()
     {
-        return ['basic' => 1, 'standard' => 2, 'premium' => 3, 'enterprise' => 4];
+        $definitions = array_keys(self::getPlanDefinitions());
+        $hierarchy = [];
+        $level = 1;
+
+        foreach ($definitions as $planName) {
+            $hierarchy[$planName] = $level;
+            $level++;
+        }
+
+        return $hierarchy;
     }
 
     /**
@@ -163,7 +165,7 @@ class SubscriptionService
     public static function canUpgrade($currentPlan, $targetPlan)
     {
         $hierarchy = self::getPlanHierarchy();
-        return $hierarchy[$targetPlan] > $hierarchy[$currentPlan];
+        return ($hierarchy[$targetPlan] ?? 0) > ($hierarchy[$currentPlan] ?? 0);
     }
 
     /**
@@ -172,7 +174,7 @@ class SubscriptionService
     public static function canDowngrade($currentPlan, $targetPlan)
     {
         $hierarchy = self::getPlanHierarchy();
-        return $hierarchy[$targetPlan] < $hierarchy[$currentPlan];
+        return ($hierarchy[$targetPlan] ?? 0) < ($hierarchy[$currentPlan] ?? 0);
     }
 
     /**
@@ -180,12 +182,13 @@ class SubscriptionService
      */
     public static function getPlanPricing()
     {
-        return [
-            'basic' => 29,
-            'standard' => 79,
-            'premium' => 149,
-            'enterprise' => null // custom pricing
-        ];
+        $pricing = [];
+
+        foreach (self::getPlanDefinitions() as $plan => $definition) {
+            $pricing[$plan] = $definition['price_monthly'] ?? null;
+        }
+
+        return $pricing;
     }
 
     /**
@@ -195,14 +198,7 @@ class SubscriptionService
     {
         $plan = self::normalizePlan((string) $plan);
 
-        $names = [
-            'basic' => 'Basic',
-            'standard' => 'Standard',
-            'premium' => 'Premium',
-            'enterprise' => 'Enterprise'
-        ];
-
-        return $names[$plan] ?? 'Unknown';
+        return (string) data_get(self::getPlanDefinitions(), "{$plan}.label", 'Unknown');
     }
 
     /**
@@ -231,7 +227,7 @@ class SubscriptionService
             return false;
         }
 
-        return $subscription['status'] === 'active' && 
+        return $subscription['status'] === 'active' &&
                now()->lt($subscription['expires_at']);
     }
 

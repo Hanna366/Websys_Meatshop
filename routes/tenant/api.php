@@ -10,7 +10,10 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SupplierController;
+use App\Models\User;
+use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -146,6 +149,63 @@ Route::middleware('auth:sanctum')->group(function () {
                 'success' => true,
                 'data' => ['users' => $users],
             ]);
+        });
+
+        Route::post('/', function (Request $request) {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'password' => 'required|string|min:8',
+                'role' => 'nullable|in:owner,manager,cashier,inventory_staff',
+                'profile' => 'nullable|array',
+            ]);
+
+            $tenantId = (string) $request->user()->tenant_id;
+            $usersCount = User::where('tenant_id', $tenantId)->count();
+
+            if (!SubscriptionService::isWithinLimit('max_users', $usersCount + 1)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User limit reached for your current plan. Upgrade to add more users.',
+                    'data' => [
+                        'limit_key' => 'max_users',
+                        'current_count' => $usersCount,
+                        'plan' => SubscriptionService::resolveCurrentPlan(),
+                    ],
+                ], 403);
+            }
+
+            $baseUsername = strtolower((string) preg_replace('/[^a-z0-9]+/i', '', (string) $validated['name']));
+            if ($baseUsername === '') {
+                $baseUsername = strtolower((string) strstr((string) $validated['email'], '@', true));
+            }
+
+            $baseUsername = $baseUsername ?: 'user';
+            $username = $baseUsername;
+            $counter = 1;
+            while (User::where('tenant_id', $tenantId)->where('username', $username)->exists()) {
+                $username = $baseUsername . $counter;
+                $counter++;
+            }
+
+            $user = User::create([
+                'tenant_id' => $tenantId,
+                'username' => $username,
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => $validated['role'] ?? 'cashier',
+                'profile' => $validated['profile'] ?? [],
+                'status' => 'active',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User created successfully.',
+                'data' => [
+                    'user' => $user->only(['id', 'name', 'email', 'role', 'status', 'created_at']),
+                ],
+            ], 201);
         });
 
         Route::get('/{user}', function (Request $request, $user) {

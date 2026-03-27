@@ -29,6 +29,7 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
+            \App\Http\Middleware\ScopeSessionCookie::class,
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
@@ -61,6 +62,7 @@ class Kernel extends HttpKernel
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
         'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         'signed' => \App\Http\Middleware\ValidateSignature::class,
+        'central.domain' => \App\Http\Middleware\EnsureCentralDomain::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'tenant.active' => \App\Http\Middleware\EnsureActiveTenant::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,

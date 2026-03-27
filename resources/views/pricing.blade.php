@@ -1,9 +1,13 @@
-@extends('layouts.central')
+@extends(app()->bound('tenant') ? 'layouts.tenant' : 'layouts.central')
 
 @section('title', 'Plans')
 
 @section('content')
 @php
+    $isTenant = app()->bound('tenant');
+    $billingRoute = $isTenant ? 'tenant.subscription.billing' : 'subscription.billing';
+    $planSelectBaseUrl = $isTenant ? route('tenant.subscription.billing') : route('tenants.create');
+
     $plans = [
         [
             'id' => 'basic',
@@ -96,7 +100,7 @@
                     Annual
                     <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Save 15%</span>
                 </button>
-                <a href="{{ route('subscription.billing') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                <a href="{{ route($billingRoute) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
                     <i data-lucide="receipt-text" class="h-4 w-4"></i>
                     Manage Billing
                 </a>
@@ -158,9 +162,11 @@
 
 @push('scripts')
 <script>
+    const planSelectBaseUrl = @json($planSelectBaseUrl);
+
     function selectPlan(plan) {
         const normalized = String(plan || '').toLowerCase();
-        window.location.href = '/account/create?plan=' + encodeURIComponent(normalized);
+        window.location.href = planSelectBaseUrl + '?plan=' + encodeURIComponent(normalized);
     }
 
     function setBillingMode(mode) {

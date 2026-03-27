@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\SubscriptionService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
@@ -148,15 +149,11 @@ class Tenant extends Model implements TenantWithDatabase
      */
     public function hasFeature($feature)
     {
-        $planFeatures = [
-            'basic' => ['inventory_tracking'],
-            'standard' => ['inventory_tracking', 'pos_system', 'supplier_management', 'customer_management', 'basic_reporting'],
-            'premium' => ['inventory_tracking', 'pos_system', 'supplier_management', 'customer_management', 'advanced_reporting', 'api_access', 'batch_operations', 'data_export'],
-            'enterprise' => ['inventory_tracking', 'pos_system', 'supplier_management', 'customer_management', 'advanced_reporting', 'api_access', 'batch_operations', 'data_export', 'custom_integrations']
-        ];
+        $plan = SubscriptionService::normalizePlan((string) ($this->plan ?? ($this->subscription['plan'] ?? 'basic')));
+        $normalizedFeature = SubscriptionService::normalizeFeature((string) $feature);
+        $features = SubscriptionService::getPlanFeatures($plan);
 
-        $plan = $this->subscription['plan'] ?? 'basic';
-        return in_array($feature, $planFeatures[$plan] ?? []);
+        return (bool) ($features[$normalizedFeature] ?? false);
     }
 
     /**
@@ -164,21 +161,41 @@ class Tenant extends Model implements TenantWithDatabase
      */
     public function isWithinLimit($limitType)
     {
-        $usage = $this->usage;
-        $limits = $this->limits;
+        $usage = is_array($this->usage) ? $this->usage : [];
+        $plan = SubscriptionService::normalizePlan((string) ($this->plan ?? ($this->subscription['plan'] ?? 'basic')));
+        $effectiveLimits = array_merge(SubscriptionService::getPlanLimits($plan), is_array($this->limits) ? $this->limits : []);
 
-        switch ($limitType) {
-            case 'users':
-                return ($usage['users_count'] ?? 0) < ($limits['max_users'] ?? 1);
-            case 'products':
-                return ($usage['products_count'] ?? 0) < ($limits['max_products'] ?? 100);
-            case 'storage':
-                return ($usage['storage_used'] ?? 0) < ($limits['max_storage_mb'] ?? 1000);
-            case 'api_calls':
-                return ($usage['api_calls_this_month'] ?? 0) < ($limits['max_api_calls_per_month'] ?? 1000);
-            default:
-                return false;
+        $usageMap = [
+            'users' => 'users_count',
+            'products' => 'products_count',
+            'storage' => 'storage_used',
+            'api_calls' => 'api_calls_this_month',
+            'transactions' => 'transactions_this_month',
+        ];
+
+        $limitMap = [
+            'users' => 'max_users',
+            'products' => 'max_products',
+            'storage' => 'max_storage_mb',
+            'api_calls' => 'max_api_calls_per_month',
+            'transactions' => 'max_monthly_transactions',
+        ];
+
+        $usageKey = $usageMap[$limitType] ?? null;
+        $limitKey = $limitMap[$limitType] ?? null;
+
+        if (!$usageKey || !$limitKey) {
+            return false;
         }
+
+        $currentUsage = (int) ($usage[$usageKey] ?? 0);
+        $maxAllowed = $effectiveLimits[$limitKey] ?? null;
+
+        if ($maxAllowed === null) {
+            return true;
+        }
+
+        return $currentUsage <= (int) $maxAllowed;
     }
 
     /**
@@ -298,14 +315,20 @@ class Tenant extends Model implements TenantWithDatabase
             ];
         }
 
+        $preferCentralCredentials = (bool) env('TENANCY_USE_CENTRAL_DB_CREDENTIALS', app()->environment('local'));
+
         // Default to MySQL-compatible configuration
         return [
             'driver' => $driver,
             'host' => $baseConfig['host'] ?? '127.0.0.1',
             'port' => $baseConfig['port'] ?? '3306',
             'database' => $this->db_name,
-            'username' => $this->db_username ?? ($baseConfig['username'] ?? null),
-            'password' => $this->getDecryptedDbPassword() ?? ($baseConfig['password'] ?? null),
+            'username' => $preferCentralCredentials
+                ? ($baseConfig['username'] ?? null)
+                : ($this->db_username ?? ($baseConfig['username'] ?? null)),
+            'password' => $preferCentralCredentials
+                ? ($baseConfig['password'] ?? null)
+                : ($this->getDecryptedDbPassword() ?? ($baseConfig['password'] ?? null)),
             'charset' => $baseConfig['charset'] ?? 'utf8mb4',
             'collation' => $baseConfig['collation'] ?? 'utf8mb4_unicode_ci',
             'prefix' => '',

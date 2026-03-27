@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Models\Domain;
 use App\Models\Tenant;
 use App\Tenancy\Bootstrappers\LegacyDatabaseBootstrapper;
+use Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper;
+use Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper;
+use Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -19,6 +22,30 @@ return [
 
     'bootstrappers' => [
         LegacyDatabaseBootstrapper::class,
+        CacheTenancyBootstrapper::class,
+        FilesystemTenancyBootstrapper::class,
+        QueueTenancyBootstrapper::class,
+    ],
+
+    'cache' => [
+        'tag_base' => 'tenant',
+    ],
+
+    'filesystem' => [
+        'suffix_base' => 'tenant',
+        'disks' => ['local', 'public'],
+        'root_override' => [
+            'local' => '%storage_path%/app/',
+            'public' => '%storage_path%/app/public/',
+        ],
+        'suffix_storage_path' => true,
+        'asset_helper_tenancy' => true,
+    ],
+
+    'tenant_lookup_cache' => [
+        'enabled' => (bool) env('TENANCY_CACHED_LOOKUP', true),
+        'ttl' => (int) env('TENANCY_CACHED_LOOKUP_TTL', 3600),
+        'store' => env('TENANCY_CACHED_LOOKUP_STORE', null),
     ],
 
     'database' => [

@@ -33,6 +33,11 @@ class PriceList extends Model
         return $this->hasMany(PriceListItem::class);
     }
 
+    public function productPrices()
+    {
+        return $this->hasMany(ProductPrice::class);
+    }
+
     public function products()
     {
         return $this->belongsToMany(Product::class, 'price_list_items')
