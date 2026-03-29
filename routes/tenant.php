@@ -39,21 +39,45 @@ Route::middleware([
         Route::get('/subscription/billing/data', [SubscriptionController::class, 'billingData'])->name('tenant.subscription.billing.data');
         Route::put('/subscription/settings', [SubscriptionController::class, 'updateSettings'])->name('tenant.subscription.settings');
 
-        Route::get('/products', [TenantPageController::class, 'products'])->middleware('subscription')->name('tenant.products');
+        Route::get('/products', [TenantPageController::class, 'products'])
+            ->middleware(['subscription', 'tenant.owner'])
+            ->name('tenant.products');
 
-        Route::get('/inventory', [TenantPageController::class, 'inventory'])->middleware('subscription')->name('tenant.inventory');
+        Route::get('/inventory', [TenantPageController::class, 'inventory'])
+            ->middleware(['subscription', 'tenant.owner'])
+            ->name('tenant.inventory');
 
-        Route::get('/sales', [TenantPageController::class, 'sales'])->middleware('subscription:pos_access')->name('tenant.sales');
+        Route::get('/sales', [TenantPageController::class, 'sales'])
+            ->middleware(['subscription:pos_access', 'tenant.pos'])
+            ->name('tenant.sales');
 
-        Route::get('/customers', [TenantPageController::class, 'customers'])->middleware('subscription:customer_management')->name('tenant.customers');
+        Route::get('/customers', [TenantPageController::class, 'customers'])
+            ->middleware(['subscription:customer_management', 'tenant.owner'])
+            ->name('tenant.customers');
 
-        Route::get('/suppliers', [TenantPageController::class, 'suppliers'])->middleware('subscription:supplier_management')->name('tenant.suppliers');
+        Route::get('/suppliers', [TenantPageController::class, 'suppliers'])
+            ->middleware(['subscription:supplier_management', 'tenant.owner'])
+            ->name('tenant.suppliers');
 
-        Route::get('/reports', [TenantPageController::class, 'reports'])->middleware('subscription:advanced_analytics')->name('tenant.reports');
+        Route::get('/reports', [TenantPageController::class, 'reports'])
+            ->middleware(['subscription:advanced_analytics', 'tenant.owner'])
+            ->name('tenant.reports');
 
-        Route::get('/settings', function () {
-            return view('settings');
-        })->middleware('subscription:custom_branding')->name('tenant.settings');
+        Route::get('/settings', [TenantPageController::class, 'settings'])
+            ->middleware(['subscription:custom_branding', 'tenant.owner'])
+            ->name('tenant.settings');
+
+        Route::post('/settings/users', [TenantPageController::class, 'storeUser'])
+            ->middleware(['subscription:custom_branding', 'tenant.owner'])
+            ->name('tenant.users.store');
+
+        Route::put('/settings/users/{userId}', [TenantPageController::class, 'updateUser'])
+            ->middleware(['subscription:custom_branding', 'tenant.owner'])
+            ->name('tenant.users.update');
+
+        Route::patch('/settings/users/{userId}/status', [TenantPageController::class, 'toggleUserStatus'])
+            ->middleware(['subscription:custom_branding', 'tenant.owner'])
+            ->name('tenant.users.status');
 
         Route::get('/profile', function () {
             return view('profile');

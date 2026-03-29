@@ -33,15 +33,15 @@ Route::post('/reset-password', [SimpleAuthController::class, 'resetPassword'])->
 Route::get('/account/create', [TenantController::class, 'create'])->name('tenants.create');
 Route::post('/account/create', [TenantController::class, 'store'])->name('tenants.store');
 
-// Central tenant management menu entries.
-Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
-Route::get('/tenant/{tenantId}', [TenantController::class, 'show'])->name('tenants.show');
-Route::post('/tenant/{tenantId}', [TenantController::class, 'update'])->name('tenants.update');
-Route::post('/tenant/{tenantId}/status', [TenantController::class, 'updateStatus'])->name('tenants.updateStatus');
-Route::post('/tenant/{tenantId}/subscription', [TenantController::class, 'updateSubscription'])->name('tenants.updateSubscription');
-
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [CentralDashboardController::class, 'index'])->name('dashboard');
+
+    // Central tenant management menu entries.
+    Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
+    Route::get('/tenant/{tenantId}', [TenantController::class, 'show'])->name('tenants.show');
+    Route::post('/tenant/{tenantId}', [TenantController::class, 'update'])->name('tenants.update');
+    Route::post('/tenant/{tenantId}/status', [TenantController::class, 'updateStatus'])->name('tenants.updateStatus');
+    Route::post('/tenant/{tenantId}/subscription', [TenantController::class, 'updateSubscription'])->name('tenants.updateSubscription');
 });
 
 // Subscription routes - require authentication

@@ -16,7 +16,25 @@
 @endsection
 
 @section('content')
-<section class="grid gap-6 lg:grid-cols-12">
+@php
+    $userStoreAction = \Illuminate\Support\Facades\Route::has('tenant.users.store')
+        ? route('tenant.users.store')
+        : url('/settings/users');
+@endphp
+
+@if(session('success'))
+    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->has('user_create'))
+    <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        {{ $errors->first('user_create') }}
+    </div>
+@endif
+
+<section class="grid min-w-0 gap-6 lg:grid-cols-12">
     <aside class="lg:col-span-3">
         <div class="sticky top-24 rounded-3xl border border-white/70 bg-white/90 p-4 shadow-card">
             <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Sections</p>
@@ -31,7 +49,7 @@
         </div>
     </aside>
 
-    <div class="space-y-6 lg:col-span-9">
+    <div class="min-w-0 space-y-6 lg:col-span-9">
         <section id="general" class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
             <h2 class="heading-font mb-4 text-lg font-semibold text-slate-900">General Settings</h2>
             <div class="grid gap-4 md:grid-cols-2">
@@ -77,13 +95,122 @@
         </section>
 
         <section id="users" class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
-            <div class="mb-4 flex items-center justify-between"><h2 class="heading-font text-lg font-semibold text-slate-900">User Management</h2><button type="button" onclick="notify('Add user flow coming next.', 'info')" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Add User</button></div>
-            <div class="overflow-x-auto">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="heading-font text-lg font-semibold text-slate-900">User Management</h2>
+            </div>
+
+            <form method="POST" action="{{ $userStoreAction }}" class="mb-6 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2">
+                @csrf
+                <div>
+                    <label for="add_user_name" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Full Name</label>
+                    <input id="add_user_name" name="name" value="{{ old('name') }}" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" placeholder="Juan Dela Cruz" required>
+                    @error('name')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label for="add_user_email" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Email</label>
+                    <input id="add_user_email" type="email" name="email" value="{{ old('email') }}" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" placeholder="cashier@shop.com" required>
+                    @error('email')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label for="add_user_username" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Username (Optional)</label>
+                    <input id="add_user_username" name="username" value="{{ old('username') }}" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" placeholder="auto-generated if empty">
+                    @error('username')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label for="add_user_role" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Role</label>
+                    <select id="add_user_role" name="role" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" required>
+                        @foreach(($availableRoles ?? ['Administrator', 'Cashier']) as $roleOption)
+                            <option value="{{ $roleOption }}" {{ old('role', 'Cashier') === $roleOption ? 'selected' : '' }}>{{ $roleOption }}</option>
+                        @endforeach
+                    </select>
+                    @error('role')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label for="add_user_password" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Password</label>
+                    <input id="add_user_password" type="password" name="password" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" minlength="8" required>
+                    @error('password')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label for="add_user_password_confirmation" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Confirm Password</label>
+                    <input id="add_user_password_confirmation" type="password" name="password_confirmation" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" minlength="8" required>
+                </div>
+                <div class="md:col-span-2 flex justify-end">
+                    <button type="submit" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Add User</button>
+                </div>
+            </form>
+
+            <div class="max-w-full overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 text-sm">
-                    <thead><tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"><th class="px-3 py-3">Username</th><th class="px-3 py-3">Email</th><th class="px-3 py-3">Role</th><th class="px-3 py-3">Status</th></tr></thead>
+                    <thead><tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500"><th class="px-3 py-3">Username</th><th class="px-3 py-3">Email</th><th class="px-3 py-3">Role</th><th class="px-3 py-3">Status</th><th class="px-3 py-3">Actions</th></tr></thead>
                     <tbody class="divide-y divide-slate-100 text-slate-700">
-                        <tr><td class="px-3 py-3">admin</td><td class="px-3 py-3">admin@meatshop.com</td><td class="px-3 py-3"><span class="rounded-full bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-700">Administrator</span></td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
-                        <tr><td class="px-3 py-3">cashier1</td><td class="px-3 py-3">cashier1@meatshop.com</td><td class="px-3 py-3"><span class="rounded-full bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-700">Cashier</span></td><td class="px-3 py-3"><span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Active</span></td></tr>
+                        @forelse(($tenantUsers ?? []) as $tenantUser)
+                            @php
+                                $roleLabel = ($tenantRoleTablesReady ?? false) ? optional($tenantUser->roles->first())->name : null;
+                                if (!$roleLabel) {
+                                    $roleLabel = strtolower((string) $tenantUser->role) === 'owner' ? 'Administrator' : ucfirst((string) $tenantUser->role);
+                                }
+                                $roleClasses = strtolower($roleLabel) === 'administrator'
+                                    ? 'bg-rose-100 text-rose-700'
+                                    : 'bg-sky-100 text-sky-700';
+
+                                $status = strtolower((string) ($tenantUser->status ?? 'active'));
+                                $statusClasses = $status === 'active'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-slate-200 text-slate-700';
+                            @endphp
+                            <tr>
+                                <td class="px-3 py-3">{{ $tenantUser->username }}</td>
+                                <td class="px-3 py-3">{{ $tenantUser->email }}</td>
+                                <td class="px-3 py-3"><span class="rounded-full px-2 py-1 text-xs font-semibold {{ $roleClasses }}">{{ $roleLabel }}</span></td>
+                                <td class="px-3 py-3"><span class="rounded-full px-2 py-1 text-xs font-semibold {{ $statusClasses }}">{{ ucfirst($status) }}</span></td>
+                                <td class="px-3 py-3">
+                                    @if(strtolower($roleLabel) === 'owner')
+                                        <span class="text-xs text-slate-500">Protected</span>
+                                    @else
+                                        <div class="space-y-2">
+                                            @php
+                                                $userUpdateAction = \Illuminate\Support\Facades\Route::has('tenant.users.update')
+                                                    ? route('tenant.users.update', $tenantUser->id)
+                                                    : url('/settings/users/' . $tenantUser->id);
+                                            @endphp
+                                            <form method="POST" action="{{ $userUpdateAction }}" class="grid min-w-0 gap-2 lg:grid-cols-4">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="text" name="name" value="{{ $tenantUser->name }}" class="min-w-0 rounded-lg border border-slate-200 px-2 py-1.5 text-xs" required>
+                                                <input type="text" name="username" value="{{ $tenantUser->username }}" class="min-w-0 rounded-lg border border-slate-200 px-2 py-1.5 text-xs" required>
+                                                <input type="email" name="email" value="{{ $tenantUser->email }}" class="min-w-0 rounded-lg border border-slate-200 px-2 py-1.5 text-xs" required>
+                                                <select name="role" class="min-w-0 rounded-lg border border-slate-200 px-2 py-1.5 text-xs">
+                                                    @foreach(($availableRoles ?? ['Administrator', 'Cashier']) as $roleOption)
+                                                        <option value="{{ $roleOption }}" {{ strtolower($roleLabel) === strtolower($roleOption) ? 'selected' : '' }}>{{ $roleOption }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <input type="hidden" name="status" value="{{ $status }}">
+                                                <div class="flex items-center gap-2 lg:col-span-4">
+                                                    <button type="submit" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700">Save</button>
+                                                </div>
+                                            </form>
+
+                                            @php
+                                                $userStatusAction = \Illuminate\Support\Facades\Route::has('tenant.users.status')
+                                                    ? route('tenant.users.status', $tenantUser->id)
+                                                    : url('/settings/users/' . $tenantUser->id . '/status');
+                                            @endphp
+                                            <form method="POST" action="{{ $userStatusAction }}">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="rounded-lg border px-2.5 py-1.5 text-xs font-semibold {{ $status === 'active' ? 'border-rose-200 text-rose-700' : 'border-emerald-200 text-emerald-700' }}">
+                                                    {{ $status === 'active' ? 'Deactivate' : 'Activate' }}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-3 py-4 text-center text-slate-500">No users found for this tenant yet.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

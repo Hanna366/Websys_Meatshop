@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\PermissionRegistrar;
 use Throwable;
 
 class TenantService
@@ -110,7 +111,7 @@ class TenantService
         $adminName = $data['admin_name'] ?? $data['business_name'] ?? 'Tenant Admin';
         $adminUsername = Str::slug($adminName, '_');
 
-        \App\Models\User::on('tenant')->create([
+        $adminUser = \App\Models\User::on('tenant')->create([
             'tenant_id' => $tenantId,
             'username' => $adminUsername,
             'name' => $adminName,
@@ -123,6 +124,9 @@ class TenantService
                 'full_name' => $adminName,
             ],
         ]);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $adminUser->syncRoles(['Owner']);
 
         return $tenant;
     }
@@ -402,6 +406,12 @@ class TenantService
         tenancy()->initialize($tenant);
 
         try {
+            Artisan::call('db:seed', [
+                '--database' => 'tenant',
+                '--class' => \Database\Seeders\TenantRoleSeeder::class,
+                '--force' => true,
+            ]);
+
             Artisan::call('db:seed', [
                 '--database' => 'tenant',
                 '--class' => \Database\Seeders\KitayamaRetail2025Seeder::class,

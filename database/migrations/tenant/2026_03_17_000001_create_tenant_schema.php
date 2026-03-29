@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->string('role')->default('owner');
+            $table->string('role')->default('staff');
             $table->json('profile')->nullable();
             $table->json('permissions')->nullable();
             $table->json('preferences')->nullable();

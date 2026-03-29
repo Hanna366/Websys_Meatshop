@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Create Your MeatShop Account</title>
 
-    @if (config('services.recaptcha.site_key'))
+    @if (($showRecaptcha ?? false) && config('services.recaptcha.site_key'))
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     @endif
 
@@ -154,7 +154,7 @@
                         </select>
                     </div>
 
-                    @if (config('services.recaptcha.site_key'))
+                    @if (($showRecaptcha ?? false) && config('services.recaptcha.site_key'))
                         <div class="flex justify-center">
                             <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
                         </div>

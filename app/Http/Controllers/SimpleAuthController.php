@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Domain;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class SimpleAuthController extends Controller
@@ -15,10 +19,11 @@ class SimpleAuthController extends Controller
     public function showLoginForm(Request $request)
     {
         $currentContext = $this->currentAuthContext();
+        $showRecaptcha = $currentContext === 'central' && (bool) config('services.recaptcha.site_key');
 
         if ($request->boolean('force_login')) {
             session()->forget(['authenticated', 'auth_context', 'user']);
-            return view('auth.login');
+            return view('auth.login', ['showRecaptcha' => $showRecaptcha]);
         }
 
         // Tenant domains should always show the login screen when opened.
@@ -27,7 +32,7 @@ class SimpleAuthController extends Controller
                 session()->forget(['authenticated', 'auth_context', 'user']);
             }
 
-            return view('auth.login');
+            return view('auth.login', ['showRecaptcha' => false]);
         }
 
         // Redirect only when authenticated for this exact context (central).
@@ -35,7 +40,7 @@ class SimpleAuthController extends Controller
             return redirect('/dashboard');
         }
         
-        return view('auth.login');
+        return view('auth.login', ['showRecaptcha' => $showRecaptcha]);
     }
 
     public function login(Request $request)
@@ -45,20 +50,39 @@ class SimpleAuthController extends Controller
             'password' => 'required',
         ]);
 
+        $currentContext = $this->currentAuthContext();
+        $currentTenant = (app()->bound('tenant') && tenant()) ? tenant() : null;
+
+        if (str_starts_with($currentContext, 'tenant:') && !$currentTenant) {
+            $currentTenant = $this->resolveTenantFromHost($request);
+
+            if (!$currentTenant) {
+                return back()->withErrors([
+                    'email' => 'Tenant context is unavailable for this domain. Please verify tenant domain setup.',
+                ]);
+            }
+
+            app()->instance('tenant', $currentTenant);
+            config(['database.connections.tenant' => $currentTenant->getTenantDatabaseConfig()]);
+            DB::purge('tenant');
+        }
+
         // Attempt to authenticate against the user table first.
-        $user = User::where('email', $credentials['email'])->first();
+        $user = $currentTenant
+            ? User::on('tenant')->where('email', $credentials['email'])->first()
+            : User::where('email', $credentials['email'])->first();
 
         if ($user && Hash::check($credentials['password'], $user->password)) {
-            $currentTenant = null;
+            // Backfill legacy tenant users that were created without tenant_id.
+            if ($currentTenant && empty($user->tenant_id)) {
+                $user->tenant_id = $currentTenant->tenant_id;
+                $user->save();
+            }
 
-            if (app()->bound('tenant')) {
-                $currentTenant = tenant();
-
-                if (!$currentTenant || $user->tenant_id !== $currentTenant->tenant_id) {
-                    return back()->withErrors([
-                        'email' => 'This account does not belong to the current tenant domain.',
-                    ]);
-                }
+            if ($currentTenant && $user->tenant_id !== $currentTenant->tenant_id) {
+                return back()->withErrors([
+                    'email' => 'This account does not belong to the current tenant domain.',
+                ]);
             }
 
             // In tenant context, always trust the active resolved tenant.
@@ -86,6 +110,10 @@ class SimpleAuthController extends Controller
                     'features' => $features,
                 ]
             ]);
+
+            // Keep Laravel's web guard in sync so middleware like Spatie role checks works.
+            Auth::guard('web')->login($user);
+            $request->session()->regenerate();
 
             return redirect()->intended('/dashboard');
         }
@@ -210,6 +238,7 @@ class SimpleAuthController extends Controller
 
     public function logout()
     {
+        Auth::guard('web')->logout();
         session()->invalidate();
         session()->regenerateToken();
         return redirect('/login');
@@ -217,10 +246,36 @@ class SimpleAuthController extends Controller
 
     private function currentAuthContext(): string
     {
-        if (app()->bound('tenant') && tenant()) {
-            return 'tenant:' . tenant()->tenant_id;
+        $host = strtolower((string) request()->getHost());
+        $centralDomains = array_map('strtolower', (array) config('tenancy.central_domains', []));
+
+        if ($host !== '' && !in_array($host, $centralDomains, true)) {
+            return 'tenant:' . $host;
         }
 
         return 'central';
+    }
+
+    private function resolveTenantFromHost(Request $request): ?Tenant
+    {
+        $host = strtolower((string) $request->getHost());
+
+        if ($host === '') {
+            return null;
+        }
+
+        if (Schema::hasTable('domains')) {
+            $domain = Domain::query()->where('domain', $host)->first();
+
+            if ($domain && $domain->tenant) {
+                return $domain->tenant;
+            }
+        }
+
+        if (Schema::hasTable('tenants') && Schema::hasColumn('tenants', 'domain')) {
+            return Tenant::query()->where('domain', $host)->first();
+        }
+
+        return null;
     }
 }

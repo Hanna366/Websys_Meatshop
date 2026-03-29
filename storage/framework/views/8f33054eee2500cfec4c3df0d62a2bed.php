@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <title>Sign In - MeatShop POS</title>
 
-    <?php if(config('services.recaptcha.site_key')): ?>
+    <?php if(($showRecaptcha ?? false) && config('services.recaptcha.site_key')): ?>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <?php endif; ?>
 
@@ -127,7 +127,7 @@ unset($__errorArgs, $__bag); ?>"
                     <a href="/forgot-password" class="font-medium text-indigo-600 transition hover:text-indigo-700">Forgot password?</a>
                 </div>
 
-                <?php if(config('services.recaptcha.site_key')): ?>
+                <?php if(($showRecaptcha ?? false) && config('services.recaptcha.site_key')): ?>
                     <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <div class="g-recaptcha mx-auto" data-sitekey="<?php echo e(config('services.recaptcha.site_key')); ?>"></div>
                     </div>
