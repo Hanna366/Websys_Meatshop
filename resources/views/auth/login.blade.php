@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Sign In - MeatShop POS</title>
 
-    @if (config('services.recaptcha.site_key'))
+    @if (($showRecaptcha ?? false) && config('services.recaptcha.site_key'))
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     @endif
 
@@ -111,7 +111,7 @@
                     <a href="/forgot-password" class="font-medium text-indigo-600 transition hover:text-indigo-700">Forgot password?</a>
                 </div>
 
-                @if (config('services.recaptcha.site_key'))
+                @if (($showRecaptcha ?? false) && config('services.recaptcha.site_key'))
                     <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <div class="g-recaptcha mx-auto" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
                     </div>

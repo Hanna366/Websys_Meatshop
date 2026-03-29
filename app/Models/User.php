@@ -6,11 +6,43 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\PermissionRegistrar;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable, SoftDeletes;
+    use HasApiTokens, Notifiable, SoftDeletes, HasRoles;
+
+    protected string $guard_name = 'web';
+
+    protected static function booted(): void
+    {
+        static::created(function (self $user): void {
+            $connection = $user->getConnectionName() ?: config('database.default');
+            $rolesTable = config('permission.table_names.roles', 'roles');
+            $modelHasRolesTable = config('permission.table_names.model_has_roles', 'model_has_roles');
+
+            if (!Schema::connection($connection)->hasTable($rolesTable)
+                || !Schema::connection($connection)->hasTable($modelHasRolesTable)) {
+                return;
+            }
+
+            try {
+                if ($user->hasAnyRole(['Owner', 'Staff'])) {
+                    return;
+                }
+
+                app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+                $defaultRole = strtolower((string) $user->role) === 'owner' ? 'Owner' : 'Staff';
+                $user->syncRoles([$defaultRole]);
+            } catch (\Throwable $e) {
+                // Ignore role sync when permission tables or mappings are not fully provisioned.
+            }
+        });
+    }
 
     protected $fillable = [
         'tenant_id',

@@ -18,8 +18,19 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    colors: {
+                        central: {
+                            bg: '#f8fafc',
+                            card: '#ffffff',
+                            primary: '#1e3a8a',
+                            accent: '#0d9488',
+                        },
+                    },
                     boxShadow: {
                         card: '0 8px 30px rgba(15, 23, 42, 0.06)',
+                    },
+                    borderRadius: {
+                        xl2: '1rem',
                     },
                 },
             },
@@ -37,6 +48,10 @@
 
         .heading-font {
             font-family: 'Poppins', sans-serif;
+        }
+
+        .main-shell {
+            min-height: 100vh;
         }
 
         .tenant-sidebar {
@@ -87,6 +102,10 @@
             box-shadow: 0 12px 26px rgba(30, 64, 175, 0.32);
         }
 
+        .avatar-ring {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
+        }
+
         .sidebar-toggle {
             display: none;
         }
@@ -114,7 +133,7 @@
     @stack('styles')
 </head>
 <body class="text-slate-900 antialiased">
-    <div class="flex min-h-screen">
+    <div class="main-shell flex">
         <aside class="tenant-sidebar shrink-0 p-4 text-white lg:sticky lg:top-0 lg:h-screen" id="tenantSidebar">
             <div class="mb-6 rounded-2xl border border-white/20 bg-white/10 p-4">
                 <div class="mb-2 flex items-center gap-3">
@@ -191,7 +210,7 @@
                             <i data-lucide="menu" class="h-5 w-5"></i>
                         </button>
                         <div>
-                            <h1 class="heading-font mb-0 text-2xl font-semibold tracking-tight text-slate-900">@yield('page_title', 'Dashboard')</h1>
+                            <h1 class="heading-font mb-0 text-2xl font-semibold tracking-tight text-slate-900">@yield('page_title', 'Tenant Dashboard')</h1>
                             <p class="mb-0 text-sm text-slate-500">@yield('page_subtitle', 'Branch operations overview and daily POS activity')</p>
                         </div>
                     </div>
@@ -202,11 +221,16 @@
                             <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
                             <span class="hidden sm:inline">Upgrade Plan</span>
                         </a>
+                        <div class="avatar-ring inline-flex h-10 w-10 items-center justify-center rounded-full p-[1px]">
+                            <div class="inline-flex h-full w-full items-center justify-center rounded-full bg-white text-sm font-semibold text-slate-700">
+                                {{ strtoupper(substr(session('user.name', 'U'), 0, 1)) }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
 
-            <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <main class="px-4 py-6 sm:px-6 lg:px-8">
                 @yield('content')
             </main>
         </div>

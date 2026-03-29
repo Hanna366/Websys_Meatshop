@@ -5,8 +5,20 @@
 @section('content')
 @php
     $isTenant = app()->bound('tenant');
-    $billingRoute = $isTenant ? 'tenant.subscription.billing' : 'subscription.billing';
-    $planSelectBaseUrl = $isTenant ? route('tenant.subscription.billing') : route('tenants.create');
+    $billingRoute = null;
+
+    if ($isTenant) {
+        if (\Illuminate\Support\Facades\Route::has('tenant.subscription.billing')) {
+            $billingRoute = 'tenant.subscription.billing';
+        } elseif (\Illuminate\Support\Facades\Route::has('subscription.billing')) {
+            $billingRoute = 'subscription.billing';
+        }
+    } elseif (\Illuminate\Support\Facades\Route::has('subscription.billing')) {
+        $billingRoute = 'subscription.billing';
+    }
+
+    $billingUrl = $billingRoute ? route($billingRoute) : null;
+    $planSelectBaseUrl = $billingUrl ?? route('tenants.create');
 
     $plans = [
         [
@@ -100,7 +112,7 @@
                     Annual
                     <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Save 15%</span>
                 </button>
-                <a href="{{ route($billingRoute) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                <a href="{{ $billingUrl ?? '#' }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 {{ $billingUrl ? '' : 'pointer-events-none opacity-60' }}" @if(!$billingUrl) aria-disabled="true" @endif>
                     <i data-lucide="receipt-text" class="h-4 w-4"></i>
                     Manage Billing
                 </a>

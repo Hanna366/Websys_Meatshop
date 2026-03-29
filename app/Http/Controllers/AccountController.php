@@ -13,7 +13,9 @@ class AccountController extends Controller
     public function store(Request $request)
     {
         $recaptchaSecret = (string) config('services.recaptcha.secret_key');
-        $recaptchaEnabled = $recaptchaSecret !== '';
+        $host = strtolower((string) $request->getHost());
+        $isLocalHost = $host === 'localhost' || $host === '127.0.0.1' || str_ends_with($host, '.localhost');
+        $recaptchaEnabled = $recaptchaSecret !== '' && !$isLocalHost;
 
         $validationRules = [
             'name' => 'required|string|max:255',

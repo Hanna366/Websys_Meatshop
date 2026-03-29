@@ -7,14 +7,226 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
+use Throwable;
 
 class TenantPageController extends Controller
 {
     private ?string $resolvedConnection = null;
+
+    public function settings(Request $request)
+    {
+        $tenantId = $this->resolveTenantId($request);
+        $userQuery = $this->tenantScopedUserQuery($tenantId);
+        $roleTablesReady = $this->spatieRoleTablesReady($tenantId);
+
+        $tenantUsers = $userQuery
+            ? ($roleTablesReady ? $userQuery->with('roles') : $userQuery)->orderByDesc('created_at')->limit(200)->get()
+            : collect();
+
+        $availableRoles = $this->availableTenantRoles($tenantId);
+
+        return view('settings', [
+            'tenantUsers' => $tenantUsers,
+            'availableRoles' => $availableRoles,
+            'tenantRoleTablesReady' => $roleTablesReady,
+        ]);
+    }
+
+    public function storeUser(Request $request)
+    {
+        $tenantId = $this->resolveTenantId($request);
+        $connection = $this->resolveTenantConnection($tenantId);
+
+        if ($connection !== 'tenant') {
+            return back()->withErrors([
+                'user_create' => 'Tenant database is not available. Please refresh and try again.',
+            ])->withInput();
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['nullable', 'string', 'max:50', Rule::unique('tenant.users', 'username')],
+            'email' => ['required', 'email', 'max:255', Rule::unique('tenant.users', 'email')],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', Rule::in(['Administrator', 'Cashier'])],
+            'status' => ['nullable', Rule::in(['active', 'inactive'])],
+        ]);
+
+        $roleTablesReady = $this->spatieRoleTablesReady($tenantId);
+        if ($roleTablesReady) {
+            $role = Role::on('tenant')
+                ->where('guard_name', 'web')
+                ->where('name', $validated['role'])
+                ->first();
+
+            if (!$role) {
+                return back()->withErrors([
+                    'role' => 'Selected role is not seeded for this tenant. Run tenant role seeder first.',
+                ])->withInput();
+            }
+        }
+
+        $username = trim((string) ($validated['username'] ?? ''));
+        if ($username === '') {
+            $username = $this->generateTenantUsername((string) $validated['name']);
+        }
+
+        try {
+            $legacyRole = strtolower($validated['role']) === 'administrator' ? 'owner' : 'cashier';
+
+            $user = User::on('tenant')->create([
+                'tenant_id' => $tenantId,
+                'username' => $username,
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => $legacyRole,
+                'status' => $validated['status'] ?? 'active',
+                'profile' => [
+                    'first_name' => $validated['name'],
+                    'last_name' => '',
+                    'full_name' => $validated['name'],
+                ],
+            ]);
+
+            if ($roleTablesReady) {
+                app(PermissionRegistrar::class)->forgetCachedPermissions();
+                $user->syncRoles([$validated['role']]);
+            }
+
+            return redirect()
+                ->route('tenant.settings')
+                ->with('success', 'User created successfully.');
+        } catch (Throwable $e) {
+            return back()->withErrors([
+                'user_create' => 'Unable to create user at the moment. ' . $e->getMessage(),
+            ])->withInput();
+        }
+    }
+
+    public function updateUser(Request $request, int $userId)
+    {
+        $tenantId = $this->resolveTenantId($request);
+        $connection = $this->resolveTenantConnection($tenantId);
+
+        if ($connection !== 'tenant') {
+            return back()->withErrors([
+                'user_create' => 'Tenant database is not available. Please refresh and try again.',
+            ]);
+        }
+
+        $user = $this->findTenantUser($userId, $tenantId);
+        if (!$user) {
+            return back()->withErrors([
+                'user_create' => 'User not found in this tenant.',
+            ]);
+        }
+
+        $currentRole = $this->resolveUserRoleName($user, $tenantId);
+        if ($currentRole === 'Owner') {
+            return back()->withErrors([
+                'user_create' => 'Owner account cannot be modified from this screen.',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:50', Rule::unique('tenant.users', 'username')->ignore($userId)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('tenant.users', 'email')->ignore($userId)],
+            'role' => ['required', Rule::in(['Administrator', 'Cashier'])],
+            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $roleTablesReady = $this->spatieRoleTablesReady($tenantId);
+        if ($roleTablesReady) {
+            $role = Role::on('tenant')
+                ->where('guard_name', 'web')
+                ->where('name', $validated['role'])
+                ->first();
+
+            if (!$role) {
+                return back()->withErrors([
+                    'user_create' => 'Selected role is not seeded for this tenant.',
+                ]);
+            }
+        }
+
+        $payload = [
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'status' => $validated['status'],
+            'role' => strtolower($validated['role']) === 'administrator' ? 'owner' : 'cashier',
+        ];
+
+        if (!empty($validated['password'])) {
+            $payload['password'] = Hash::make($validated['password']);
+        }
+
+        try {
+            $user->fill($payload);
+            $user->save();
+
+            if ($roleTablesReady) {
+                app(PermissionRegistrar::class)->forgetCachedPermissions();
+                $user->syncRoles([$validated['role']]);
+            }
+
+            return redirect()->route('tenant.settings')->with('success', 'User updated successfully.');
+        } catch (Throwable $e) {
+            return back()->withErrors([
+                'user_create' => 'Unable to update user. ' . $e->getMessage(),
+            ])->withInput();
+        }
+    }
+
+    public function toggleUserStatus(Request $request, int $userId)
+    {
+        $tenantId = $this->resolveTenantId($request);
+        $connection = $this->resolveTenantConnection($tenantId);
+
+        if ($connection !== 'tenant') {
+            return back()->withErrors([
+                'user_create' => 'Tenant database is not available. Please refresh and try again.',
+            ]);
+        }
+
+        $user = $this->findTenantUser($userId, $tenantId);
+        if (!$user) {
+            return back()->withErrors([
+                'user_create' => 'User not found in this tenant.',
+            ]);
+        }
+
+        $currentRole = $this->resolveUserRoleName($user, $tenantId);
+        if ($currentRole === 'Owner') {
+            return back()->withErrors([
+                'user_create' => 'Owner account cannot be deactivated from this screen.',
+            ]);
+        }
+
+        if ((int) session('user.id') === (int) $user->id) {
+            return back()->withErrors([
+                'user_create' => 'You cannot change your own status from this screen.',
+            ]);
+        }
+
+        $user->status = strtolower((string) $user->status) === 'active' ? 'inactive' : 'active';
+        $user->save();
+
+        return redirect()->route('tenant.settings')->with('success', 'User status updated successfully.');
+    }
 
     public function dashboard(Request $request)
     {
@@ -430,6 +642,94 @@ class TenantPageController extends Controller
         }
 
         return $query;
+    }
+
+    private function tenantScopedUserQuery(?string $tenantId)
+    {
+        $connection = $this->resolveTenantConnection($tenantId);
+
+        if (!$this->hasTable('users', $connection)) {
+            return null;
+        }
+
+        $query = User::on($connection)->newQuery();
+
+        if ($tenantId && $this->tableHasColumn('users', 'tenant_id', $connection)) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        return $query;
+    }
+
+    private function findTenantUser(int $userId, ?string $tenantId): ?User
+    {
+        $query = $this->tenantScopedUserQuery($tenantId);
+
+        if (!$query) {
+            return null;
+        }
+
+        if ($this->spatieRoleTablesReady($tenantId)) {
+            return $query->with('roles')->where('id', $userId)->first();
+        }
+
+        return $query->where('id', $userId)->first();
+    }
+
+    private function availableTenantRoles(?string $tenantId): array
+    {
+        $connection = $this->resolveTenantConnection($tenantId);
+
+        if (!$this->hasTable('roles', $connection)) {
+            return ['Administrator', 'Cashier'];
+        }
+
+        $roles = Role::on($connection)
+            ->where('guard_name', 'web')
+            ->whereIn('name', ['Administrator', 'Cashier'])
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
+
+        return !empty($roles) ? array_values($roles) : ['Administrator', 'Cashier'];
+    }
+
+    private function generateTenantUsername(string $name): string
+    {
+        $base = Str::lower(Str::slug($name, '_'));
+        if ($base === '') {
+            $base = 'user';
+        }
+
+        $username = $base;
+        $counter = 1;
+
+        while (User::on('tenant')->where('username', $username)->exists()) {
+            $counter++;
+            $username = $base . $counter;
+        }
+
+        return $username;
+    }
+
+    private function spatieRoleTablesReady(?string $tenantId): bool
+    {
+        $connection = $this->resolveTenantConnection($tenantId);
+
+        return $this->hasTable('roles', $connection)
+            && $this->hasTable('model_has_roles', $connection);
+    }
+
+    private function resolveUserRoleName(User $user, ?string $tenantId): string
+    {
+        if ($this->spatieRoleTablesReady($tenantId)) {
+            $spatieRole = optional($user->roles->first())->name;
+            if (!empty($spatieRole)) {
+                return (string) $spatieRole;
+            }
+        }
+
+        return strtolower((string) $user->role) === 'owner' ? 'Owner' : ucfirst((string) $user->role);
     }
 
     private function customerNamesForSales(?string $tenantId, Collection $sales): array

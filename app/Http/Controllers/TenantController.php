@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Services\NotificationService;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 
 class TenantController extends Controller
@@ -56,16 +57,20 @@ class TenantController extends Controller
 
     public function create()
     {
-        return view('account.create');
+        return view('account.create', [
+            'showRecaptcha' => $this->shouldEnableRecaptcha(request()),
+        ]);
     }
 
     public function store(Request $request)
     {
+        $recaptchaEnabled = $this->shouldEnableRecaptcha($request);
+
         $request->merge([
             'domain' => $this->normalizeDomain($request->input('domain')),
         ]);
 
-        $validated = $request->validate([
+        $rules = [
             'business_name' => 'required|string|max:255',
             'business_email' => 'required|email|max:255',
             'business_phone' => 'nullable|string|max:50',
@@ -75,7 +80,29 @@ class TenantController extends Controller
             'plan' => 'required|in:basic,standard,premium,enterprise',
             'domain' => ['nullable', 'string', 'max:255', Rule::unique('tenants', 'domain')->whereNull('deleted_at')],
             'password' => 'nullable|string|min:8',
+        ];
+
+        if ($recaptchaEnabled) {
+            $rules['g-recaptcha-response'] = 'required|string';
+        }
+
+        $validated = $request->validate($rules, [
+            'g-recaptcha-response.required' => 'Please complete the reCAPTCHA challenge.',
         ]);
+
+        if ($recaptchaEnabled) {
+            $recaptchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => (string) config('services.recaptcha.secret_key'),
+                'response' => (string) $request->input('g-recaptcha-response'),
+                'remoteip' => $request->ip(),
+            ]);
+
+            if (!$recaptchaResponse->successful() || !data_get($recaptchaResponse->json(), 'success', false)) {
+                return back()
+                    ->withErrors(['captcha' => 'reCAPTCHA verification failed. Please try again.'])
+                    ->withInput();
+            }
+        }
 
         $domain = $validated['domain'] ?? null;
 
@@ -216,6 +243,24 @@ class TenantController extends Controller
         $normalized = rtrim((string) $normalized, '/');
 
         return str_ireplace('locasthost', 'localhost', $normalized);
+    }
+
+    private function shouldEnableRecaptcha(Request $request): bool
+    {
+        $siteKey = (string) config('services.recaptcha.site_key');
+        $secretKey = (string) config('services.recaptcha.secret_key');
+
+        if ($siteKey === '' || $secretKey === '') {
+            return false;
+        }
+
+        $host = strtolower((string) $request->getHost());
+
+        $isLocalHost = $host === 'localhost'
+            || $host === '127.0.0.1'
+            || str_ends_with($host, '.localhost');
+
+        return !$isLocalHost;
     }
 }
 
