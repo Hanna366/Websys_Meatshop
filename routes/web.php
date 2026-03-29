@@ -31,11 +31,13 @@ Route::post('/reset-password', [SimpleAuthController::class, 'resetPassword'])->
 
 // Public signup to create tenant from selected plan.
 Route::get('/account/create', [TenantController::class, 'create'])->name('tenants.create');
-Route::post('/account/create', [TenantController::class, 'store'])->name('tenants.store');
+Route::post('/account/create', [TenantController::class, 'store'])->middleware('throttle:10,1')->name('tenants.store');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [CentralDashboardController::class, 'index'])->name('dashboard');
+});
 
+Route::middleware(['auth', 'central.admin'])->group(function () {
     // Central tenant management menu entries.
     Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
     Route::get('/tenant/{tenantId}', [TenantController::class, 'show'])->name('tenants.show');
