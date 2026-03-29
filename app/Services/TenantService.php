@@ -24,6 +24,7 @@ class TenantService
         $tenantId = Str::uuid()->toString();
         $defaultConnection = config('database.default');
         $connectionConfig = config("database.connections.{$defaultConnection}", []);
+        $driver = $connectionConfig['driver'] ?? 'mysql';
 
         $domain = $data['domain'] ?? null;
         if (!$domain) {
@@ -43,15 +44,9 @@ class TenantService
         $dbName = self::generateDatabaseName($tenantId);
         $dbUsername = $data['db_username'] ?? ('tenant_' . substr(sha1($tenantId), 0, 10));
         $dbPasswordPlain = $data['db_password'] ?? Str::random(24);
-
-        // Create database and attempt dedicated database user creation.
-        $hasDedicatedDbUser = self::createDatabase($dbName, $dbUsername, $dbPasswordPlain);
-
-        if (!$hasDedicatedDbUser && (($connectionConfig['driver'] ?? 'mysql') !== 'sqlite')) {
-            // Fallback to central credentials if DB user management is unavailable.
-            $dbUsername = $connectionConfig['username'] ?? null;
-            $dbPasswordPlain = $connectionConfig['password'] ?? '';
-        }
+        $tenant = null;
+        $databaseExistedBefore = self::databaseExists($dbName, $defaultConnection, $driver);
+        $hasDedicatedDbUser = false;
 
         $now = now();
         $planStartedAt = $data['plan_started_at'] ?? $now;
@@ -68,67 +63,97 @@ class TenantService
         $planLimits = SubscriptionService::getPlanLimits($plan);
         $limitsPayload = array_merge($planLimits, is_array($data['limits'] ?? null) ? $data['limits'] : []);
 
-        // Store the tenant record (password stored encrypted)
-        $tenant = Tenant::create([
-            'tenant_id' => $tenantId,
-            'business_name' => $data['business_name'] ?? $data['name'] ?? 'Tenant',
-            'business_email' => $data['business_email'] ?? $data['email'] ?? null,
-            'business_phone' => $data['business_phone'] ?? null,
-            'business_address' => $data['business_address'] ?? null,
-            'subscription' => $subscriptionPayload,
-            'settings' => $data['settings'] ?? [],
-            'usage' => $data['usage'] ?? [],
-            'limits' => $limitsPayload,
-            'status' => $data['status'] ?? 'active',
-            'payment_status' => $data['payment_status'] ?? 'paid',
-            'suspended_message' => $data['suspended_message'] ?? 'Please contact your administrator.',
-            'domain' => $domain,
-            'db_name' => $dbName,
-            'db_username' => $dbUsername,
-            'db_password' => encrypt($dbPasswordPlain),
-            'plan' => $plan,
-            'plan_started_at' => $planStartedAt,
-            'plan_ends_at' => $planEndsAt,
-            'admin_name' => $data['admin_name'] ?? null,
-            'admin_email' => $data['admin_email'] ?? null,
-        ]);
+        try {
+            // Create database and attempt dedicated database user creation.
+            $hasDedicatedDbUser = self::createDatabase($dbName, $dbUsername, $dbPasswordPlain);
 
-        if (Schema::hasTable('domains')) {
-            Domain::firstOrCreate([
-                'domain' => $domain,
-            ], [
-                'tenant_id' => $tenant->id,
+            if (!$hasDedicatedDbUser && $driver !== 'sqlite') {
+                // Fallback to central credentials if DB user management is unavailable.
+                $dbUsername = $connectionConfig['username'] ?? null;
+                $dbPasswordPlain = $connectionConfig['password'] ?? '';
+            }
+
+            $tenant = DB::connection($defaultConnection)->transaction(function () use (
+                $tenantId,
+                $data,
+                $subscriptionPayload,
+                $limitsPayload,
+                $domain,
+                $dbName,
+                $dbUsername,
+                $dbPasswordPlain,
+                $plan,
+                $planStartedAt,
+                $planEndsAt
+            ) {
+                $tenant = Tenant::create([
+                    'tenant_id' => $tenantId,
+                    'business_name' => $data['business_name'] ?? $data['name'] ?? 'Tenant',
+                    'business_email' => $data['business_email'] ?? $data['email'] ?? null,
+                    'business_phone' => $data['business_phone'] ?? null,
+                    'business_address' => $data['business_address'] ?? null,
+                    'subscription' => $subscriptionPayload,
+                    'settings' => $data['settings'] ?? [],
+                    'usage' => $data['usage'] ?? [],
+                    'limits' => $limitsPayload,
+                    'status' => $data['status'] ?? 'active',
+                    'payment_status' => $data['payment_status'] ?? 'paid',
+                    'suspended_message' => $data['suspended_message'] ?? 'Please contact your administrator.',
+                    'domain' => $domain,
+                    'db_name' => $dbName,
+                    'db_username' => $dbUsername,
+                    'db_password' => encrypt($dbPasswordPlain),
+                    'plan' => $plan,
+                    'plan_started_at' => $planStartedAt,
+                    'plan_ends_at' => $planEndsAt,
+                    'admin_name' => $data['admin_name'] ?? null,
+                    'admin_email' => $data['admin_email'] ?? null,
+                ]);
+
+                if (Schema::hasTable('domains')) {
+                    Domain::firstOrCreate([
+                        'domain' => $domain,
+                    ], [
+                        'tenant_id' => $tenant->id,
+                    ]);
+                }
+
+                return $tenant;
+            });
+
+            // Run tenant migrations
+            self::runTenantMigrations($tenant);
+            self::runTenantSeeders($tenant);
+
+            // Create initial admin user on tenant database
+            $adminPassword = $data['password'] ?? Str::random(16);
+            $adminEmail = $data['admin_email'] ?? $data['business_email'] ?? $data['email'] ?? null;
+            $adminName = $data['admin_name'] ?? $data['business_name'] ?? 'Tenant Admin';
+            $adminUsername = Str::slug($adminName, '_');
+
+            $adminUser = \App\Models\User::on('tenant')->create([
+                'tenant_id' => $tenantId,
+                'username' => $adminUsername,
+                'name' => $adminName,
+                'email' => $adminEmail,
+                'password' => Hash::make($adminPassword),
+                'role' => 'owner',
+                'profile' => [
+                    'first_name' => $adminName,
+                    'last_name' => '',
+                    'full_name' => $adminName,
+                ],
             ]);
+
+            app(PermissionRegistrar::class)->forgetCachedPermissions();
+            $adminUser->syncRoles(['Owner']);
+
+            return $tenant;
+        } catch (Throwable $e) {
+            // Cleanup central records and newly created tenant DB artifacts on partial failure.
+            self::cleanupFailedProvisioning($tenant, $dbName, $databaseExistedBefore, $defaultConnection, $driver);
+            throw $e;
         }
-
-        // Run tenant migrations
-        self::runTenantMigrations($tenant);
-        self::runTenantSeeders($tenant);
-
-        // Create initial admin user on tenant database
-        $adminPassword = $data['password'] ?? Str::random(16);
-        $adminEmail = $data['admin_email'] ?? $data['business_email'] ?? $data['email'] ?? null;
-        $adminName = $data['admin_name'] ?? $data['business_name'] ?? 'Tenant Admin';
-        $adminUsername = Str::slug($adminName, '_');
-
-        $adminUser = \App\Models\User::on('tenant')->create([
-            'tenant_id' => $tenantId,
-            'username' => $adminUsername,
-            'name' => $adminName,
-            'email' => $adminEmail,
-            'password' => Hash::make($adminPassword),
-            'role' => 'owner',
-            'profile' => [
-                'first_name' => $adminName,
-                'last_name' => '',
-                'full_name' => $adminName,
-            ],
-        ]);
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-        $adminUser->syncRoles(['Owner']);
-
-        return $tenant;
     }
 
     /**
@@ -158,8 +183,8 @@ class TenantService
                 mkdir($tenantPath, 0755, true);
             }
 
-// The tenant database name is stored as <db_name>.sqlite
-        $file = $tenantPath . DIRECTORY_SEPARATOR . ($databaseName ?: 'tenant') . '.sqlite';
+            // The tenant database name is stored as <db_name>.sqlite
+            $file = $tenantPath . DIRECTORY_SEPARATOR . ($databaseName ?: 'tenant') . '.sqlite';
             if (!file_exists($file)) {
                 touch($file);
             }
@@ -198,6 +223,71 @@ class TenantService
                        "Error: " . $e->getMessage();
 
             throw new \RuntimeException($message, $e->getCode(), $e);
+        }
+    }
+
+    private static function databaseExists(string $databaseName, string $defaultConnection, string $driver): bool
+    {
+        if ($driver === 'sqlite') {
+            $tenantPath = database_path('tenants');
+            $file = $tenantPath . DIRECTORY_SEPARATOR . ($databaseName ?: 'tenant') . '.sqlite';
+
+            return file_exists($file);
+        }
+
+        if (!in_array($driver, ['mysql', 'mariadb'], true)) {
+            return false;
+        }
+
+        $safeDb = preg_replace('/[^A-Za-z0-9_]/', '_', $databaseName);
+        $exists = DB::connection($defaultConnection)->selectOne(
+            'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?',
+            [$safeDb]
+        );
+
+        return $exists !== null;
+    }
+
+    private static function dropDatabase(string $databaseName, string $defaultConnection, string $driver): void
+    {
+        $safeDb = preg_replace('/[^A-Za-z0-9_]/', '_', $databaseName);
+
+        if ($driver === 'sqlite') {
+            $tenantPath = database_path('tenants');
+            $file = $tenantPath . DIRECTORY_SEPARATOR . ($safeDb ?: 'tenant') . '.sqlite';
+            if (file_exists($file)) {
+                @unlink($file);
+            }
+
+            return;
+        }
+
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
+            DB::connection($defaultConnection)->statement("DROP DATABASE IF EXISTS `{$safeDb}`");
+        }
+    }
+
+    private static function cleanupFailedProvisioning(
+        ?Tenant $tenant,
+        string $dbName,
+        bool $databaseExistedBefore,
+        string $defaultConnection,
+        string $driver
+    ): void {
+        try {
+            if ($tenant && Schema::hasTable('domains')) {
+                Domain::where('tenant_id', $tenant->id)->delete();
+            }
+
+            if ($tenant) {
+                $tenant->forceDelete();
+            }
+
+            if (!$databaseExistedBefore) {
+                self::dropDatabase($dbName, $defaultConnection, $driver);
+            }
+        } catch (Throwable $cleanupException) {
+            // Do not mask original provisioning exception.
         }
     }
 

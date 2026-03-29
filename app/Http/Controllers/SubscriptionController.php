@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Services\SubscriptionService;
@@ -13,12 +14,12 @@ class SubscriptionController extends Controller
      */
     public function billingPage()
     {
-        $subscription = SubscriptionService::getCurrentSubscription();
-        $billingHistory = SubscriptionService::getBillingHistory();
+        [$subscription, $billingHistory, $centralBillingMode] = $this->resolveBillingPayload();
 
         return view('subscription.billing', [
             'subscription' => $subscription,
             'billingHistory' => $billingHistory,
+            'centralBillingMode' => $centralBillingMode,
         ]);
     }
 
@@ -27,16 +28,98 @@ class SubscriptionController extends Controller
      */
     public function billingData()
     {
-        $subscription = SubscriptionService::getCurrentSubscription();
-        $billingHistory = SubscriptionService::getBillingHistory();
+        [$subscription, $billingHistory, $centralBillingMode] = $this->resolveBillingPayload();
 
         return response()->json([
             'success' => true,
             'data' => [
                 'subscription' => $subscription,
                 'history' => $billingHistory,
+                'central_mode' => $centralBillingMode,
             ],
         ]);
+    }
+
+    private function resolveBillingPayload(): array
+    {
+        if ($this->isCentralContext()) {
+            return $this->buildCentralBillingPayload();
+        }
+
+        return [
+            SubscriptionService::getCurrentSubscription(),
+            SubscriptionService::getBillingHistory(),
+            false,
+        ];
+    }
+
+    private function isCentralContext(): bool
+    {
+        if (tenant()) {
+            return false;
+        }
+
+        return (string) session('auth_context', 'central') === 'central';
+    }
+
+    private function buildCentralBillingPayload(): array
+    {
+        $tenants = Tenant::query()->whereNull('deleted_at')->get();
+        $pricing = SubscriptionService::getPlanPricing();
+
+        $paidCount = 0;
+        $unpaidCount = 0;
+        $estimatedMrr = 0.0;
+        $nextBillingAt = null;
+        $history = [];
+
+        foreach ($tenants as $tenant) {
+            $planKey = SubscriptionService::normalizePlan((string) ($tenant->plan ?? data_get($tenant->subscription, 'plan', 'basic')));
+            $amount = (float) ($pricing[$planKey] ?? 0);
+            $estimatedMrr += $amount;
+
+            $paymentStatus = strtolower((string) ($tenant->payment_status ?? 'paid'));
+            if (in_array($paymentStatus, ['paid'], true)) {
+                $paidCount++;
+            }
+
+            if (in_array($paymentStatus, ['unpaid', 'overdue'], true)) {
+                $unpaidCount++;
+            }
+
+            $periodEnd = data_get($tenant->subscription, 'current_period_end')
+                ?? optional($tenant->plan_ends_at)->toDateString();
+
+            if ($periodEnd) {
+                $periodEndDate = \Carbon\Carbon::parse((string) $periodEnd);
+                if ($nextBillingAt === null || $periodEndDate->lt($nextBillingAt)) {
+                    $nextBillingAt = $periodEndDate;
+                }
+            }
+
+            $history[] = [
+                'id' => 'TEN-' . strtoupper(substr((string) $tenant->tenant_id, 0, 8)),
+                'tenant_name' => $tenant->business_name,
+                'date' => optional($tenant->updated_at)->format('Y-m-d') ?? now()->format('Y-m-d'),
+                'amount' => $amount,
+                'plan' => ucfirst($planKey),
+                'status' => ucfirst($paymentStatus),
+                'payment_method' => 'N/A',
+            ];
+        }
+
+        $status = $unpaidCount > 0 ? 'mixed' : 'healthy';
+
+        $subscription = [
+            'plan' => (string) $tenants->count(),
+            'price' => $estimatedMrr,
+            'status' => $status,
+            'next_billing_at' => $nextBillingAt,
+            'paid_tenants' => $paidCount,
+            'unpaid_tenants' => $unpaidCount,
+        ];
+
+        return [$subscription, $history, true];
     }
 
     public function current()
