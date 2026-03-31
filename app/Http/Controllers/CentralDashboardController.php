@@ -6,6 +6,11 @@ use App\Models\Tenant;
 
 class CentralDashboardController extends Controller
 {
+    public function welcome()
+    {
+        return view('central.welcome');
+    }
+
     public function index()
     {
         $stats = [

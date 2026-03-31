@@ -40,13 +40,8 @@ class TenantRoleSeeder extends Seeder
             'guard_name' => $guard,
         ]);
 
-        $administratorRole = Role::firstOrCreate([
-            'name' => 'Administrator',
-            'guard_name' => $guard,
-        ]);
-
-        $staffRole = Role::firstOrCreate([
-            'name' => 'Staff',
+        $managerRole = Role::firstOrCreate([
+            'name' => 'Manager',
             'guard_name' => $guard,
         ]);
 
@@ -55,9 +50,32 @@ class TenantRoleSeeder extends Seeder
             'guard_name' => $guard,
         ]);
 
+        $inventoryStaffRole = Role::firstOrCreate([
+            'name' => 'Inventory Staff',
+            'guard_name' => $guard,
+        ]);
+
+        // Assign permissions based on roles
         $ownerRole->syncPermissions($permissions);
-        $administratorRole->syncPermissions($permissions);
-        $staffRole->syncPermissions(['pos.access']);
-        $cashierRole->syncPermissions(['pos.access']);
+        
+        $managerRole->syncPermissions([
+            'pos.access',
+            'products.manage',
+            'inventory.manage',
+            'customers.manage',
+            'suppliers.manage',
+            'reports.view',
+        ]);
+
+        $cashierRole->syncPermissions([
+            'pos.access',
+            'customers.manage',
+        ]);
+
+        $inventoryStaffRole->syncPermissions([
+            'pos.access',
+            'products.manage',
+            'inventory.manage',
+        ]);
     }
 }

@@ -58,13 +58,15 @@ class TenantController extends Controller
     public function create()
     {
         return view('account.create', [
-            'showRecaptcha' => $this->shouldEnableRecaptcha(request()),
+            // 'showRecaptcha' => $this->shouldEnableRecaptcha(request()),
+            'showRecaptcha' => false, // Temporarily disabled
         ]);
     }
 
     public function store(Request $request)
     {
-        $recaptchaEnabled = $this->shouldEnableRecaptcha($request);
+        // $recaptchaEnabled = $this->shouldEnableRecaptcha($request);
+        $recaptchaEnabled = false; // Temporarily disabled
 
         $request->merge([
             'domain' => $this->normalizeDomain($request->input('domain')),
@@ -82,27 +84,27 @@ class TenantController extends Controller
             'password' => 'nullable|string|min:8',
         ];
 
-        if ($recaptchaEnabled) {
-            $rules['g-recaptcha-response'] = 'required|string';
-        }
+        // if ($recaptchaEnabled) {
+        //     $rules['g-recaptcha-response'] = 'required|string';
+        // }
 
         $validated = $request->validate($rules, [
-            'g-recaptcha-response.required' => 'Please complete the reCAPTCHA challenge.',
+            // 'g-recaptcha-response.required' => 'Please complete the reCAPTCHA challenge.',
         ]);
 
-        if ($recaptchaEnabled) {
-            $recaptchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                'secret' => (string) config('services.recaptcha.secret_key'),
-                'response' => (string) $request->input('g-recaptcha-response'),
-                'remoteip' => $request->ip(),
-            ]);
+        // if ($recaptchaEnabled) {
+        //     $recaptchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+        //         'secret' => (string) config('services.recaptcha.secret_key'),
+        //         'response' => (string) $request->input('g-recaptcha-response'),
+        //         'remoteip' => $request->ip(),
+        //     ]);
 
-            if (!$recaptchaResponse->successful() || !data_get($recaptchaResponse->json(), 'success', false)) {
-                return back()
-                    ->withErrors(['captcha' => 'reCAPTCHA verification failed. Please try again.'])
-                    ->withInput();
-            }
-        }
+        //     if (!$recaptchaResponse->successful() || !data_get($recaptchaResponse->json(), 'success', false)) {
+        //         return back()
+        //             ->withErrors(['captcha' => 'reCAPTCHA verification failed. Please try again.'])
+        //             ->withInput();
+        //     }
+        // }
 
         $domain = $validated['domain'] ?? null;
 

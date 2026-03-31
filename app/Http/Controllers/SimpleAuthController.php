@@ -19,11 +19,21 @@ class SimpleAuthController extends Controller
     public function showLoginForm(Request $request)
     {
         $currentContext = $this->currentAuthContext();
-        $showRecaptcha = $currentContext === 'central' && (bool) config('services.recaptcha.site_key');
+        // $showRecaptcha = $currentContext === 'central' && (bool) config('services.recaptcha.site_key');
+        $showRecaptcha = false; // Temporarily disabled
+
+        // Get tenant information for dynamic logo
+        $tenant = null;
+        if (str_starts_with($currentContext, 'tenant:')) {
+            $tenant = (app()->bound('tenant') && tenant()) ? tenant() : $this->resolveTenantFromHost($request);
+        }
 
         if ($request->boolean('force_login')) {
             session()->forget(['authenticated', 'auth_context', 'user']);
-            return view('auth.login', ['showRecaptcha' => $showRecaptcha]);
+            return view('auth.login', [
+                'showRecaptcha' => $showRecaptcha,
+                'tenant' => $tenant
+            ]);
         }
 
         // Tenant domains should always show the login screen when opened.
@@ -32,7 +42,10 @@ class SimpleAuthController extends Controller
                 session()->forget(['authenticated', 'auth_context', 'user']);
             }
 
-            return view('auth.login', ['showRecaptcha' => false]);
+            return view('auth.login', [
+                'showRecaptcha' => false,
+                'tenant' => $tenant
+            ]);
         }
 
         // Redirect only when authenticated for this exact context (central).
@@ -40,7 +53,10 @@ class SimpleAuthController extends Controller
             return redirect('/dashboard');
         }
         
-        return view('auth.login', ['showRecaptcha' => $showRecaptcha]);
+        return view('auth.login', [
+            'showRecaptcha' => $showRecaptcha,
+            'tenant' => $tenant
+        ]);
     }
 
     public function login(Request $request)

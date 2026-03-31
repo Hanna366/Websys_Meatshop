@@ -17,9 +17,8 @@ use App\Http\Controllers\TenantController;
 |
 */
 
-Route::get('/', [CentralDashboardController::class, 'index'])->name('central.home');
-
-Route::get('/central', [CentralDashboardController::class, 'index'])->name('central.framework');
+Route::get('/', [CentralDashboardController::class, 'welcome'])->name('central.welcome');
+Route::get('/central', [CentralDashboardController::class, 'index'])->name('central.home');
 
 Route::get('/login', [SimpleAuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [SimpleAuthController::class, 'login'])->name('login.post');
@@ -61,4 +60,8 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/test', function () {
     return 'Laravel Meat Shop POS is working!';
 });
+
+// Logo testing routes
+Route::get('/logo/test', [App\Http\Controllers\LogoController::class, 'testLogos']);
+Route::get('/logo/generate/{tenantId?}', [App\Http\Controllers\LogoController::class, 'generateLogo']);
 

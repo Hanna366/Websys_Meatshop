@@ -40,7 +40,8 @@ class Tenant extends Model implements TenantWithDatabase
         'plan_started_at',
         'plan_ends_at',
         'admin_name',
-        'admin_email'
+        'admin_email',
+        'logo_path'
     ];
 
     protected $casts = [

@@ -30,13 +30,14 @@ class User extends Authenticatable
             }
 
             try {
-                if ($user->hasAnyRole(['Owner', 'Staff'])) {
-                    return;
-                }
-
-                app(PermissionRegistrar::class)->forgetCachedPermissions();
-
-                $defaultRole = strtolower((string) $user->role) === 'owner' ? 'Owner' : 'Staff';
+                $roleMapping = [
+                    'owner' => 'Owner',
+                    'manager' => 'Manager',
+                    'cashier' => 'Cashier',
+                    'inventory_staff' => 'Inventory Staff'
+                ];
+                
+                $defaultRole = $roleMapping[strtolower((string) $user->role)] ?? 'Staff';
                 $user->syncRoles([$defaultRole]);
             } catch (\Throwable $e) {
                 // Ignore role sync when permission tables or mappings are not fully provisioned.
