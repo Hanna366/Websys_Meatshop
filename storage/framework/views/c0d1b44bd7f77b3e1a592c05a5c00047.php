@@ -3,20 +3,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     
-    @php
+    <?php
         use App\Helpers\LogoHelper;
         $tenant = $tenant ?? null;
         $businessName = $tenant ? $tenant->business_name : 'MeatShop POS';
         $logoUrl = LogoHelper::getTenantLogo($tenant);
-    @endphp
+    ?>
     
-    <title>Sign In - {{ $businessName }}</title>
+    <title>Sign In - <?php echo e($businessName); ?></title>
 
-    @if (($showRecaptcha ?? false) && config('services.recaptcha.site_key'))
+    <?php if(($showRecaptcha ?? false) && config('services.recaptcha.site_key')): ?>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    @endif
+    <?php endif; ?>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,36 +43,38 @@
         <section class="w-full max-w-md rounded-2xl border border-slate-200/70 bg-white/95 p-6 shadow-xl backdrop-blur sm:p-8">
             <div class="mb-6 text-center">
                 <div class="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden shadow-lg">
-                    <img src="{{ $logoUrl }}" alt="{{ $businessName }} Logo" class="h-12 w-12">
+                    <img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($businessName); ?> Logo" class="h-12 w-12">
                 </div>
-                <h1 class="heading-font text-2xl font-semibold text-slate-900">{{ $businessName }}</h1>
+                <h1 class="heading-font text-2xl font-semibold text-slate-900"><?php echo e($businessName); ?></h1>
                 <p class="mt-1 text-sm text-slate-500">Sign in to manage your meat shop</p>
             </div>
 
-            @if(session('error'))
+            <?php if(session('error')): ?>
                 <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                    {{ session('error') }}
-                </div>
-            @endif
+                    <?php echo e(session('error')); ?>
 
-            @if(session('status'))
+                </div>
+            <?php endif; ?>
+
+            <?php if(session('status')): ?>
                 <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    {{ session('status') }}
-                </div>
-            @endif
+                    <?php echo e(session('status')); ?>
 
-            @if($errors->any())
+                </div>
+            <?php endif; ?>
+
+            <?php if($errors->any()): ?>
                 <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                     <ul class="list-disc space-y-1 pl-5">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
+                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <li><?php echo e($error); ?></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </ul>
                 </div>
-            @endif
+            <?php endif; ?>
 
             <form id="tenantLoginForm" method="POST" action="/login" class="space-y-4">
-                @csrf
+                <?php echo csrf_field(); ?>
 
                 <div>
                     <label for="email" class="mb-1 block text-sm font-medium text-slate-700">Email Address</label>
@@ -84,9 +86,16 @@
                             type="email"
                             id="email"
                             name="email"
-                            value="{{ old('email') }}"
+                            value="<?php echo e(old('email')); ?>"
                             placeholder="you@meatshop.com"
-                            class="h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 @error('email') border-rose-300 ring-rose-200 @enderror"
+                            class="h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-rose-300 ring-rose-200 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                             required
                             autocomplete="email"
                         >
@@ -104,7 +113,14 @@
                             id="password"
                             name="password"
                             placeholder="Enter your password"
-                            class="h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 @error('password') border-rose-300 ring-rose-200 @enderror"
+                            class="h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-rose-300 ring-rose-200 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                             required
                             autocomplete="current-password"
                         >
@@ -119,11 +135,11 @@
                     <a href="/forgot-password" class="font-medium text-indigo-600 transition hover:text-indigo-700">Forgot password?</a>
                 </div>
 
-                @if (($showRecaptcha ?? false) && config('services.recaptcha.site_key'))
+                <?php if(($showRecaptcha ?? false) && config('services.recaptcha.site_key')): ?>
                     <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <div class="g-recaptcha mx-auto" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+                        <div class="g-recaptcha mx-auto" data-sitekey="<?php echo e(config('services.recaptcha.site_key')); ?>"></div>
                     </div>
-                @endif
+                <?php endif; ?>
 
                 <button
                     id="signInButton"
@@ -139,18 +155,18 @@
                 <a href="/" class="text-slate-500 transition hover:text-slate-700">Back to homepage</a>
             </div>
 
-            @if (Route::has('google.redirect'))
+            <?php if(Route::has('google.redirect')): ?>
                 <div class="my-4 flex items-center gap-3">
                     <span class="h-px flex-1 bg-slate-200"></span>
                     <span class="text-xs uppercase tracking-wide text-slate-400">or</span>
                     <span class="h-px flex-1 bg-slate-200"></span>
                 </div>
 
-                <a href="{{ route('google.redirect') }}" class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                <a href="<?php echo e(route('google.redirect')); ?>" class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
                     <i data-lucide="circle" class="h-3.5 w-3.5 text-rose-500"></i>
                     Sign in with Google
                 </a>
-            @endif
+            <?php endif; ?>
         </section>
     </main>
 
@@ -170,3 +186,4 @@
     </script>
 </body>
 </html>
+<?php /**PATH C:\Users\Rusty\Music\Websys_Meatshop\resources\views/auth/login.blade.php ENDPATH**/ ?>

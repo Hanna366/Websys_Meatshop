@@ -12,10 +12,10 @@ class AccountController extends Controller
 {
     public function store(Request $request)
     {
-        $recaptchaSecret = (string) config('services.recaptcha.secret_key');
-        $host = strtolower((string) $request->getHost());
-        $isLocalHost = $host === 'localhost' || $host === '127.0.0.1' || str_ends_with($host, '.localhost');
-        $recaptchaEnabled = $recaptchaSecret !== '' && !$isLocalHost;
+        // $recaptchaSecret = (string) config('services.recaptcha.secret_key');
+        // $host = strtolower((string) $request->getHost());
+        // $isLocalHost = $host === 'localhost' || $host === '127.0.0.1' || str_ends_with($host, '.localhost');
+        $recaptchaEnabled = false; // Temporarily disabled
 
         $validationRules = [
             'name' => 'required|string|max:255',
@@ -27,28 +27,8 @@ class AccountController extends Controller
             'plan' => 'required|in:basic,standard,premium,enterprise',
         ];
 
-        if ($recaptchaEnabled) {
-            $validationRules['g-recaptcha-response'] = 'required|string';
-        }
-
         // Validate the request data
-        $request->validate($validationRules, [
-            'g-recaptcha-response.required' => 'Please complete the reCAPTCHA challenge.',
-        ]);
-
-        if ($recaptchaEnabled) {
-            $recaptchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                'secret' => $recaptchaSecret,
-                'response' => (string) $request->input('g-recaptcha-response'),
-                'remoteip' => $request->ip(),
-            ]);
-
-            if (!$recaptchaResponse->successful() || !data_get($recaptchaResponse->json(), 'success', false)) {
-                return back()
-                    ->withErrors(['captcha' => 'reCAPTCHA verification failed. Please try again.'])
-                    ->withInput();
-            }
-        }
+        $request->validate($validationRules);
 
         $fullName = trim($request->name);
         $nameParts = preg_split('/\s+/', $fullName, -1, PREG_SPLIT_NO_EMPTY);

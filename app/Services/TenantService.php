@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Domain;
 use App\Models\Tenant;
+use App\Helpers\EmailHelper;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -30,6 +31,11 @@ class TenantService
         if (!$domain) {
             $baseSlug = Str::slug($data['business_name'] ?? ($data['email'] ?? 'tenant'));
             $root = config('tenancy.fallback_domain') ?? 'localhost';
+            
+            // Auto-append localhost if not already present for local development
+            if (app()->environment('local') && !str_contains($root, 'localhost')) {
+                $root = $root . '.localhost';
+            }
 
             $domain = $baseSlug . '.' . $root;
             $counter = 1;
@@ -37,8 +43,15 @@ class TenantService
                 $counter++;
                 $domain = $baseSlug . '-' . $counter . '.' . $root;
             }
-        } elseif (Schema::hasTable('domains')) {
-            self::releaseDomainFromDeletedTenants($domain);
+        } else {
+            // Auto-append localhost for provided domain in local development
+            if (app()->environment('local') && !str_contains($domain, 'localhost')) {
+                $domain = $domain . '.localhost';
+            }
+            
+            if (Schema::hasTable('domains')) {
+                self::releaseDomainFromDeletedTenants($domain);
+            }
         }
 
         $dbName = self::generateDatabaseName($tenantId);
@@ -126,8 +139,8 @@ class TenantService
             self::runTenantSeeders($tenant);
 
             // Create initial admin user on tenant database
-            $adminPassword = $data['password'] ?? Str::random(16);
-            $adminEmail = $data['admin_email'] ?? $data['business_email'] ?? $data['email'] ?? null;
+            $adminPassword = $data['password'] ?? self::generateSecurePassword();
+            $adminEmail = $data['admin_email'] ?? $data['business_email'] ?? $data['email'] ?? EmailHelper::getBusinessEmail('owner', $data['business_name'] ?? 'Tenant');
             $adminName = $data['admin_name'] ?? $data['business_name'] ?? 'Tenant Admin';
             $adminUsername = Str::slug($adminName, '_');
 
@@ -145,8 +158,20 @@ class TenantService
                 ],
             ]);
 
+            // Set tenant context for role operations
+            tenancy()->initialize($tenant);
             app(PermissionRegistrar::class)->forgetCachedPermissions();
-            $adminUser->syncRoles(['Owner']);
+            
+            // Explicitly use tenant connection for permission models
+            $role = \Spatie\Permission\Models\Role::on('tenant')->where('name', 'Owner')->first();
+            if ($role) {
+                $adminUser->syncRoles([$role]);
+            }
+            
+            tenancy()->end();
+
+            // Store the generated password in tenant data for notification purposes
+            $tenant->generated_password = $adminPassword;
 
             return $tenant;
         } catch (Throwable $e) {
@@ -154,6 +179,34 @@ class TenantService
             self::cleanupFailedProvisioning($tenant, $dbName, $databaseExistedBefore, $defaultConnection, $driver);
             throw $e;
         }
+    }
+
+    /**
+     * Generate a secure random password.
+     */
+    private static function generateSecurePassword(): string
+    {
+        // Generate a secure 16-character password with mixed case, numbers, and symbols
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $numbers = '0123456789';
+        $symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        
+        $allChars = $uppercase . $lowercase . $numbers . $symbols;
+        $password = '';
+        
+        // Ensure at least one character from each category
+        $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
+        $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
+        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
+        $password .= $symbols[random_int(0, strlen($symbols) - 1)];
+        
+        // Fill the rest with random characters
+        for ($i = 4; $i < 16; $i++) {
+            $password .= $allChars[random_int(0, strlen($allChars) - 1)];
+        }
+        
+        return str_shuffle($password);
     }
 
     /**

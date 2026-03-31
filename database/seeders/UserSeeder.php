@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Tenant;
+use App\Helpers\EmailHelper;
 
 class UserSeeder extends Seeder
 {
@@ -17,10 +18,11 @@ class UserSeeder extends Seeder
 
         foreach ($tenants as $tenant) {
             // Create owner user for each tenant
-            User::create([
+            $ownerUser = User::create([
                 'tenant_id' => $tenant->tenant_id,
-                'username' => 'owner@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
-                'email' => 'owner@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
+                'username' => 'owner',
+                'name' => 'John Owner',
+                'email' => EmailHelper::getBusinessEmail('owner', $tenant->business_name),
                 'password' => bcrypt('password123'),
                 'role' => 'owner',
                 'profile' => [
@@ -48,13 +50,16 @@ class UserSeeder extends Seeder
                 ],
                 'status' => 'active'
             ]);
+            
+            $ownerUser->syncRoles(['Owner']);
 
             // Create manager user for premium tenant
             if ($tenant->subscription['plan'] === 'premium') {
-                User::create([
+                $managerUser = User::create([
                     'tenant_id' => $tenant->tenant_id,
-                    'username' => 'manager@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
-                    'email' => 'manager@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
+                    'username' => 'manager',
+                    'name' => 'Jane Manager',
+                    'email' => EmailHelper::getBusinessEmail('manager', $tenant->business_name),
                     'password' => bcrypt('password123'),
                     'role' => 'manager',
                     'profile' => [
@@ -82,12 +87,15 @@ class UserSeeder extends Seeder
                     ],
                     'status' => 'active'
                 ]);
+                
+                $managerUser->syncRoles(['Manager']);
 
                 // Create cashier user
-                User::create([
+                $cashierUser = User::create([
                     'tenant_id' => $tenant->tenant_id,
-                    'username' => 'cashier@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
-                    'email' => 'cashier@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
+                    'username' => 'cashier',
+                    'name' => 'Mike Cashier',
+                    'email' => EmailHelper::getBusinessEmail('cashier', $tenant->business_name),
                     'password' => bcrypt('password123'),
                     'role' => 'cashier',
                     'profile' => [
@@ -115,12 +123,15 @@ class UserSeeder extends Seeder
                     ],
                     'status' => 'active'
                 ]);
+                
+                $cashierUser->syncRoles(['Cashier']);
 
                 // Create inventory staff user
-                User::create([
+                $inventoryUser = User::create([
                     'tenant_id' => $tenant->tenant_id,
-                    'username' => 'inventory@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
-                    'email' => 'inventory@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
+                    'username' => 'inventory',
+                    'name' => 'Sarah Inventory',
+                    'email' => EmailHelper::getBusinessEmail('inventory', $tenant->business_name),
                     'password' => bcrypt('password123'),
                     'role' => 'inventory_staff',
                     'profile' => [
@@ -148,14 +159,17 @@ class UserSeeder extends Seeder
                     ],
                     'status' => 'active'
                 ]);
+                
+                $inventoryUser->syncRoles(['Inventory Staff']);
             }
 
             // Create additional users for standard tenant
             if ($tenant->subscription['plan'] === 'standard') {
-                User::create([
+                $standardManagerUser = User::create([
                     'tenant_id' => $tenant->tenant_id,
-                    'username' => 'manager@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
-                    'email' => 'manager@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
+                    'username' => 'manager',
+                    'name' => 'Bob Manager',
+                    'email' => EmailHelper::getBusinessEmail('manager', $tenant->business_name),
                     'password' => bcrypt('password123'),
                     'role' => 'manager',
                     'profile' => [
@@ -183,11 +197,14 @@ class UserSeeder extends Seeder
                     ],
                     'status' => 'active'
                 ]);
+                
+                $standardManagerUser->syncRoles(['Manager']);
 
-                User::create([
+                $standardCashierUser = User::create([
                     'tenant_id' => $tenant->tenant_id,
-                    'username' => 'cashier@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
-                    'email' => 'cashier@' . strtolower(str_replace(' ', '', $tenant->business_name)) . '.com',
+                    'username' => 'cashier',
+                    'name' => 'Lisa Cashier',
+                    'email' => EmailHelper::getBusinessEmail('cashier', $tenant->business_name),
                     'password' => bcrypt('password123'),
                     'role' => 'cashier',
                     'profile' => [
@@ -215,6 +232,8 @@ class UserSeeder extends Seeder
                     ],
                     'status' => 'active'
                 ]);
+                
+                $standardCashierUser->syncRoles(['Cashier']);
             }
         }
 
