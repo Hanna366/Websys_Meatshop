@@ -57,7 +57,7 @@ class TenantPageController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'username' => ['nullable', 'string', 'max:50', Rule::unique('tenant.users', 'username')],
             'email' => ['required', 'email', 'max:255', Rule::unique('tenant.users', 'email')],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role' => ['required', Rule::in(['Administrator', 'Cashier'])],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
         ]);
@@ -83,13 +83,17 @@ class TenantPageController extends Controller
 
         try {
             $legacyRole = strtolower($validated['role']) === 'administrator' ? 'owner' : 'cashier';
+            $plainPassword = trim((string) ($validated['password'] ?? ''));
+            if ($plainPassword === '') {
+                $plainPassword = Str::random(16);
+            }
 
             $user = User::on('tenant')->create([
                 'tenant_id' => $tenantId,
                 'username' => $username,
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
+                'password' => Hash::make($plainPassword),
                 'role' => $legacyRole,
                 'status' => $validated['status'] ?? 'active',
                 'profile' => [
@@ -686,12 +690,25 @@ class TenantPageController extends Controller
 
         $roles = Role::on($connection)
             ->where('guard_name', 'web')
-            ->whereIn('name', ['Administrator', 'Cashier'])
+            ->whereIn('name', ['Owner', 'Administrator', 'Cashier'])
             ->orderBy('name')
             ->pluck('name')
             ->all();
 
-        return !empty($roles) ? array_values($roles) : ['Administrator', 'Cashier'];
+        if (empty($roles)) {
+            return ['Administrator', 'Cashier'];
+        }
+
+        $normalized = array_map(function (string $role): string {
+            $lower = strtolower($role);
+            if ($lower === 'owner' || $lower === 'administrator') {
+                return 'Administrator';
+            }
+
+            return $role;
+        }, $roles);
+
+        return array_values(array_unique($normalized));
     }
 
     private function generateTenantUsername(string $name): string

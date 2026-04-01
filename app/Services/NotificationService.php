@@ -17,54 +17,54 @@ class NotificationService
         return $tenant->admin_email ?: $tenant->business_email;
     }
 
-    public function sendTenantSignupConfirmation(Tenant $tenant): void
+    public function sendTenantSignupConfirmation(Tenant $tenant): bool
     {
-        $recipient = $this->tenantRecipientEmail($tenant);
-        if (!$recipient) {
-            return;
-        }
-
-        Notification::route('mail', $recipient)->notify(new TenantSignupConfirmationNotification($tenant));
+        return $this->dispatchMailNotification($tenant, new TenantSignupConfirmationNotification($tenant));
     }
 
-    public function sendTenantStatusChanged(Tenant $tenant): void
+    public function sendTenantStatusChanged(Tenant $tenant): bool
     {
-        $recipient = $this->tenantRecipientEmail($tenant);
-        if (!$recipient) {
-            return;
-        }
-
-        Notification::route('mail', $recipient)->notify(new TenantStatusChangedNotification($tenant));
+        return $this->dispatchMailNotification($tenant, new TenantStatusChangedNotification($tenant));
     }
 
-    public function sendSubscriptionUpdated(Tenant $tenant): void
+    public function sendSubscriptionUpdated(Tenant $tenant): bool
     {
-        $recipient = $this->tenantRecipientEmail($tenant);
-        if (!$recipient) {
-            return;
-        }
-
-        Notification::route('mail', $recipient)->notify(new TenantSubscriptionUpdatedNotification($tenant));
+        return $this->dispatchMailNotification($tenant, new TenantSubscriptionUpdatedNotification($tenant));
     }
 
-    public function sendPaymentReminder(Tenant $tenant): void
+    public function sendPaymentReminder(Tenant $tenant): bool
     {
-        $recipient = $this->tenantRecipientEmail($tenant);
-        if (!$recipient) {
-            return;
-        }
-
-        Notification::route('mail', $recipient)->notify(new TenantPaymentReminderNotification($tenant));
+        return $this->dispatchMailNotification($tenant, new TenantPaymentReminderNotification($tenant));
     }
 
-    public function sendExpirationAlert(Tenant $tenant): void
+    public function sendExpirationAlert(Tenant $tenant): bool
+    {
+        return $this->dispatchMailNotification($tenant, new TenantExpirationAlertNotification($tenant));
+    }
+
+    /**
+     * Send mail notifications without failing the parent workflow.
+     */
+    private function dispatchMailNotification(Tenant $tenant, object $notification): bool
     {
         $recipient = $this->tenantRecipientEmail($tenant);
         if (!$recipient) {
-            return;
+            return false;
         }
 
-        Notification::route('mail', $recipient)->notify(new TenantExpirationAlertNotification($tenant));
+        try {
+            Notification::route('mail', $recipient)->notify($notification);
+            return true;
+        } catch (\Throwable $e) {
+            \Log::warning('Tenant notification mail failed.', [
+                'tenant_id' => $tenant->tenant_id,
+                'recipient' => $recipient,
+                'notification' => get_class($notification),
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     public function settings(string $tenantId): array

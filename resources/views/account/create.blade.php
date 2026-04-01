@@ -138,8 +138,8 @@
                             </div>
                             <div>
                                 <label for="password" class="mb-1 block text-sm font-medium text-slate-700">Password</label>
-                                <input type="password" id="password" name="password" placeholder="Create a secure password" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 @error('password') border-rose-300 ring-rose-200 @enderror" required>
-                                <p class="mt-1 text-xs text-slate-500">Minimum 8 characters recommended.</p>
+                                  <input type="password" id="password" name="password" placeholder="Leave blank to auto-generate" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 @error('password') border-rose-300 ring-rose-200 @enderror">
+                                  <p class="mt-1 text-xs text-slate-500">Optional: leave blank to auto-generate a secure password and send it via email.</p>
                             </div>
                         </div>
                     </div>

@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Mail\TenantOnboardingMail;
 use App\Models\Domain;
 use App\Models\Tenant;
 use App\Helpers\EmailHelper;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -170,8 +172,7 @@ class TenantService
             
             tenancy()->end();
 
-            // Store the generated password in tenant data for notification purposes
-            $tenant->generated_password = $adminPassword;
+            $tenant->setAttribute('onboarding_email_sent', self::sendTenantOnboardingEmail($tenant, $adminEmail, $adminName));
 
             return $tenant;
         } catch (Throwable $e) {
@@ -179,6 +180,49 @@ class TenantService
             self::cleanupFailedProvisioning($tenant, $dbName, $databaseExistedBefore, $defaultConnection, $driver);
             throw $e;
         }
+    }
+
+    /**
+     * Send onboarding email after successful tenant provisioning.
+     */
+    private static function sendTenantOnboardingEmail(Tenant $tenant, string $adminEmail, string $adminName): bool
+    {
+        try {
+            $loginUrl = self::buildTenantUrl($tenant, '/login');
+            $passwordSetupUrl = self::buildTenantUrl($tenant, '/forgot-password');
+
+            Mail::to($adminEmail)->queue(new TenantOnboardingMail(
+                businessName: (string) $tenant->business_name,
+                adminName: $adminName,
+                adminEmail: $adminEmail,
+                loginUrl: $loginUrl,
+                passwordSetupUrl: $passwordSetupUrl,
+                plan: (string) ($tenant->plan ?? data_get($tenant->subscription, 'plan', 'basic')),
+            ));
+
+            return true;
+        } catch (Throwable $e) {
+            \Log::warning('Tenant onboarding email could not be sent.', [
+                'tenant_id' => $tenant->tenant_id,
+                'admin_email' => $adminEmail,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Build a tenant-aware absolute URL using APP_URL scheme/port.
+     */
+    private static function buildTenantUrl(Tenant $tenant, string $path): string
+    {
+        $appUrl = (string) config('app.url', 'http://localhost');
+        $parts = parse_url($appUrl) ?: [];
+        $scheme = $parts['scheme'] ?? 'http';
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+
+        return sprintf('%s://%s%s%s', $scheme, (string) $tenant->domain, $port, $path);
     }
 
     /**
