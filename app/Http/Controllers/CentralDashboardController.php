@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use App\Services\DatabaseMonitorService;
 
 class CentralDashboardController extends Controller
 {
@@ -25,9 +26,21 @@ class CentralDashboardController extends Controller
             ->limit(15)
             ->get();
 
+        // Get database monitoring statistics
+        $databaseStats = DatabaseMonitorService::getDatabaseUsageStats();
+        $databaseSummary = DatabaseMonitorService::getDatabaseSummary();
+        $databaseHealth = DatabaseMonitorService::getDatabaseHealth();
+        
+        // Check XAMPP MySQL status
+        $xamppStatus = DatabaseMonitorService::checkXAMPPStatus();
+
         return view('central.home', [
             'stats' => $stats,
             'tenants' => $tenants,
+            'database_stats' => $databaseStats,
+            'database_summary' => $databaseSummary,
+            'database_health' => $databaseHealth,
+            'xampp_status' => $xamppStatus,
         ]);
     }
 }
