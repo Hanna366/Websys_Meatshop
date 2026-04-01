@@ -33,14 +33,14 @@ class EmailService
 
             public function envelope()
             {
-                return new \Illuminate\Mail\Envelope(
+                return new \Illuminate\Mail\Mailables\Envelope(
                     subject: "Welcome to {$this->businessName} - Meat Shop POS"
                 );
             }
 
             public function content()
             {
-                return new \Illuminate\Mail\Content(
+                return new \Illuminate\Mail\Mailables\Content(
                     view: 'emails.welcome',
                     with: [
                         'email' => $this->email,
@@ -57,12 +57,13 @@ class EmailService
             }
         };
 
-            // Use business email as sender
-            $fromEmail = EmailHelper::getBusinessEmail('info', $businessName);
-            $fromName = "{$businessName} - Meat Shop POS";
+            // Always use configured sender to satisfy SMTP provider policies.
+            $mailable->from(
+                (string) config('mail.from.address'),
+                (string) config('mail.from.name')
+            );
 
             Mail::to($email)
-                ->from($fromEmail, $fromName)
                 ->send($mailable);
 
             return [
@@ -100,14 +101,14 @@ class EmailService
 
                 public function envelope()
                 {
-                    return new \Illuminate\Mail\Envelope(
+                    return new \Illuminate\Mail\Mailables\Envelope(
                         subject: "Password Reset Request - {$this->businessName}"
                     );
                 }
 
                 public function content()
                 {
-                    return new \Illuminate\Mail\Content(
+                    return new \Illuminate\Mail\Mailables\Content(
                         view: 'emails.password-reset',
                         with: [
                             'email' => $this->email,
@@ -124,11 +125,13 @@ class EmailService
                 }
             };
 
-            $fromEmail = EmailHelper::getBusinessEmail('support', $businessName);
-            $fromName = "{$businessName} - Support";
+            // Always use configured sender to satisfy SMTP provider policies.
+            $mailable->from(
+                (string) config('mail.from.address'),
+                (string) config('mail.from.name')
+            );
 
             Mail::to($email)
-                ->from($fromEmail, $fromName)
                 ->send($mailable);
 
             return [
@@ -164,14 +167,14 @@ class EmailService
 
                 public function envelope()
                 {
-                    return new \Illuminate\Mail\Envelope(
+                    return new \Illuminate\Mail\Mailables\Envelope(
                         subject: "Your Meat Shop POS Account is Ready - {$this->businessName}"
                     );
                 }
 
                 public function content()
                 {
-                    return new \Illuminate\Mail\Content(
+                    return new \Illuminate\Mail\Mailables\Content(
                         view: 'emails.tenant-creation',
                         with: [
                             'email' => $this->email,
@@ -188,11 +191,13 @@ class EmailService
                 }
             };
 
-            $fromEmail = EmailHelper::getBusinessEmail('billing', $businessName);
-            $fromName = "{$businessName} - Meat Shop POS";
+            // Always use configured sender to satisfy SMTP provider policies.
+            $mailable->from(
+                (string) config('mail.from.address'),
+                (string) config('mail.from.name')
+            );
 
             Mail::to($email)
-                ->from($fromEmail, $fromName)
                 ->send($mailable);
 
             return [
@@ -254,14 +259,14 @@ class EmailService
 
                 public function envelope()
                 {
-                    return new \Illuminate\Mail\Envelope(
+                    return new \Illuminate\Mail\Mailables\Envelope(
                         subject: 'Email Configuration Test - Meat Shop POS'
                     );
                 }
 
                 public function content()
                 {
-                    return new \Illuminate\Mail\Content(
+                    return new \Illuminate\Mail\Mailables\Content(
                         view: 'emails.test',
                         with: [
                             'testEmail' => $this->testEmail,
@@ -275,6 +280,11 @@ class EmailService
                     return [];
                 }
             };
+
+            $mailable->from(
+                (string) config('mail.from.address'),
+                (string) config('mail.from.name')
+            );
 
             Mail::to($testEmail)
                 ->send($mailable);
