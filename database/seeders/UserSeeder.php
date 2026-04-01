@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Tenant;
+use App\Services\EmailService;
 use App\Helpers\EmailHelper;
 
 class UserSeeder extends Seeder
@@ -234,6 +235,27 @@ class UserSeeder extends Seeder
                 ]);
                 
                 $standardCashierUser->syncRoles(['Cashier']);
+            }
+        }
+
+        // Send welcome emails to all created users
+        foreach ($tenants as $tenant) {
+            $tenantUsers = User::where('tenant_id', $tenant->tenant_id)->get();
+            
+            foreach ($tenantUsers as $user) {
+                $password = 'password123'; // Default seeder password
+                
+                $emailResult = EmailService::sendWelcomeEmail(
+                    $user->email,
+                    $tenant->business_name,
+                    $user->role,
+                    $password
+                );
+
+                // Log email result for debugging
+                if (!$emailResult['success']) {
+                    \Log::error("Failed to send welcome email to {$user->email}: " . $emailResult['error']);
+                }
             }
         }
 

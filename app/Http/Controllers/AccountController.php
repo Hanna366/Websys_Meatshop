@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Services\TenantService;
@@ -83,7 +84,24 @@ class AccountController extends Controller
             ],
         ]);
 
+        // Send welcome email with auto-generated password
+        $emailResult = EmailService::sendWelcomeEmail(
+            $request->email,
+            $request->business_name,
+            'owner',
+            $request->password
+        );
+
+        // Log email result for debugging
+        if (!$emailResult['success']) {
+            \Log::error('Failed to send welcome email: ' . $emailResult['error']);
+        }
+
         // Redirect to a success page or login
-        return redirect('/login')->with('success', 'Account created successfully!');
+        $message = $emailResult['success'] 
+            ? 'Account created successfully! Check your email for login details.'
+            : 'Account created! (Email notification failed - contact support)';
+        
+        return redirect('/login')->with('success', $message);
     }
 }

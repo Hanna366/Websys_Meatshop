@@ -12,6 +12,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SupplierController;
 use App\Models\User;
 use App\Services\SubscriptionService;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
@@ -54,18 +55,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/stats', [InventoryController::class, 'stats']);
         Route::get('/alerts', [InventoryController::class, 'alerts']);
         Route::get('/product/{product}/batches', [InventoryController::class, 'productBatches']);
-        Route::post('/batch', [InventoryController::class, 'addBatch']);
-        Route::put('/batch/{batch}', [InventoryController::class, 'updateBatch']);
-        Route::post('/batch/{batch}/waste', [InventoryController::class, 'recordWaste']);
+        Route::post('/batch', [InventoryController::class, 'addBatch'])->middleware('rbac.permission:can_manage_inventory');
+        Route::put('/batch/{batch}', [InventoryController::class, 'updateBatch'])->middleware('rbac.permission:can_manage_inventory');
+        Route::post('/batch/{batch}/waste', [InventoryController::class, 'recordWaste'])->middleware('rbac.permission:can_manage_inventory');
     });
 
     Route::prefix('sales')->group(function () {
-        Route::get('/', [SalesController::class, 'index']);
-        Route::get('/summary', [SalesController::class, 'summary']);
-        Route::get('/daily-report', [SalesController::class, 'dailyReport']);
-        Route::post('/', [SalesController::class, 'process']);
-        Route::get('/{sale}', [SalesController::class, 'show']);
-        Route::post('/{sale}/void', [SalesController::class, 'void']);
+        Route::get('/', [SalesController::class, 'index'])->middleware('rbac.permission:can_view_reports');
+        Route::get('/summary', [SalesController::class, 'summary'])->middleware('rbac.permission:can_view_reports');
+        Route::get('/daily-report', [SalesController::class, 'dailyReport'])->middleware('rbac.permission:can_view_reports');
+        Route::post('/', [SalesController::class, 'process'])->middleware('rbac.permission:can_process_sales');
+        Route::get('/{sale}', [SalesController::class, 'show'])->middleware('rbac.permission:can_view_reports');
+        Route::post('/{sale}/void', [SalesController::class, 'void'])->middleware('rbac.permission:can_process_sales');
     });
 
     Route::prefix('customers')->group(function () {
@@ -149,14 +150,14 @@ Route::middleware('auth:sanctum')->group(function () {
                 'success' => true,
                 'data' => ['users' => $users],
             ]);
-        });
+        })->middleware('rbac.permission:can_manage_users');
 
         Route::post('/', function (Request $request) {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
-                'password' => 'required|string|min:8',
-                'role' => 'nullable|in:owner,manager,cashier,inventory_staff',
+                'password' => 'nullable|string|min:8', // Password optional for auto-generation
+                'role' => 'required|in:owner,manager,cashier,inventory_staff',
                 'profile' => 'nullable|array',
             ]);
 
@@ -174,6 +175,9 @@ Route::middleware('auth:sanctum')->group(function () {
                     ],
                 ], 403);
             }
+
+            // Auto-generate password if not provided
+            $password = $validated['password'] ?? EmailService::generateSecurePassword();
 
             $baseUsername = strtolower((string) preg_replace('/[^a-z0-9]+/i', '', (string) $validated['name']));
             if ($baseUsername === '') {
@@ -193,20 +197,48 @@ Route::middleware('auth:sanctum')->group(function () {
                 'username' => $username,
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => $validated['role'] ?? 'cashier',
+                'password' => Hash::make($password),
+                'role' => $validated['role'],
                 'profile' => $validated['profile'] ?? [],
                 'status' => 'active',
             ]);
 
+            // Send welcome email for all accounts (auto-generated password)
+            $emailSent = false;
+            if (!$validated['password']) {
+                // Only send email if password was not provided (auto-generated)
+                $tenant = \App\Models\Tenant::where('tenant_id', $tenantId)->first();
+                $businessName = $tenant ? $tenant->business_name : 'Meat Shop POS';
+                
+                $emailResult = EmailService::sendWelcomeEmail(
+                    $validated['email'],
+                    $businessName,
+                    $validated['role'],
+                    $password
+                );
+
+                $emailSent = $emailResult['success'];
+                
+                // Log email result for debugging
+                if (!$emailResult['success']) {
+                    \Log::error("Failed to send welcome email to {$validated['email']} ({$validated['role']}): " . $emailResult['error']);
+                }
+            }
+
+            $message = $emailSent 
+                ? 'User created successfully! Welcome email sent with login credentials.'
+                : 'User created successfully!' . (!$validated['password'] ? ' (Email notification failed - contact support)' : '');
+
             return response()->json([
                 'success' => true,
-                'message' => 'User created successfully.',
+                'message' => $message,
                 'data' => [
                     'user' => $user->only(['id', 'name', 'email', 'role', 'status', 'created_at']),
+                    'email_sent' => $emailSent,
+                    'auto_generated_password' => !$validated['password'],
                 ],
             ], 201);
-        });
+        })->middleware('rbac.permission:can_manage_users');
 
         Route::get('/{user}', function (Request $request, $user) {
             $userData = \App\Models\User::where('tenant_id', $request->user()->tenant_id)
@@ -225,7 +257,41 @@ Route::middleware('auth:sanctum')->group(function () {
                 'success' => true,
                 'data' => ['user' => $userData],
             ]);
+        })->middleware('rbac.permission:can_manage_users');
+
+        Route::get('/roles', function (Request $request) {
+            $user = $request->user();
+            $availableRoles = [];
+            
+            foreach (\App\Services\RbacService::getAvailableRoles() as $role) {
+                if (\App\Services\RbacService::canAssignRole($user, $role)) {
+                    $availableRoles[] = [
+                        'value' => $role,
+                        'label' => \App\Services\RbacService::getRoleDisplayName($role),
+                        'description' => \App\Services\RbacService::getRoleDescription($role),
+                    ];
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'available_roles' => $availableRoles,
+                    'current_user_role' => $user->role,
+                    'current_user_permissions' => \App\Services\RbacService::getRolePermissions($user->role),
+                ],
+            ]);
         });
+
+        Route::get('/stats', function (Request $request) {
+            $tenantId = $request->user()->tenant_id;
+            $stats = \App\Services\RbacService::getRoleStats($tenantId);
+
+            return response()->json([
+                'success' => true,
+                'data' => ['role_stats' => $stats],
+            ]);
+        })->middleware('rbac.permission:can_view_reports');
     });
 
     Route::prefix('v1')->middleware(['throttle:60,1'])->group(function () {

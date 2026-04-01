@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tenant;
 use App\Services\NotificationService;
 use App\Services\TenantService;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
@@ -124,10 +125,31 @@ class TenantController extends Controller
             ],
         ]);
 
+        // Send tenant creation confirmation email
+        $tenantDetails = [
+            'plan' => $validated['plan'],
+            'login_url' => config('app.url') . '/login'
+        ];
+        
+        $emailResult = EmailService::sendTenantCreationConfirmation(
+            $validated['admin_email'],
+            $validated['business_name'],
+            $tenantDetails
+        );
+
+        // Log email result for debugging
+        if (!$emailResult['success']) {
+            \Log::error('Failed to send tenant creation email: ' . $emailResult['error']);
+        }
+
         $this->notificationService->sendTenantSignupConfirmation($tenant);
 
+        $message = $emailResult['success']
+            ? 'Tenant created successfully! Admin will receive email confirmation.'
+            : 'Tenant created! (Email notification failed - contact support)';
+
         return redirect()->route('tenants.show', $tenant->tenant_id)
-            ->with('success', 'Tenant created successfully.');
+            ->with('success', $message);
     }
 
     public function update(Request $request, string $tenantId)
