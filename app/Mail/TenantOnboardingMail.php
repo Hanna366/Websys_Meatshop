@@ -21,6 +21,7 @@ class TenantOnboardingMail extends Mailable implements ShouldQueue
         public string $loginUrl,
         public ?string $passwordSetupUrl = null,
         public ?string $plan = null,
+        public ?string $generatedPassword = null,
     ) {
     }
 
@@ -42,6 +43,7 @@ class TenantOnboardingMail extends Mailable implements ShouldQueue
                 'loginUrl' => $this->loginUrl,
                 'passwordSetupUrl' => $this->passwordSetupUrl,
                 'plan' => $this->plan,
+                'generatedPassword' => $this->generatedPassword,
             ],
         );
     }

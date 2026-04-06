@@ -17,50 +17,50 @@
                     </tr>
                     <tr>
                         <td style="padding:24px;">
-                            <p style="margin:0 0 14px; font-size:15px;">Hi {{ $adminName }},</p>
+                            <p style="margin:0 0 14px; font-size:15px;">Hi <?php echo e($adminName); ?>,</p>
                             <p style="margin:0 0 14px; font-size:15px; line-height:1.6;">
-                                Your tenant <strong>{{ $businessName }}</strong> has been provisioned successfully.
+                                Your tenant <strong><?php echo e($businessName); ?></strong> has been provisioned successfully.
                             </p>
 
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 16px; border-collapse:collapse;">
                                 <tr>
-                                    <td style="padding:8px 0; font-size:14px;"><strong>Admin Email:</strong> {{ $adminEmail }}</td>
+                                    <td style="padding:8px 0; font-size:14px;"><strong>Admin Email:</strong> <?php echo e($adminEmail); ?></td>
                                 </tr>
-                                @if(!empty($generatedPassword))
+                                <?php if(!empty($generatedPassword)): ?>
                                     <tr>
-                                        <td style="padding:8px 0; font-size:14px;"><strong>Temporary Password:</strong> {{ $generatedPassword }}</td>
+                                        <td style="padding:8px 0; font-size:14px;"><strong>Temporary Password:</strong> <?php echo e($generatedPassword); ?></td>
                                     </tr>
-                                @endif
+                                <?php endif; ?>
                                 <tr>
-                                    <td style="padding:8px 0; font-size:14px;"><strong>Plan:</strong> {{ ucfirst((string) ($plan ?? 'basic')) }}</td>
+                                    <td style="padding:8px 0; font-size:14px;"><strong>Plan:</strong> <?php echo e(ucfirst((string) ($plan ?? 'basic'))); ?></td>
                                 </tr>
                             </table>
 
                             <p style="margin:0 0 8px; font-size:14px;"><strong>Login URL</strong></p>
                             <p style="margin:0 0 16px; font-size:14px; line-height:1.6;">
-                                <a href="{{ $loginUrl }}" style="color:#0f766e; text-decoration:none;">{{ $loginUrl }}</a>
+                                <a href="<?php echo e($loginUrl); ?>" style="color:#0f766e; text-decoration:none;"><?php echo e($loginUrl); ?></a>
                             </p>
 
                             <p style="margin:0 0 10px; font-size:14px;"><strong>Getting Started</strong></p>
                             <ol style="margin:0 0 16px 20px; padding:0; font-size:14px; line-height:1.8;">
                                 <li>Open the login URL above and sign in with your admin email@if(!empty($generatedPassword)) and the temporary password@endif.</li>
-                                @if(!empty($passwordSetupUrl))
-                                    <li>If this is your first login or you forgot your password, set/reset it here: <a href="{{ $passwordSetupUrl }}" style="color:#0f766e; text-decoration:none;">{{ $passwordSetupUrl }}</a></li>
-                                @else
+                                <?php if(!empty($passwordSetupUrl)): ?>
+                                    <li>If this is your first login or you forgot your password, set/reset it here: <a href="<?php echo e($passwordSetupUrl); ?>" style="color:#0f766e; text-decoration:none;"><?php echo e($passwordSetupUrl); ?></a></li>
+                                <?php else: ?>
                                     <li>If this is your first login, use the password reset flow to set your password.</li>
-                                @endif
+                                <?php endif; ?>
                                 <li>Review your catalog, inventory, and team settings to finish onboarding.</li>
                             </ol>
 
-                            @if(!empty($generatedPassword))
+                            <?php if(!empty($generatedPassword)): ?>
                                 <p style="margin:0; font-size:13px; color:#6b7280; line-height:1.6;">
                                     This temporary password was auto-generated because no password was provided during tenant creation. Please change it after first login.
                                 </p>
-                            @else
+                            <?php else: ?>
                                 <p style="margin:0; font-size:13px; color:#6b7280; line-height:1.6;">
                                     For security, we never send plaintext passwords by email unless an auto-generated temporary password was requested.
                                 </p>
-                            @endif
+                            <?php endif; ?>
                         </td>
                     </tr>
                 </table>
@@ -69,3 +69,4 @@
     </table>
 </body>
 </html>
+<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/emails/tenant-onboarding.blade.php ENDPATH**/ ?>
