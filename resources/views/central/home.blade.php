@@ -167,20 +167,17 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm" id="tenantTable">
-                <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+        <div class="overflow-auto h-[360px] lg:h-[460px]">
+            <table class="min-w-[1100px] table-auto text-sm" id="tenantTable">
+            <thead class="sticky top-0 z-10 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th class="px-5 py-3.5 font-semibold">Name</th>
-                        <th class="px-5 py-3.5 font-semibold">Domain</th>
-                        <th class="px-5 py-3.5 font-semibold">Database Status</th>
-                        <th class="px-5 py-3.5 font-semibold">Database Size</th>
-                        <th class="px-5 py-3.5 font-semibold">Tables</th>
-                        <th class="px-5 py-3.5 font-semibold">Response Time</th>
-                        <th class="px-5 py-3.5 font-semibold">Administrator</th>
-                        <th class="px-5 py-3.5 font-semibold">Admin Email</th>
-                        <th class="px-5 py-3.5 font-semibold">Pricing Model</th>
-                        <th class="px-5 py-3.5 text-right font-semibold">Action</th>
+                        <th class="w-[18%] px-5 py-3.5 font-semibold">Name</th>
+                        <th class="w-[24%] px-5 py-3.5 font-semibold">Domain</th>
+                        <th class="w-[16%] px-5 py-3.5 font-semibold">Database Status</th>
+                        <th class="w-[14%] px-5 py-3.5 font-semibold">Database Size</th>
+                        <th class="w-[8%] px-5 py-3.5 font-semibold">Tables</th>
+                        <th class="w-[12%] px-5 py-3.5 font-semibold">Administrator</th>
+                        <th class="w-[8%] px-5 py-3.5 text-right font-semibold">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -193,7 +190,9 @@
                             $statusText = $isAvailable ? 'Available' : 'Unavailable';
                         @endphp
                         <tr class="tenant-row transition duration-150 hover:bg-indigo-50/40">
-                            <td class="px-5 py-4 font-medium text-slate-900">{{ $tenant->business_name }}</td>
+                            <td class="max-w-[220px] px-5 py-4 font-medium text-slate-900">
+                                <span class="block truncate" title="{{ $tenant->business_name }}">{{ $tenant->business_name }}</span>
+                            </td>
                             <td class="px-5 py-4">
                                 @if(!empty($tenant->domain))
                                     @php
@@ -206,8 +205,8 @@
                                         $tenantPort = app()->environment('local') && !$hasPort ? ':8000' : '';
                                         $tenantUrl = $scheme . '://' . $normalizedDomain . $tenantPort . '/login?force_login=1';
                                     @endphp
-                                    <a href="{{ $tenantUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">
-                                        {{ $normalizedDomain }}
+                                    <a href="{{ $tenantUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex max-w-[200px] items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100" title="{{ $normalizedDomain }}">
+                                        <span class="truncate">{{ $normalizedDomain }}</span>
                                         <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
                                     </a>
                                 @else
@@ -238,15 +237,8 @@
                             <td class="px-5 py-4">
                                 <span class="text-sm font-medium text-slate-700">{{ $dbInfo['table_count'] ?? 0 }}</span>
                             </td>
-                            <td class="px-5 py-4">
-                                <span class="text-sm font-medium {{ $isAvailable ? 'text-emerald-600' : 'text-rose-600' }}">
-                                    {{ $dbInfo['response_time'] ?? 'N/A' }}
-                                </span>
-                            </td>
-                            <td class="px-5 py-4">{{ $tenant->admin_name ?? '—' }}</td>
-                            <td class="px-5 py-4 text-slate-600">{{ $tenant->admin_email ?? $tenant->business_email }}</td>
-                            <td class="px-5 py-4">
-                                <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{{ ucfirst($tenant->plan ?? 'basic') }}</span>
+                            <td class="max-w-[180px] px-5 py-4">
+                                <span class="block truncate" title="{{ $tenant->admin_name ?? '—' }}">{{ $tenant->admin_name ?? '—' }}</span>
                             </td>
                             <td class="px-5 py-4 text-right">
                                 <a href="{{ route('tenants.show', $tenant->tenant_id) }}" class="inline-flex items-center gap-1 rounded-xl border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-600 hover:text-white">
@@ -257,7 +249,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-5 py-10 text-center text-sm text-slate-500">No tenants yet. Create your first tenant.</td>
+                            <td colspan="7" class="px-5 py-10 text-center text-sm text-slate-500">No tenants yet. Create your first tenant.</td>
                         </tr>
                     @endforelse
                 </tbody>

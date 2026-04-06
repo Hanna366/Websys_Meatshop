@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use App\Models\Tenant;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
 
 class DatabaseMonitorService
 {
@@ -26,7 +24,7 @@ class DatabaseMonitorService
                     $stats[$tenant->tenant_id] = [
                         'tenant_id' => $tenant->tenant_id,
                         'business_name' => $tenant->business_name,
-                        'database_name' => $tenant->database_name ?? 'N/A',
+                        'database_name' => $tenant->db_name ?? 'N/A',
                         'database_size' => 'N/A',
                         'table_count' => 0,
                         'is_available' => false,
@@ -59,7 +57,7 @@ class DatabaseMonitorService
                 $stats[$tenant->tenant_id] = [
                     'tenant_id' => $tenant->tenant_id,
                     'business_name' => $tenant->business_name,
-                    'database_name' => $tenant->database_name ?? 'N/A',
+                    'database_name' => $tenant->db_name ?? 'N/A',
                     'database_size' => 'N/A',
                     'table_count' => 0,
                     'is_available' => false,
@@ -81,20 +79,17 @@ class DatabaseMonitorService
      */
     private static function getTenantDatabaseConfig($tenant)
     {
-        // Default tenant database naming pattern
-        $databaseName = $tenant->database_name ?? 'tenant_' . $tenant->tenant_id;
-        
-        // For XAMPP, use the same connection details as main database
-        return [
-            'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => $databaseName,
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-        ];
+        if (!$tenant instanceof Tenant) {
+            return null;
+        }
+
+        try {
+            return $tenant->getTenantDatabaseConfig();
+        } catch (\Throwable $e) {
+            Log::error("Unable to resolve tenant DB config for {$tenant->tenant_id}: " . $e->getMessage());
+
+            return null;
+        }
     }
     
     /**
@@ -103,8 +98,42 @@ class DatabaseMonitorService
     private static function getDatabaseInfoDirect($config)
     {
         $startTime = microtime(true);
+        $driver = $config['driver'] ?? 'mysql';
         
         try {
+            if ($driver === 'sqlite') {
+                $databaseFile = (string) ($config['database'] ?? '');
+                if ($databaseFile === '' || !file_exists($databaseFile)) {
+                    return [
+                        'size' => 'N/A',
+                        'table_count' => 0,
+                        'response_time' => round((microtime(true) - $startTime) * 1000, 2) . ' ms',
+                        'largest_table' => 'N/A',
+                        'is_available' => false,
+                        'error' => 'SQLite database file not found',
+                    ];
+                }
+
+                $pdo = new \PDO('sqlite:' . $databaseFile, null, null, [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                    \PDO::ATTR_TIMEOUT => 3,
+                ]);
+
+                $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+                $sizeMb = round(filesize($databaseFile) / 1024 / 1024, 2);
+                $tableCount = (int) ($pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")->fetchColumn() ?: 0);
+
+                return [
+                    'size' => $sizeMb . ' MB',
+                    'table_count' => $tableCount,
+                    'response_time' => $responseTime . ' ms',
+                    'largest_table' => 'N/A',
+                    'is_available' => true,
+                    'error' => null,
+                ];
+            }
+
             // First check if MySQL is running
             $xamppStatus = self::checkXAMPPStatus();
             if (!$xamppStatus['is_running']) {

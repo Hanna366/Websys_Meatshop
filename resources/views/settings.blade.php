@@ -159,6 +159,10 @@
                                 if (!$roleLabel) {
                                     $roleLabel = strtolower((string) $tenantUser->role) === 'owner' ? 'Administrator' : ucfirst((string) $tenantUser->role);
                                 }
+                                $normalizedRole = strtolower(str_replace(['_', '-'], ' ', (string) $roleLabel));
+                                if (in_array($normalizedRole, ['inventory staff', 'inventory', 'staff', 'manager'], true)) {
+                                    $roleLabel = 'Cashier';
+                                }
                                 $roleClasses = strtolower($roleLabel) === 'administrator'
                                     ? 'bg-rose-100 text-rose-700'
                                     : 'bg-sky-100 text-sky-700';
@@ -182,7 +186,7 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    @if(strtolower($roleLabel) === 'owner')
+                                    @if(in_array(strtolower((string) $roleLabel), ['owner', 'administrator'], true))
                                         <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium text-slate-500 bg-slate-100">Protected</span>
                                     @else
                                         <div class="flex flex-col gap-2 items-end">
@@ -191,7 +195,12 @@
                                             </button>
                                             
                                             <div id="edit-{{ $tenantUser->id }}" class="hidden w-full mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                                <form method="POST" action="{{ $userUpdateAction }}" class="space-y-3">
+                                                @php
+                                                    $userUpdateAction = \Illuminate\Support\Facades\Route::has('tenant.users.update')
+                                                        ? route('tenant.users.update', $tenantUser->id)
+                                                        : url('/settings/users/' . $tenantUser->id);
+                                                @endphp
+                                                <form method="POST" action="{{ \Illuminate\Support\Facades\Route::has('tenant.users.update') ? route('tenant.users.update', $tenantUser->id) : url('/settings/users/' . $tenantUser->id) }}" class="space-y-3">
                                                     @csrf
                                                     @method('PUT')
                                                     <div class="grid grid-cols-1 gap-2">

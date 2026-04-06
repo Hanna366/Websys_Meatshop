@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Tenant;
 use App\Services\NotificationService;
 use App\Services\TenantService;
-use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
@@ -75,7 +74,7 @@ class TenantController extends Controller
 
         $rules = [
             'business_name' => 'required|string|max:255',
-            'business_email' => 'required|email|max:255',
+            'business_email' => ['required', 'email', 'max:255', Rule::unique('tenants', 'business_email')],
             'business_phone' => 'nullable|string|max:50',
             'business_address' => 'nullable|string|max:1000',
             'admin_name' => 'required|string|max:255',
@@ -90,6 +89,7 @@ class TenantController extends Controller
         // }
 
         $validated = $request->validate($rules, [
+            'business_email.unique' => 'A tenant with this business email already exists.',
             // 'g-recaptcha-response.required' => 'Please complete the reCAPTCHA challenge.',
         ]);
 
@@ -125,28 +125,12 @@ class TenantController extends Controller
             ],
         ]);
 
-        // Send tenant creation confirmation email
-        $tenantDetails = [
-            'plan' => $validated['plan'],
-            'login_url' => config('app.url') . '/login'
-        ];
-        
-        $emailResult = EmailService::sendTenantCreationConfirmation(
-            $validated['admin_email'],
-            $validated['business_name'],
-            $tenantDetails
-        );
+        $lifecycleNotificationSent = $this->notificationService->sendTenantSignupConfirmation($tenant);
+        $onboardingEmailSent = (bool) $tenant->getAttribute('onboarding_email_sent');
 
-        // Log email result for debugging
-        if (!$emailResult['success']) {
-            \Log::error('Failed to send tenant creation email: ' . $emailResult['error']);
-        }
-
-        $this->notificationService->sendTenantSignupConfirmation($tenant);
-
-        $message = $emailResult['success']
-            ? 'Tenant created successfully! Admin will receive email confirmation.'
-            : 'Tenant created! (Email notification failed - contact support)';
+        $message = ($lifecycleNotificationSent || $onboardingEmailSent)
+            ? 'Tenant created successfully! Admin notification email has been sent.'
+            : 'Tenant created successfully, but email notification failed. Please verify SMTP credentials (MAIL_USERNAME/MAIL_PASSWORD).';
 
         return redirect()->route('tenants.show', $tenant->tenant_id)
             ->with('success', $message);
@@ -266,7 +250,7 @@ class TenantController extends Controller
         $normalized = preg_replace('#^https?://#i', '', $normalized);
         $normalized = rtrim((string) $normalized, '/');
 
-        return str_ireplace('locasthost', 'localhost', $normalized);
+        return str_ireplace(['locasthost', 'locathost'], 'localhost', $normalized);
     }
 
     private function shouldEnableRecaptcha(Request $request): bool

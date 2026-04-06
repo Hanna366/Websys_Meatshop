@@ -18,12 +18,14 @@
             <p class="text-gray-600 mt-2">Set New Password</p>
         </div>
 
+        @php($pageError = $error ?? session('error'))
+
         <!-- Error Messages -->
-        @if ($error)
+        @if (!empty($pageError))
             <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
-                    {{ $error }}
+                    {{ $pageError }}
                 </div>
             </div>
         @endif

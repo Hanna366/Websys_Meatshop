@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\EmailService;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Services\TenantService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class AccountController extends Controller
 {
@@ -21,7 +21,7 @@ class AccountController extends Controller
         $validationRules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
+            'password' => 'nullable|string|min:8',
             'business_name' => 'required|string|max:255',
             'business_phone' => 'nullable|string|max:50',
             'business_address' => 'nullable|string|max:1000',
@@ -49,6 +49,11 @@ class AccountController extends Controller
             $counter++;
         }
 
+        $plainPassword = trim((string) $request->password);
+        if ($plainPassword === '') {
+            $plainPassword = Str::random(16);
+        }
+
         // Create the tenant in the central system and prepare its database.
         $tenant = TenantService::createTenant([
             'business_name' => $request->business_name,
@@ -58,7 +63,7 @@ class AccountController extends Controller
             'plan' => $request->plan,
             'admin_name' => $fullName,
             'admin_email' => $request->email,
-            'password' => $request->password,
+            'password' => $plainPassword,
             'subscription' => [
                 'plan' => $request->plan,
                 'status' => 'active',
@@ -75,7 +80,7 @@ class AccountController extends Controller
             'username' => $username,
             'name' => $fullName,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($plainPassword),
             'role' => 'owner',
             'profile' => [
                 'first_name' => $firstName,
@@ -84,23 +89,9 @@ class AccountController extends Controller
             ],
         ]);
 
-        // Send welcome email with auto-generated password
-        $emailResult = EmailService::sendWelcomeEmail(
-            $request->email,
-            $request->business_name,
-            'owner',
-            $request->password
-        );
-
-        // Log email result for debugging
-        if (!$emailResult['success']) {
-            \Log::error('Failed to send welcome email: ' . $emailResult['error']);
-        }
-
-        // Redirect to a success page or login
-        $message = $emailResult['success'] 
-            ? 'Account created successfully! Check your email for login details.'
-            : 'Account created! (Email notification failed - contact support)';
+        // Redirect to a success page or login.
+        // Onboarding email is sent by TenantService after provisioning.
+        $message = 'Account created successfully! Check your email for login instructions.';
         
         return redirect('/login')->with('success', $message);
     }
