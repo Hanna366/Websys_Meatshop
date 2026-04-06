@@ -89,6 +89,12 @@ class SimpleAuthController extends Controller
             : User::where('email', $credentials['email'])->first();
 
         if ($user && Hash::check($credentials['password'], $user->password)) {
+            if (strtolower((string) ($user->status ?? 'active')) !== 'active') {
+                return back()->withErrors([
+                    'email' => 'This account is inactive. Please contact your administrator.',
+                ]);
+            }
+
             // Backfill legacy tenant users that were created without tenant_id.
             if ($currentTenant && empty($user->tenant_id)) {
                 $user->tenant_id = $currentTenant->tenant_id;

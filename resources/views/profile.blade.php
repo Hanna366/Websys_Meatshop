@@ -11,6 +11,16 @@
     </button>
 @endsection
 
+@php
+    $sessionRole = strtolower((string) session('user.role', 'owner'));
+    $profileRoleLabel = match ($sessionRole) {
+        'owner', 'administrator' => 'Administrator',
+        'inventory_staff', 'inventory staff', 'inventory', 'staff', 'manager' => 'Cashier',
+        'cashier' => 'Cashier',
+        default => ucfirst($sessionRole),
+    };
+@endphp
+
 @section('content')
 <section class="grid gap-6 lg:grid-cols-12">
     <aside class="space-y-6 lg:col-span-4">
@@ -42,7 +52,7 @@
                 <div><p class="text-xs uppercase tracking-wide text-slate-500">Full Name</p><p class="mt-1 font-medium text-slate-800">{{ session('user.name', 'Owner User') }}</p></div>
                 <div><p class="text-xs uppercase tracking-wide text-slate-500">Email</p><p class="mt-1 font-medium text-slate-800">{{ session('user.email', 'owner@meatshop.com') }}</p></div>
                 <div><p class="text-xs uppercase tracking-wide text-slate-500">Phone</p><p class="mt-1 font-medium text-slate-800">+63 912 345 6789</p></div>
-                <div><p class="text-xs uppercase tracking-wide text-slate-500">Role</p><p class="mt-1 font-medium text-slate-800">Administrator</p></div>
+                <div><p class="text-xs uppercase tracking-wide text-slate-500">Role</p><p class="mt-1 font-medium text-slate-800">{{ $profileRoleLabel }}</p></div>
                 <div><p class="text-xs uppercase tracking-wide text-slate-500">Department</p><p class="mt-1 font-medium text-slate-800">Management</p></div>
                 <div><p class="text-xs uppercase tracking-wide text-slate-500">Location</p><p class="mt-1 font-medium text-slate-800">Manila, Philippines</p></div>
             </div>

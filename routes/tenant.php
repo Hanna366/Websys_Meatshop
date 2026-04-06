@@ -29,15 +29,31 @@ Route::middleware([
 
     Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [TenantPageController::class, 'dashboard'])->name('tenant.dashboard');
-        Route::get('/pricing', [SubscriptionController::class, 'index'])->name('tenant.pricing');
+        Route::get('/pricing', [SubscriptionController::class, 'index'])
+            ->middleware('tenant.owner')
+            ->name('tenant.pricing');
 
-        Route::post('/subscription/process', [SubscriptionController::class, 'processSubscription'])->name('tenant.subscription.process');
-        Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('tenant.subscription.cancel');
-        Route::post('/subscription/renew', [SubscriptionController::class, 'renew'])->name('tenant.subscription.renew');
-        Route::get('/subscription/status', [SubscriptionController::class, 'status'])->name('tenant.subscription.status');
-        Route::get('/subscription/billing', [SubscriptionController::class, 'billingPage'])->name('tenant.subscription.billing');
-        Route::get('/subscription/billing/data', [SubscriptionController::class, 'billingData'])->name('tenant.subscription.billing.data');
-        Route::put('/subscription/settings', [SubscriptionController::class, 'updateSettings'])->name('tenant.subscription.settings');
+        Route::post('/subscription/process', [SubscriptionController::class, 'processSubscription'])
+            ->middleware('tenant.owner')
+            ->name('tenant.subscription.process');
+        Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])
+            ->middleware('tenant.owner')
+            ->name('tenant.subscription.cancel');
+        Route::post('/subscription/renew', [SubscriptionController::class, 'renew'])
+            ->middleware('tenant.owner')
+            ->name('tenant.subscription.renew');
+        Route::get('/subscription/status', [SubscriptionController::class, 'status'])
+            ->middleware('tenant.owner')
+            ->name('tenant.subscription.status');
+        Route::get('/subscription/billing', [SubscriptionController::class, 'billingPage'])
+            ->middleware('tenant.owner')
+            ->name('tenant.subscription.billing');
+        Route::get('/subscription/billing/data', [SubscriptionController::class, 'billingData'])
+            ->middleware('tenant.owner')
+            ->name('tenant.subscription.billing.data');
+        Route::put('/subscription/settings', [SubscriptionController::class, 'updateSettings'])
+            ->middleware('tenant.owner')
+            ->name('tenant.subscription.settings');
 
         Route::get('/products', [TenantPageController::class, 'products'])
             ->middleware(['subscription', 'tenant.owner'])

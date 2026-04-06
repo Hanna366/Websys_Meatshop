@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -108,8 +109,7 @@ class TenantPageController extends Controller
                 $user->syncRoles([$validated['role']]);
             }
 
-            return redirect()
-                ->route('tenant.settings')
+            return $this->redirectToTenantSettings()
                 ->with('success', 'User created successfully.');
         } catch (Throwable $e) {
             return back()->withErrors([
@@ -187,7 +187,7 @@ class TenantPageController extends Controller
                 $user->syncRoles([$validated['role']]);
             }
 
-            return redirect()->route('tenant.settings')->with('success', 'User updated successfully.');
+            return $this->redirectToTenantSettings()->with('success', 'User updated successfully.');
         } catch (Throwable $e) {
             return back()->withErrors([
                 'user_create' => 'Unable to update user. ' . $e->getMessage(),
@@ -229,7 +229,7 @@ class TenantPageController extends Controller
         $user->status = strtolower((string) $user->status) === 'active' ? 'inactive' : 'active';
         $user->save();
 
-        return redirect()->route('tenant.settings')->with('success', 'User status updated successfully.');
+        return $this->redirectToTenantSettings()->with('success', 'User status updated successfully.');
     }
 
     public function dashboard(Request $request)
@@ -290,6 +290,20 @@ class TenantPageController extends Controller
             ],
             'recentSales' => $recentSales,
         ]);
+    }
+
+    private function redirectToTenantSettings()
+    {
+        if (Route::has('tenant.settings')) {
+            return redirect()->route('tenant.settings');
+        }
+
+        $previousUrl = url()->previous();
+        if (!empty($previousUrl)) {
+            return redirect()->to($previousUrl);
+        }
+
+        return redirect('/dashboard');
     }
 
     public function products(Request $request)

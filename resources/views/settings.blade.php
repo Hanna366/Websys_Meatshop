@@ -159,6 +159,10 @@
                                 if (!$roleLabel) {
                                     $roleLabel = strtolower((string) $tenantUser->role) === 'owner' ? 'Administrator' : ucfirst((string) $tenantUser->role);
                                 }
+                                $normalizedRole = strtolower(str_replace(['_', '-'], ' ', (string) $roleLabel));
+                                if (in_array($normalizedRole, ['inventory staff', 'inventory', 'staff', 'manager'], true)) {
+                                    $roleLabel = 'Cashier';
+                                }
                                 $roleClasses = strtolower($roleLabel) === 'administrator'
                                     ? 'bg-rose-100 text-rose-700'
                                     : 'bg-sky-100 text-sky-700';
