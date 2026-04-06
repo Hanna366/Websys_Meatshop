@@ -37,6 +37,11 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
+        html,
+        body {
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background:
@@ -51,6 +56,8 @@
 
         .main-shell {
             min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         .central-sidebar {
@@ -59,6 +66,7 @@
             backdrop-filter: blur(12px);
             border-right: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08);
+            overflow: hidden;
         }
 
         .nav-item {
@@ -133,7 +141,7 @@
 </head>
 <body class="text-slate-900 antialiased">
     <div class="main-shell flex">
-        <aside class="central-sidebar shrink-0 p-4 text-white lg:sticky lg:top-0 lg:h-screen" id="centralSidebar">
+        <aside class="central-sidebar shrink-0 p-4 text-white lg:fixed lg:inset-y-0 lg:left-0 lg:h-screen" id="centralSidebar">
             <div class="mb-6 rounded-2xl border border-white/20 bg-white/10 p-4">
                 <div class="mb-2 flex items-center gap-3">
                     <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-white">
@@ -191,7 +199,7 @@
             </div>
         </aside>
 
-        <div class="flex-1">
+        <div class="min-w-0 flex-1 lg:ml-[272px]">
             <header class="central-header sticky top-0 z-30 px-4 py-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -219,7 +227,7 @@
                 </div>
             </header>
 
-            <main class="px-4 py-6 sm:px-6 lg:px-8">
+            <main class="min-w-0 max-w-full overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
                 @yield('content')
             </main>
         </div>
