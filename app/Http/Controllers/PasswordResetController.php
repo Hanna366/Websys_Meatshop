@@ -55,7 +55,8 @@ class PasswordResetController extends Controller
         $emailResult = EmailService::sendPasswordReset(
             $request->email,
             $businessName,
-            $resetToken
+            $resetToken,
+            $request->getSchemeAndHttpHost()
         );
 
         // Log email result

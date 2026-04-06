@@ -48,7 +48,7 @@ class Authenticate
                 : User::query();
 
             $freshUser = $userQuery
-                ->select(['id', 'name', 'email', 'role', 'tenant_id'])
+                ->select(['id', 'name', 'email', 'role', 'tenant_id', 'status'])
                 ->find($sessionUserId);
 
             if (!$freshUser) {
@@ -56,6 +56,13 @@ class Authenticate
                 session()->regenerateToken();
 
                 return redirect('/login');
+            }
+
+            if (strtolower((string) ($freshUser->status ?? 'active')) !== 'active') {
+                session()->invalidate();
+                session()->regenerateToken();
+
+                return redirect('/login')->with('error', 'Your account is inactive.');
             }
 
             session(['user' => [

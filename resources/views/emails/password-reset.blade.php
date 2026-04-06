@@ -12,7 +12,7 @@
         </div>
 
         <div style="padding: 22px;">
-            <p style="margin-top: 0;">Hi {{ $user->name ?: $user->email }},</p>
+            <p style="margin-top: 0;">Hi {{ $user->name ?? $user->email ?? $email }},</p>
             <p>We received a request to reset your password. Click the button below to continue.</p>
 
             <p style="margin: 22px 0;">

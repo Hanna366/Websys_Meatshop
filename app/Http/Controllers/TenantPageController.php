@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -57,7 +58,7 @@ class TenantPageController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'username' => ['nullable', 'string', 'max:50', Rule::unique('tenant.users', 'username')],
             'email' => ['required', 'email', 'max:255', Rule::unique('tenant.users', 'email')],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role' => ['required', Rule::in(['Administrator', 'Cashier'])],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
         ]);
@@ -83,13 +84,17 @@ class TenantPageController extends Controller
 
         try {
             $legacyRole = strtolower($validated['role']) === 'administrator' ? 'owner' : 'cashier';
+            $plainPassword = trim((string) ($validated['password'] ?? ''));
+            if ($plainPassword === '') {
+                $plainPassword = Str::random(16);
+            }
 
             $user = User::on('tenant')->create([
                 'tenant_id' => $tenantId,
                 'username' => $username,
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
+                'password' => Hash::make($plainPassword),
                 'role' => $legacyRole,
                 'status' => $validated['status'] ?? 'active',
                 'profile' => [
@@ -104,8 +109,7 @@ class TenantPageController extends Controller
                 $user->syncRoles([$validated['role']]);
             }
 
-            return redirect()
-                ->route('tenant.settings')
+            return $this->redirectToTenantSettings()
                 ->with('success', 'User created successfully.');
         } catch (Throwable $e) {
             return back()->withErrors([
@@ -183,7 +187,7 @@ class TenantPageController extends Controller
                 $user->syncRoles([$validated['role']]);
             }
 
-            return redirect()->route('tenant.settings')->with('success', 'User updated successfully.');
+            return $this->redirectToTenantSettings()->with('success', 'User updated successfully.');
         } catch (Throwable $e) {
             return back()->withErrors([
                 'user_create' => 'Unable to update user. ' . $e->getMessage(),
@@ -225,7 +229,7 @@ class TenantPageController extends Controller
         $user->status = strtolower((string) $user->status) === 'active' ? 'inactive' : 'active';
         $user->save();
 
-        return redirect()->route('tenant.settings')->with('success', 'User status updated successfully.');
+        return $this->redirectToTenantSettings()->with('success', 'User status updated successfully.');
     }
 
     public function dashboard(Request $request)
@@ -286,6 +290,20 @@ class TenantPageController extends Controller
             ],
             'recentSales' => $recentSales,
         ]);
+    }
+
+    private function redirectToTenantSettings()
+    {
+        if (Route::has('tenant.settings')) {
+            return redirect()->route('tenant.settings');
+        }
+
+        $previousUrl = url()->previous();
+        if (!empty($previousUrl)) {
+            return redirect()->to($previousUrl);
+        }
+
+        return redirect('/dashboard');
     }
 
     public function products(Request $request)
@@ -686,12 +704,25 @@ class TenantPageController extends Controller
 
         $roles = Role::on($connection)
             ->where('guard_name', 'web')
-            ->whereIn('name', ['Administrator', 'Cashier'])
+            ->whereIn('name', ['Owner', 'Administrator', 'Cashier'])
             ->orderBy('name')
             ->pluck('name')
             ->all();
 
-        return !empty($roles) ? array_values($roles) : ['Administrator', 'Cashier'];
+        if (empty($roles)) {
+            return ['Administrator', 'Cashier'];
+        }
+
+        $normalized = array_map(function (string $role): string {
+            $lower = strtolower($role);
+            if ($lower === 'owner' || $lower === 'administrator') {
+                return 'Administrator';
+            }
+
+            return $role;
+        }, $roles);
+
+        return array_values(array_unique($normalized));
     }
 
     private function generateTenantUsername(string $name): string

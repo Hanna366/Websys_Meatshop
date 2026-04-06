@@ -20,21 +20,31 @@ class EnsureTenantOwner
         }
 
         $user = Auth::guard('web')->user();
+        $sessionRole = strtolower((string) session('user.role', ''));
+        $sessionIsOwner = in_array($sessionRole, ['owner', 'administrator'], true);
 
         if ($user) {
             $connection = $user->getConnectionName() ?: config('database.default');
             $rolesTable = config('permission.table_names.roles', 'roles');
+            $legacyRole = strtolower((string) $user->role);
+            $hasOwnerRole = false;
 
             if (Schema::connection($connection)->hasTable($rolesTable)) {
-                if ($user->hasRole('Owner')) {
-                    return $next($request);
+                try {
+                    $hasOwnerRole = $user->hasAnyRole(['Owner', 'Administrator']);
+                } catch (\Throwable $e) {
+                    $hasOwnerRole = false;
                 }
-
-                return redirect('/dashboard')->with('error', 'Owner access required.');
             }
+
+            if ($hasOwnerRole || in_array($legacyRole, ['owner', 'administrator'], true) || $sessionIsOwner) {
+                return $next($request);
+            }
+
+            return redirect('/dashboard')->with('error', 'Owner access required.');
         }
 
-        if (strtolower((string) session('user.role', '')) === 'owner') {
+        if ($sessionIsOwner) {
             return $next($request);
         }
 

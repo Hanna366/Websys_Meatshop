@@ -116,6 +116,7 @@
                                 <div>
                                     <label for="domain" class="mb-1 block text-sm font-medium text-slate-700">Domain / Subdomain</label>
                                     <input type="text" id="domain" name="domain" placeholder="ramcar.localhost" value="{{ old('domain') }}" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 @error('domain') border-rose-300 ring-rose-200 @enderror">
+                                    <p class="mt-1 text-xs text-slate-500">Auto-generated from business name. You can still edit it manually.</p>
                                 </div>
                             </div>
                             <div>
@@ -138,8 +139,8 @@
                             </div>
                             <div>
                                 <label for="password" class="mb-1 block text-sm font-medium text-slate-700">Password</label>
-                                <input type="password" id="password" name="password" placeholder="Create a secure password" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 @error('password') border-rose-300 ring-rose-200 @enderror" required>
-                                <p class="mt-1 text-xs text-slate-500">Minimum 8 characters recommended.</p>
+                                  <input type="password" id="password" name="password" placeholder="Leave blank to auto-generate" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 @error('password') border-rose-300 ring-rose-200 @enderror">
+                                  <p class="mt-1 text-xs text-slate-500">Optional: leave blank to auto-generate a secure password and send it via email.</p>
                             </div>
                         </div>
                     </div>
@@ -177,6 +178,47 @@
         const signupForm = document.getElementById('tenantSignupForm');
         const submitButton = document.getElementById('submitButton');
         const submitLabel = document.getElementById('submitLabel');
+        const businessNameInput = document.getElementById('business_name');
+        const domainInput = document.getElementById('domain');
+        const domainRoot = @json(config('tenancy.fallback_domain', 'localhost'));
+
+        let domainTouched = Boolean(domainInput?.value?.trim());
+
+        function slugify(value) {
+            return (value || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        }
+
+        function normalizeRoot(value) {
+            const root = (value || 'localhost').trim().toLowerCase();
+            return root.length > 0 ? root : 'localhost';
+        }
+
+        function updateAutoDomain() {
+            if (!businessNameInput || !domainInput || domainTouched) {
+                return;
+            }
+
+            const slug = slugify(businessNameInput.value);
+            domainInput.value = slug ? `${slug}.${normalizeRoot(domainRoot)}` : '';
+        }
+
+        domainInput?.addEventListener('input', function () {
+            domainTouched = this.value.trim().length > 0;
+        });
+
+        domainInput?.addEventListener('blur', function () {
+            if (this.value.trim() === '') {
+                domainTouched = false;
+                updateAutoDomain();
+            }
+        });
+
+        businessNameInput?.addEventListener('input', updateAutoDomain);
+
+        updateAutoDomain();
 
         signupForm?.addEventListener('submit', function () {
             submitButton.disabled = true;
