@@ -18,24 +18,25 @@
             <p class="text-gray-600 mt-2">Set New Password</p>
         </div>
 
-        @php($pageError = $error ?? session('error'))
+        <?php ($pageError = $error ?? session('error')); ?>
 
         <!-- Error Messages -->
-        @if (!empty($pageError))
+        <?php if(!empty($pageError)): ?>
             <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
-                    {{ $pageError }}
+                    <?php echo e($pageError); ?>
+
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
 
-        @if ($token)
+        <?php if($token): ?>
             <!-- Password Reset Form -->
-            <form method="POST" action="{{ route('password.reset.update') }}" class="space-y-6">
-                @csrf
-                <input type="hidden" name="token" value="{{ $token }}">
-                <input type="hidden" name="email" value="{{ $email }}">
+            <form method="POST" action="<?php echo e(route('password.reset.update')); ?>" class="space-y-6">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="token" value="<?php echo e($token); ?>">
+                <input type="hidden" name="email" value="<?php echo e($email); ?>">
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
@@ -67,16 +68,17 @@
                     >
                 </div>
 
-                @if ($errors->any())
+                <?php if($errors->any()): ?>
                     <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm">
-                        @foreach ($errors->all() as $error)
+                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="flex items-center text-red-600 mb-1">
                                 <i class="fas fa-exclamation-circle mr-2 text-xs"></i>
-                                {{ $error }}
+                                <?php echo e($error); ?>
+
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                @endif
+                <?php endif; ?>
 
                 <div class="bg-blue-50 p-4 rounded-lg">
                     <p class="text-sm text-blue-800">
@@ -96,7 +98,7 @@
                     Reset Password
                 </button>
             </form>
-        @else
+        <?php else: ?>
             <!-- Invalid Token Message -->
             <div class="text-center">
                 <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded">
@@ -116,17 +118,17 @@
                         Go Back
                     </button>
 
-                    <a href="{{ route('password.reset.request') }}" class="block w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition duration-200 font-medium text-center">
+                    <a href="<?php echo e(route('password.reset.request')); ?>" class="block w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition duration-200 font-medium text-center">
                         <i class="fas fa-redo mr-2"></i>
                         Request New Reset Link
                     </a>
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
 
         <!-- Back to Login -->
         <div class="mt-6 text-center">
-            <a href="{{ route('login') }}" class="text-red-600 hover:text-red-500 text-sm font-medium">
+            <a href="<?php echo e(route('login')); ?>" class="text-red-600 hover:text-red-500 text-sm font-medium">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Login
             </a>
@@ -134,3 +136,4 @@
     </div>
 </body>
 </html>
+<?php /**PATH C:\Users\OWNER\Documents\webs\meatshop\resources\views/auth/password-reset.blade.php ENDPATH**/ ?>

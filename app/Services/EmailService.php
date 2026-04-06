@@ -84,19 +84,23 @@ class EmailService
     /**
      * Send password reset email
      */
-    public static function sendPasswordReset(string $email, string $businessName, string $resetToken)
+    public static function sendPasswordReset(string $email, string $businessName, string $resetToken, ?string $baseUrl = null)
     {
         try {
-            $mailable = new class($email, $businessName, $resetToken) extends Mailable {
+            $baseUrl = rtrim((string) ($baseUrl ?: config('app.url')), '/');
+
+            $mailable = new class($email, $businessName, $resetToken, $baseUrl) extends Mailable {
                 private $email;
                 private $businessName;
                 private $resetToken;
+                private $baseUrl;
 
-                public function __construct($email, $businessName, $resetToken)
+                public function __construct($email, $businessName, $resetToken, $baseUrl)
                 {
                     $this->email = $email;
                     $this->businessName = $businessName;
                     $this->resetToken = $resetToken;
+                    $this->baseUrl = $baseUrl;
                 }
 
                 public function envelope()
@@ -114,7 +118,7 @@ class EmailService
                             'email' => $this->email,
                             'businessName' => $this->businessName,
                             'resetToken' => $this->resetToken,
-                            'resetUrl' => config('app.url') . "/password-reset/{$this->resetToken}"
+                            'resetUrl' => $this->baseUrl . "/reset-password/{$this->resetToken}"
                         ]
                     );
                 }
