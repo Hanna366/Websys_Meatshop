@@ -147,7 +147,86 @@
         </article>
     </section>
 
-    <!-- Tenant Table with Database Monitoring -->
+    <!-- Version Control Section -->
+    <section class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
+        <div class="flex flex-col gap-4 border-b border-slate-200/70 px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="heading-font mb-0 text-lg font-semibold text-slate-900">Version Control</h2>
+                <p class="mb-0 text-sm text-slate-500">Manage application versions and system updates.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3 text-sm">
+                    <div class="flex items-center gap-1">
+                        <span class="text-slate-500">Current:</span>
+                        <span class="font-medium text-indigo-700">{{ config('app.version', '1.0.0') }}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-slate-500">Latest:</span>
+                        <span class="font-medium text-emerald-700">1.0.0</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <i data-lucide="github" class="h-3 w-3 text-slate-600"></i>
+                        <span class="text-slate-600">GitHub</span>
+                    </div>
+                </div>
+                <a href="/admin/versions" class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-medium text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-600 hover:text-white">
+                    <i data-lucide="settings" class="h-4 w-4"></i>
+                    Manage Versions
+                </a>
+            </div>
+        </div>
+        <div class="px-5 py-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="package" class="h-4 w-4 text-indigo-600"></i>
+                        <h3 class="text-sm font-semibold text-slate-900">Current Version</h3>
+                    </div>
+                    <p class="text-2xl font-bold text-indigo-700">{{ config('app.version', '1.0.0') }}</p>
+                    <p class="mt-1 text-xs text-slate-500">Stable release</p>
+                </div>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="check-circle" class="h-4 w-4 text-emerald-600"></i>
+                        <h3 class="text-sm font-semibold text-slate-900">System Status</h3>
+                    </div>
+                    <p class="text-2xl font-bold text-emerald-700">Up to Date</p>
+                    <p class="mt-1 text-xs text-slate-500">No updates available</p>
+                </div>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="github" class="h-4 w-4 text-slate-600"></i>
+                        <h3 class="text-sm font-semibold text-slate-900">GitHub Sync</h3>
+                    </div>
+                    <p class="text-2xl font-bold text-slate-700">Connected</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ env('GITHUB_REPO_OWNER', 'Hanna366') }}/{{ env('GITHUB_REPO_NAME', 'Websys_Meatshop') }}</p>
+                </div>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="history" class="h-4 w-4 text-slate-600"></i>
+                        <h3 class="text-sm font-semibold text-slate-900">Update History</h3>
+                    </div>
+                    <p class="text-2xl font-bold text-slate-700">0</p>
+                    <p class="mt-1 text-xs text-slate-500">Total updates</p>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center justify-between">
+                <p class="text-xs text-slate-500">
+                    Last checked: {{ now()->format('M d, Y H:i') }} · Source: GitHub + Local
+                </p>
+                <div class="flex gap-3">
+                    <button onclick="checkForUpdates()" class="text-xs text-indigo-600 hover:text-indigo-700">
+                        <i data-lucide="refresh-cw" class="h-3 w-3 inline mr-1"></i>
+                        Check for Updates
+                    </button>
+                    <a href="https://github.com/{{ env('GITHUB_REPO_OWNER', 'Hanna366') }}/{{ env('GITHUB_REPO_NAME', 'Websys_Meatshop') }}/releases" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-700">
+                        <i data-lucide="external-link" class="h-3 w-3 inline mr-1"></i>
+                        View Releases
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
     <section class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
         <div class="flex flex-col gap-4 border-b border-slate-200/70 px-5 py-4 md:flex-row md:items-center md:justify-between">
             <div>

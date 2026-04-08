@@ -6,6 +6,7 @@ use App\Http\Controllers\SimpleAuthController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\VersionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +18,29 @@ use App\Http\Controllers\PasswordResetController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+// Version Management Routes (Admin only)
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/versions', [VersionController::class, 'index'])->name('versions.index');
+    Route::get('/versions/create', [VersionController::class, 'create'])->name('versions.create');
+    Route::post('/versions', [VersionController::class, 'store'])->name('versions.store');
+    Route::get('/versions/{version}', [VersionController::class, 'show'])->name('versions.show');
+    Route::get('/versions/{version}/edit', [VersionController::class, 'edit'])->name('versions.edit');
+    Route::put('/versions/{version}', [VersionController::class, 'update'])->name('versions.update');
+    Route::delete('/versions/{version}', [VersionController::class, 'destroy'])->name('versions.destroy');
+    
+    // AJAX endpoints
+    Route::get('/versions/check-updates', [VersionController::class, 'checkUpdates'])->name('versions.check-updates');
+    Route::post('/versions/download', [VersionController::class, 'downloadUpdate'])->name('versions.download');
+    Route::post('/versions/install', [VersionController::class, 'installUpdate'])->name('versions.install');
+    Route::post('/versions/upload', [VersionController::class, 'uploadPackage'])->name('versions.upload');
+    Route::get('/versions/status', [VersionController::class, 'getUpdateStatus'])->name('versions.status');
+    
+    // GitHub integration endpoints
+    Route::post('/versions/sync-github', [VersionController::class, 'syncGitHub'])->name('versions.sync-github');
+    Route::post('/versions/clear-github-cache', [VersionController::class, 'clearGitHubCache'])->name('versions.clear-github-cache');
+    Route::get('/versions/github-releases', [VersionController::class, 'getGitHubReleases'])->name('versions.github-releases');
+});
 
 Route::get('/', [CentralDashboardController::class, 'welcome'])->name('central.welcome');
 Route::get('/central', [CentralDashboardController::class, 'index'])->name('central.home');
