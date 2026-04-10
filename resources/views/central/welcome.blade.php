@@ -294,7 +294,7 @@
             border-radius: 22px;
             border: none;
             background: radial-gradient(circle at 70% 20%, rgba(170, 30, 45, 0.24), rgba(40, 4, 8, 0.08) 55%, transparent 100%);
-            min-height: 560px;
+            min-height: 620px;
             overflow: hidden;
             padding: 0;
             animation: rise 0.8s ease;
@@ -327,8 +327,8 @@
         .hero-image-glow {
             position: absolute;
             right: 0;
-            bottom: 16px;
-            width: 102%;
+            bottom: 36px;
+            width: 100%;
             height: auto;
         }
 
@@ -461,27 +461,52 @@
 
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 0.9rem;
         }
 
         .price-card {
-            border-radius: 14px;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.03);
-            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background:
+                radial-gradient(circle at 15% -20%, rgba(255, 175, 140, 0.24), transparent 56%),
+                linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+            backdrop-filter: blur(7px);
+            padding: 1.15rem 1rem 1.05rem;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 12px 28px rgba(8, 1, 2, 0.32);
+        }
+
+        .price-card::after {
+            content: "";
+            position: absolute;
+            inset: auto -24% -46% auto;
+            width: 210px;
+            height: 210px;
+            background: radial-gradient(circle, rgba(255, 112, 76, 0.2), rgba(255, 112, 76, 0));
+            pointer-events: none;
+        }
+
+        .price-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 180, 160, 0.52);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.42);
         }
 
         .price-card h3 {
             margin: 0;
-            font-size: 1.12rem;
+            font-size: 1.1rem;
+            letter-spacing: 0.01em;
             font-family: "Sora", sans-serif;
         }
 
         .price {
-            margin: 0.22rem 0 0.45rem;
-            font-size: 1.68rem;
+            margin: 0.34rem 0 0.55rem;
+            font-size: 1.76rem;
             font-weight: 800;
+            text-shadow: 0 6px 14px rgba(0, 0, 0, 0.34);
         }
 
         .price span {
@@ -497,27 +522,40 @@
         }
 
         .price-card ul {
-            margin: 0.8rem 0 0;
+            margin: 0.9rem 0 0;
             padding: 0;
             list-style: none;
         }
 
         .price-card li {
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.52rem;
+            padding-left: 1.1rem;
+            position: relative;
             color: #ffd8d0;
             font-size: 0.83rem;
         }
 
         .price-card li::before {
-            content: "• ";
-            color: #ff729f;
+            content: "✓";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #ff84a6;
+            font-weight: 700;
+        }
+
+        .basic {
+            border-color: rgba(255, 173, 141, 0.32);
         }
 
         .highlight {
             border-color: rgba(67, 168, 255, 0.55);
-            box-shadow: inset 0 0 0 1px rgba(67, 168, 255, 0.28);
+            box-shadow: inset 0 0 0 1px rgba(67, 168, 255, 0.24), 0 18px 38px rgba(4, 20, 56, 0.4);
             position: relative;
-            background: linear-gradient(160deg, rgba(27, 91, 206, 0.24), rgba(7, 26, 70, 0.22));
+            background:
+                radial-gradient(circle at 15% -20%, rgba(132, 196, 255, 0.33), transparent 56%),
+                linear-gradient(160deg, rgba(27, 91, 206, 0.27), rgba(7, 26, 70, 0.22));
+            transform: translateY(-6px);
         }
 
         .highlight::before {
@@ -535,13 +573,10 @@
         }
 
         .premium {
-            background: linear-gradient(170deg, rgba(80, 26, 140, 0.28), rgba(23, 8, 40, 0.24));
+            background:
+                radial-gradient(circle at 15% -20%, rgba(211, 136, 255, 0.32), transparent 55%),
+                linear-gradient(170deg, rgba(80, 26, 140, 0.28), rgba(23, 8, 40, 0.24));
             border-color: rgba(191, 143, 255, 0.38);
-        }
-
-        .enterprise {
-            background: linear-gradient(170deg, rgba(109, 17, 36, 0.28), rgba(46, 8, 16, 0.28));
-            border-color: rgba(255, 130, 164, 0.35);
         }
 
         .cta-band {
@@ -599,13 +634,13 @@
             }
 
             .hero-right {
-                min-height: 420px;
+                min-height: 500px;
             }
 
             .hero-image-stack img {
                 right: 0;
-                bottom: 12px;
-                width: 102%;
+                bottom: 24px;
+                width: 100%;
                 height: auto;
                 object-position: right bottom;
             }
@@ -787,7 +822,7 @@
         <section class="pricing-wrap">
             <h2>Flexible Plans for Every Shop</h2>
             <div class="pricing-grid">
-                <article class="price-card">
+                <article class="price-card basic">
                     <h3>Basic Plan</h3>
                     <div class="price">$29 <span>/ month</span></div>
                     <p class="price-sub">Great for small shops</p>
@@ -820,18 +855,6 @@
                         <li>API access</li>
                         <li>Batch operations</li>
                         <li>Custom branding and priority support</li>
-                    </ul>
-                </article>
-
-                <article class="price-card enterprise">
-                    <h3>Enterprise Plan</h3>
-                    <div class="price">Custom <span>pricing</span></div>
-                    <p class="price-sub">Built for large operations</p>
-                    <ul>
-                        <li>Dedicated database</li>
-                        <li>Custom integrations</li>
-                        <li>On-premise deployment option</li>
-                        <li>Advanced compliance tools</li>
                     </ul>
                 </article>
             </div>

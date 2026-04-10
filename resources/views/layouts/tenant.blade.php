@@ -8,7 +8,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -20,14 +20,14 @@
                 extend: {
                     colors: {
                         central: {
-                            bg: '#f8fafc',
-                            card: '#ffffff',
-                            primary: '#1e3a8a',
-                            accent: '#0d9488',
+                            bg: '#060202',
+                            card: 'rgba(255, 255, 255, 0.04)',
+                            primary: '#f63470',
+                            accent: '#ff8c57',
                         },
                     },
                     boxShadow: {
-                        card: '0 8px 30px rgba(15, 23, 42, 0.06)',
+                        card: '0 16px 38px rgba(0, 0, 0, 0.28)',
                     },
                     borderRadius: {
                         xl2: '1rem',
@@ -38,72 +38,161 @@
     </script>
 
     <style>
+        :root {
+            --bg-1: #060202;
+            --bg-2: #1a0808;
+            --card: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.14);
+            --text: #fef7f5;
+            --muted: #d5b8b1;
+            --accent: #f63470;
+            --accent-2: #a41245;
+            --line: rgba(255, 255, 255, 0.12);
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text);
             background:
-                radial-gradient(circle at 12% -5%, rgba(30, 58, 138, 0.08) 0, transparent 30%),
-                radial-gradient(circle at 100% 0%, rgba(13, 148, 136, 0.08) 0, transparent 24%),
-                #f8fafc;
+                radial-gradient(circle at 18% -10%, rgba(246, 52, 112, 0.28), transparent 38%),
+                radial-gradient(circle at 92% 10%, rgba(255, 140, 87, 0.2), transparent 32%),
+                linear-gradient(145deg, var(--bg-1), var(--bg-2) 50%, #2f0b12);
         }
 
         .heading-font {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Sora', sans-serif;
         }
 
         .main-shell {
             min-height: 100vh;
+            background: rgba(8, 2, 2, 0.74);
+            border: 1px solid var(--line);
+            box-shadow: 0 35px 90px rgba(0, 0, 0, 0.45);
         }
 
         .tenant-sidebar {
             width: 272px;
-            background: linear-gradient(170deg, rgba(30, 58, 138, 0.94) 0%, rgba(30, 64, 175, 0.9) 42%, rgba(13, 148, 136, 0.86) 100%);
+            background: linear-gradient(168deg, rgba(36, 6, 10, 0.94) 0%, rgba(92, 12, 36, 0.92) 52%, rgba(164, 18, 69, 0.9) 100%);
             backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08);
+            border-right: 1px solid var(--line);
+            box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.05);
         }
 
         .nav-item {
-            color: rgba(241, 245, 249, 0.85);
+            color: #f8d7cf;
             border: 1px solid transparent;
             transition: all 0.2s ease;
         }
 
         .nav-item:hover {
             color: #fff;
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
             transform: translateX(2px);
         }
 
         .nav-item.active {
             color: #fff;
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.28);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+            background: linear-gradient(90deg, rgba(164, 18, 69, 0.9), rgba(246, 52, 112, 0.9));
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 12px 28px rgba(96, 10, 37, 0.36);
         }
 
         .tenant-header {
             backdrop-filter: blur(10px);
-            background: rgba(248, 250, 252, 0.86);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(13, 2, 4, 0.85);
+            border-bottom: 1px solid var(--line);
         }
 
         .btn-primary-gradient {
-            background: linear-gradient(135deg, #1e40af 0%, #0f766e 100%);
+            background: linear-gradient(90deg, var(--accent-2), var(--accent));
             color: #fff;
             border: 0;
             transition: all 0.2s ease;
-            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.25);
+            box-shadow: 0 10px 28px rgba(246, 52, 112, 0.28);
         }
 
         .btn-primary-gradient:hover {
             color: #fff;
             transform: translateY(-1px);
-            box-shadow: 0 12px 26px rgba(30, 64, 175, 0.32);
+            box-shadow: 0 14px 30px rgba(246, 52, 112, 0.35);
         }
 
         .avatar-ring {
-            background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
+            background: linear-gradient(135deg, #ff9b8d 0%, var(--accent) 100%);
+        }
+
+        .tenant-header button,
+        .tenant-header a:not(.btn-primary-gradient) {
+            border-color: var(--line) !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            color: #f6d5cf !important;
+        }
+
+        .tenant-header button:hover,
+        .tenant-header a:not(.btn-primary-gradient):hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #fff !important;
+        }
+
+        .tenant-header h1 {
+            color: var(--text) !important;
+        }
+
+        .tenant-header p {
+            color: var(--muted) !important;
+        }
+
+        .tenant-header .avatar-ring > div {
+            background: #220106;
+            color: #ffdcd3;
+        }
+
+        main .bg-white,
+        main .bg-white\/70,
+        main .bg-slate-50 {
+            background: var(--card) !important;
+        }
+
+        main .border-slate-200,
+        main .border-slate-200\/70,
+        main .border-slate-300,
+        main .border-slate-100 {
+            border-color: var(--card-border) !important;
+        }
+
+        main .text-slate-900,
+        main .text-slate-700,
+        main .text-slate-600 {
+            color: #ffe9e5 !important;
+        }
+
+        main .text-slate-500,
+        main .text-slate-400 {
+            color: var(--muted) !important;
+        }
+
+        main .bg-indigo-50,
+        main .bg-emerald-50,
+        main .bg-amber-50,
+        main .bg-rose-50,
+        main .bg-teal-50 {
+            background: rgba(255, 255, 255, 0.06) !important;
+        }
+
+        main .hover\:bg-indigo-50:hover,
+        main .hover\:bg-indigo-50\/40:hover,
+        main .hover\:bg-indigo-100:hover,
+        main .hover\:bg-indigo-600:hover {
+            background: rgba(246, 52, 112, 0.16) !important;
+            color: #fff !important;
+        }
+
+        main .shadow-card,
+        main .shadow-sm,
+        main .hover\:shadow-lg:hover,
+        main .hover\:shadow-xl:hover {
+            box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28) !important;
         }
 
         .sidebar-toggle {
@@ -132,7 +221,7 @@
     </style>
     @stack('styles')
 </head>
-<body class="text-slate-900 antialiased">
+<body class="antialiased">
     <div class="main-shell flex">
         <aside class="tenant-sidebar shrink-0 p-4 text-white lg:sticky lg:top-0 lg:h-screen" id="tenantSidebar">
             <div class="mb-6 rounded-2xl border border-white/20 bg-white/10 p-4">

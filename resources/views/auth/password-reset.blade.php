@@ -4,133 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password - Meat Shop POS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-1: #060202;
+            --bg-2: #1a0808;
+            --card-border: rgba(255, 255, 255, 0.14);
+            --text: #fef7f5;
+            --muted: #d5b8b1;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background:
+                radial-gradient(circle at 18% -10%, rgba(246, 52, 112, 0.28), transparent 38%),
+                radial-gradient(circle at 92% 10%, rgba(255, 140, 87, 0.2), transparent 32%),
+                linear-gradient(145deg, var(--bg-1), var(--bg-2) 50%, #2f0b12);
+        }
+
+        .heading-font {
+            font-family: 'Sora', sans-serif;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <!-- Logo Section -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-red-600 rounded-lg mb-4">
-                <i class="fas fa-drumstick-bite text-white text-2xl"></i>
+<body class="min-h-screen text-[color:var(--text)] antialiased">
+    <main class="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center p-4 sm:p-6">
+        <section class="w-full max-w-md rounded-3xl border p-6 shadow-2xl backdrop-blur sm:p-8" style="border-color: var(--card-border); background: rgba(8, 2, 2, 0.74); box-shadow: 0 35px 90px rgba(0, 0, 0, 0.45);">
+            <div class="mb-6 text-center">
+                <h1 class="heading-font text-2xl font-semibold" style="color: var(--text);">Set New Password</h1>
+                <p class="mt-1 text-sm" style="color: var(--muted);">Create a secure password for your account.</p>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Meat Shop POS</h1>
-            <p class="text-gray-600 mt-2">Set New Password</p>
-        </div>
 
-        @php($pageError = $error ?? session('error'))
+            @php($pageError = $error ?? session('error'))
 
-        <!-- Error Messages -->
-        @if (!empty($pageError))
-            <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                <div class="flex items-center">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    {{ $pageError }}
-                </div>
-            </div>
-        @endif
+            @if (!empty($pageError))
+                <div class="mb-4 rounded-xl border border-rose-400/45 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{{ $pageError }}</div>
+            @endif
 
-        @if ($token)
-            <!-- Password Reset Form -->
-            <form method="POST" action="{{ route('password.reset.update') }}" class="space-y-6">
-                @csrf
-                <input type="hidden" name="token" value="{{ $token }}">
-                <input type="hidden" name="email" value="{{ $email }}">
+            @if ($token)
+                <form method="POST" action="{{ route('password.reset.update') }}" class="space-y-4">
+                    @csrf
+                    <input type="hidden" name="token" value="{{ $token }}">
+                    <input type="hidden" name="email" value="{{ $email }}">
 
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-lock mr-2"></i>New Password
-                    </label>
-                    <input 
-                        id="password" 
-                        name="password" 
-                        type="password" 
-                        required 
-                        autocomplete="new-password"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        placeholder="Enter new password"
-                    >
-                </div>
-
-                <div>
-                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-lock mr-2"></i>Confirm Password
-                    </label>
-                    <input 
-                        id="password_confirmation" 
-                        name="password_confirmation" 
-                        type="password" 
-                        required 
-                        autocomplete="new-password"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        placeholder="Confirm new password"
-                    >
-                </div>
-
-                @if ($errors->any())
-                    <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm">
-                        @foreach ($errors->all() as $error)
-                            <div class="flex items-center text-red-600 mb-1">
-                                <i class="fas fa-exclamation-circle mr-2 text-xs"></i>
-                                {{ $error }}
-                            </div>
-                        @endforeach
+                    <div>
+                        <label for="password" class="mb-1 block text-sm font-medium" style="color: #f7dbd4;">New Password</label>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            required
+                            autocomplete="new-password"
+                            class="h-11 w-full rounded-lg border bg-white/5 px-3 text-sm text-rose-50 outline-none transition placeholder:text-rose-200/55 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/35"
+                            placeholder="Enter new password"
+                            style="border-color: rgba(255, 255, 255, 0.28);"
+                        >
                     </div>
-                @endif
 
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <p class="text-sm text-blue-800">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <strong>Password Requirements:</strong><br>
-                        • At least 8 characters long<br>
-                        • Include uppercase and lowercase letters<br>
-                        • Include numbers and special characters
-                    </p>
-                </div>
+                    <div>
+                        <label for="password_confirmation" class="mb-1 block text-sm font-medium" style="color: #f7dbd4;">Confirm Password</label>
+                        <input
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            type="password"
+                            required
+                            autocomplete="new-password"
+                            class="h-11 w-full rounded-lg border bg-white/5 px-3 text-sm text-rose-50 outline-none transition placeholder:text-rose-200/55 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/35"
+                            placeholder="Confirm new password"
+                            style="border-color: rgba(255, 255, 255, 0.28);"
+                        >
+                    </div>
 
-                <button 
-                    type="submit" 
-                    class="w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition duration-200 font-medium flex items-center justify-center"
-                >
-                    <i class="fas fa-key mr-2"></i>
-                    Reset Password
-                </button>
-            </form>
-        @else
-            <!-- Invalid Token Message -->
-            <div class="text-center">
-                <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                    <i class="fas fa-exclamation-triangle text-yellow-600 text-3xl mb-3"></i>
-                    <h3 class="text-lg font-semibold text-yellow-800 mb-2">Invalid Reset Link</h3>
-                    <p class="text-yellow-700">
-                        This password reset link is invalid or has expired.
-                    </p>
-                </div>
+                    @if ($errors->any())
+                        <div class="rounded-xl border border-rose-400/45 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                            @foreach ($errors->all() as $error)
+                                <div>{{ $error }}</div>
+                            @endforeach
+                        </div>
+                    @endif
 
-                <div class="space-y-4">
-                    <button 
-                        onclick="history.back()" 
-                        class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition duration-200 font-medium"
+                    <div class="rounded-xl border border-white/15 bg-white/[0.03] px-4 py-3 text-sm text-rose-100/90">
+                        Password should be at least 8 characters and include mixed character types.
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="inline-flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-rose-800 to-rose-500 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-rose-950/40"
+                        style="box-shadow: 0 10px 28px rgba(246, 52, 112, 0.28);"
                     >
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Go Back
+                        Reset Password
                     </button>
+                </form>
+            @else
+                <div class="text-center">
+                    <div class="mb-6 rounded-xl border border-amber-400/45 bg-amber-500/10 px-4 py-4">
+                        <h3 class="mb-2 text-lg font-semibold text-amber-200">Invalid Reset Link</h3>
+                        <p class="text-sm text-amber-100/90">This password reset link is invalid or has expired.</p>
+                    </div>
 
-                    <a href="{{ route('password.reset.request') }}" class="block w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition duration-200 font-medium text-center">
-                        <i class="fas fa-redo mr-2"></i>
-                        Request New Reset Link
-                    </a>
+                    <div class="space-y-3">
+                        <button
+                            onclick="history.back()"
+                            class="inline-flex h-11 w-full items-center justify-center rounded-lg border border-white/20 bg-white/[0.04] px-4 text-sm font-semibold text-rose-100 transition hover:bg-white/[0.1]"
+                        >
+                            Go Back
+                        </button>
+
+                        <a href="{{ route('password.reset.request') }}" class="inline-flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-rose-800 to-rose-500 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg" style="box-shadow: 0 10px 28px rgba(246, 52, 112, 0.28);">
+                            Request New Reset Link
+                        </a>
+                    </div>
                 </div>
-            </div>
-        @endif
+            @endif
 
-        <!-- Back to Login -->
-        <div class="mt-6 text-center">
-            <a href="{{ route('login') }}" class="text-red-600 hover:text-red-500 text-sm font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Back to Login
-            </a>
-        </div>
-    </div>
+            <div class="mt-4 text-center text-sm">
+                <a href="{{ route('login') }}" class="text-rose-100/75 transition hover:text-rose-100">Back to Login</a>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
