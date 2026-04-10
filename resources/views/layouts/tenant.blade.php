@@ -20,14 +20,14 @@
                 extend: {
                     colors: {
                         central: {
-                            bg: '#060202',
-                            card: 'rgba(255, 255, 255, 0.04)',
+                            bg: '#eef2f7',
+                            card: '#ffffff',
                             primary: '#f63470',
                             accent: '#ff8c57',
                         },
                     },
                     boxShadow: {
-                        card: '0 16px 38px rgba(0, 0, 0, 0.28)',
+                        card: '0 8px 22px rgba(15, 23, 42, 0.1)',
                     },
                     borderRadius: {
                         xl2: '1rem',
@@ -41,13 +41,14 @@
         :root {
             --bg-1: #060202;
             --bg-2: #1a0808;
-            --card: rgba(255, 255, 255, 0.04);
-            --card-border: rgba(255, 255, 255, 0.14);
-            --text: #fef7f5;
-            --muted: #d5b8b1;
+            --card: #ffffff;
+            --card-strong: #ffffff;
+            --card-border: #d6d9e0;
+            --text: #0f172a;
+            --muted: #64748b;
             --accent: #f63470;
             --accent-2: #a41245;
-            --line: rgba(255, 255, 255, 0.12);
+            --line: #dbe3ef;
         }
 
         body {
@@ -65,23 +66,30 @@
 
         .main-shell {
             min-height: 100vh;
-            background: rgba(8, 2, 2, 0.74);
+            background: rgba(238, 242, 247, 0.96);
             border: 1px solid var(--line);
-            box-shadow: 0 35px 90px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
         }
 
         .tenant-sidebar {
             width: 272px;
-            background: linear-gradient(168deg, rgba(36, 6, 10, 0.94) 0%, rgba(92, 12, 36, 0.92) 52%, rgba(164, 18, 69, 0.9) 100%);
+            background:
+                radial-gradient(circle at 18% -10%, rgba(246, 52, 112, 0.24), transparent 42%),
+                radial-gradient(circle at 92% 10%, rgba(255, 140, 87, 0.16), transparent 36%),
+                linear-gradient(168deg, #060202 0%, #1a0808 52%, #2f0b12 100%);
             backdrop-filter: blur(12px);
             border-right: 1px solid var(--line);
             box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.05);
+            overflow-x: hidden;
+            overflow-y: hidden;
         }
 
         .nav-item {
             color: #f8d7cf;
             border: 1px solid transparent;
             transition: all 0.2s ease;
+            padding-top: 0.55rem !important;
+            padding-bottom: 0.55rem !important;
         }
 
         .nav-item:hover {
@@ -100,7 +108,7 @@
 
         .tenant-header {
             backdrop-filter: blur(10px);
-            background: rgba(13, 2, 4, 0.85);
+            background: rgba(245, 248, 252, 0.9);
             border-bottom: 1px solid var(--line);
         }
 
@@ -122,25 +130,58 @@
             background: linear-gradient(135deg, #ff9b8d 0%, var(--accent) 100%);
         }
 
+        .tenant-brand-card {
+            background: linear-gradient(160deg, rgba(164, 18, 69, 0.52), rgba(246, 52, 112, 0.24));
+            border: 1px solid rgba(255, 255, 255, 0.26);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(8px);
+            text-align: center;
+        }
+
+        .tenant-brand-logo {
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 0.65rem;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.36);
+            box-shadow: 0 12px 28px rgba(28, 9, 14, 0.28);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .tenant-brand-fallback {
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 0.65rem;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.1);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
         .tenant-header button,
         .tenant-header a:not(.btn-primary-gradient) {
-            border-color: var(--line) !important;
-            background: rgba(255, 255, 255, 0.03) !important;
-            color: #f6d5cf !important;
+            border-color: rgba(255, 255, 255, 0.22) !important;
+            background: rgba(255, 255, 255, 0.92) !important;
+            color: #3f0f1a !important;
         }
 
         .tenant-header button:hover,
         .tenant-header a:not(.btn-primary-gradient):hover {
-            background: rgba(255, 255, 255, 0.08) !important;
-            color: #fff !important;
+            background: #ffffff !important;
+            color: #25070f !important;
         }
 
         .tenant-header h1 {
-            color: var(--text) !important;
+            color: #111827 !important;
         }
 
         .tenant-header p {
-            color: var(--muted) !important;
+            color: #64748b !important;
         }
 
         .tenant-header .avatar-ring > div {
@@ -175,12 +216,12 @@
         main .text-slate-800,
         main .text-slate-700,
         main .text-slate-600 {
-            color: #ffe9e5 !important;
+            color: #1f2937 !important;
         }
 
         main .text-slate-500,
         main .text-slate-400 {
-            color: var(--muted) !important;
+            color: #64748b !important;
         }
 
         main .bg-indigo-50,
@@ -190,7 +231,7 @@
         main .bg-teal-50,
         main .bg-slate-100,
         main .bg-slate-200 {
-            background: rgba(255, 255, 255, 0.06) !important;
+            background: #f8fafc !important;
         }
 
         main .hover\:bg-indigo-50:hover,
@@ -202,7 +243,7 @@
         main .hover\:bg-rose-50:hover,
         main .hover\:bg-emerald-50:hover,
         main .hover\:bg-amber-50:hover {
-            background: rgba(255, 255, 255, 0.03) !important;
+            background: #f3f4f6 !important;
             color: inherit !important;
         }
 
@@ -212,26 +253,26 @@
         main .shadow-lg,
         main .hover\:shadow-lg:hover,
         main .hover\:shadow-xl:hover {
-            box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28) !important;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.1) !important;
         }
 
         main select,
         main select option,
         main select optgroup {
-            background: rgba(22, 4, 8, 0.98) !important;
-            color: #ffe9e5 !important;
+            background: #ffffff !important;
+            color: #1f2937 !important;
         }
 
         main input:not([type="checkbox"]):not([type="radio"]),
         main textarea {
-            border-color: rgba(255, 255, 255, 0.22) !important;
-            background: rgba(255, 255, 255, 0.03) !important;
-            color: #ffe9e5 !important;
+            border-color: #d5dce8 !important;
+            background: #ffffff !important;
+            color: #111827 !important;
         }
 
         main input:not([type="checkbox"]):not([type="radio"])::placeholder,
         main textarea::placeholder {
-            color: #c9a49b !important;
+            color: #94a3b8 !important;
             opacity: 1;
         }
 
@@ -247,11 +288,11 @@
         main input:-webkit-autofill:focus,
         main textarea:-webkit-autofill,
         main select:-webkit-autofill {
-            -webkit-text-fill-color: #ffe9e5 !important;
-            box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.03) inset !important;
-            -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.03) inset !important;
+            -webkit-text-fill-color: #111827 !important;
+            box-shadow: 0 0 0 1000px #ffffff inset !important;
+            -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
             transition: background-color 5000s ease-in-out 0s;
-            caret-color: #ffe9e5;
+            caret-color: #111827;
         }
 
         main select:focus {
@@ -299,25 +340,20 @@
 </head>
 <body class="antialiased">
     <div class="main-shell flex">
-        <aside class="tenant-sidebar shrink-0 p-4 text-white lg:sticky lg:top-0 lg:h-screen" id="tenantSidebar">
-            <div class="mb-6 rounded-2xl border border-white/20 bg-white/10 p-4">
-                <div class="mb-2 flex items-center gap-3">
-                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-white">
-                        <i data-lucide="store" class="h-5 w-5"></i>
-                    </span>
-                    <div>
-                        <p class="heading-font mb-0 text-base font-semibold tracking-tight">Branch POS</p>
-                        <p class="mb-0 text-xs text-white/75">Tenant Workspace</p>
-                    </div>
-                </div>
+        <aside class="tenant-sidebar shrink-0 p-4 text-white lg:sticky lg:top-0 lg:h-screen flex flex-col" id="tenantSidebar">
+            <div class="tenant-brand-card mb-4 rounded-2xl p-3.5">
+                <img src="{{ asset('im.png') }}" alt="Branch Logo" class="tenant-brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <span class="tenant-brand-fallback" aria-hidden="true">BP</span>
+                <p class="heading-font mb-0 text-base font-semibold tracking-tight">Branch POS</p>
+                <p class="mb-1.5 text-xs text-white/80">Tenant Workspace</p>
                 @if(tenant())
-                    <p class="mb-0 text-sm text-white/75">{{ tenant()->business_name ?? tenant()->tenant_id }}</p>
+                    <p class="mb-0 text-sm text-white/85">{{ tenant()->business_name ?? tenant()->tenant_id }}</p>
                 @elseif(session('user.name'))
-                    <p class="mb-0 text-sm text-white/75">{{ session('user.name') }}</p>
+                    <p class="mb-0 text-sm text-white/85">{{ session('user.name') }}</p>
                 @endif
             </div>
 
-            <nav class="space-y-2">
+            <nav class="space-y-1.5">
                 <a class="nav-item {{ request()->routeIs('tenant.dashboard') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/dashboard">
                     <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
                     Dashboard
@@ -356,7 +392,7 @@
                 </a>
             </nav>
 
-            <div class="mt-6 border-t border-white/20 pt-4">
+            <div class="mt-auto border-t border-white/20 pt-3.5">
                 <form action="/logout" method="POST" class="m-0">
                     @csrf
                     <button type="submit" class="nav-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium">
