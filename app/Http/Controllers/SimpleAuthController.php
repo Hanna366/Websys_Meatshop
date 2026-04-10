@@ -61,6 +61,16 @@ class SimpleAuthController extends Controller
 
     public function login(Request $request)
     {
+        // Fail fast when local DB is unhealthy to avoid long login hangs.
+        @ini_set('mysql.connect_timeout', (string) env('DB_CONNECT_TIMEOUT', 5));
+        @ini_set('default_socket_timeout', (string) env('DB_CONNECT_TIMEOUT', 5));
+
+        if (!$this->isAuthDatabaseResponsive()) {
+            return back()->withErrors([
+                'email' => 'Login is temporarily unavailable because the database service is not responding. Please restart MySQL and try again.',
+            ])->withInput($request->only('email'));
+        }
+
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -299,5 +309,55 @@ class SimpleAuthController extends Controller
         }
 
         return null;
+    }
+
+    private function isAuthDatabaseResponsive(): bool
+    {
+        $defaultConnection = (string) config('database.default', 'mysql');
+
+        if (!in_array($defaultConnection, ['mysql', 'mariadb'], true)) {
+            return true;
+        }
+
+        if (!function_exists('mysqli_init')) {
+            return true;
+        }
+
+        $host = (string) config("database.connections.{$defaultConnection}.host", '127.0.0.1');
+        $port = (int) config("database.connections.{$defaultConnection}.port", 3306);
+        $username = (string) config("database.connections.{$defaultConnection}.username", 'root');
+        $password = (string) config("database.connections.{$defaultConnection}.password", '');
+        $database = (string) config("database.connections.{$defaultConnection}.database", '');
+        $timeout = max(1, (int) env('DB_CONNECT_TIMEOUT', 5));
+
+        if (function_exists('mysqli_report') && defined('MYSQLI_REPORT_OFF')) {
+            mysqli_report(MYSQLI_REPORT_OFF);
+        }
+
+        $mysqli = mysqli_init();
+
+        if ($mysqli === false) {
+            return false;
+        }
+
+        try {
+            mysqli_options($mysqli, MYSQLI_OPT_CONNECT_TIMEOUT, $timeout);
+            mysqli_options($mysqli, MYSQLI_OPT_READ_TIMEOUT, $timeout);
+
+            $connected = @mysqli_real_connect(
+                $mysqli,
+                $host,
+                $username,
+                $password,
+                $database,
+                $port
+            );
+
+            return $connected === true;
+        } catch (\Throwable $e) {
+            return false;
+        } finally {
+            @mysqli_close($mysqli);
+        }
     }
 }
