@@ -41,6 +41,42 @@
     @endif
 @endsection
 
+@push('styles')
+<style>
+    .blend-card {
+        border-color: rgba(255, 255, 255, 0.14) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
+    }
+
+    .blend-field {
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        color: #ffe9e5 !important;
+    }
+
+    .blend-field::placeholder {
+        color: #c9a49b;
+    }
+
+    .blend-field:focus {
+        border-color: rgba(246, 52, 112, 0.75) !important;
+        box-shadow: 0 0 0 2px rgba(246, 52, 112, 0.18);
+    }
+
+    .blend-soft-btn {
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        color: #f6d5cf !important;
+    }
+
+    .blend-soft-btn:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #fff !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <section class="space-y-6">
     @if(!$isUnlimitedProducts)
@@ -50,22 +86,22 @@
     @endif
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+        <article class="blend-card rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Products</p>
             <p class="mt-2 text-2xl font-bold text-slate-900">{{ number_format((int) data_get($productStats ?? [], 'total_products', 0)) }}</p>
             <p class="mt-1 text-xs text-slate-500">Current tenant catalog size</p>
         </article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+        <article class="blend-card rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Low Stock</p>
             <p class="mt-2 text-2xl font-bold text-amber-600">{{ number_format((int) data_get($productStats ?? [], 'low_stock_products', 0)) }}</p>
             <p class="mt-1 text-xs text-slate-500">Below reorder threshold</p>
         </article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+        <article class="blend-card rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Avg Margin</p>
             <p class="mt-2 text-2xl font-bold text-emerald-600">{{ data_get($productStats ?? [], 'average_margin') !== null ? number_format((float) data_get($productStats, 'average_margin', 0), 1) . '%' : 'N/A' }}</p>
             <p class="mt-1 text-xs text-slate-500">Based on available product pricing</p>
         </article>
-        <article class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
+        <article class="blend-card rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Catalog Health</p>
             @php
                 $outOfStock = (int) data_get($productStats ?? [], 'out_of_stock_products', 0);
@@ -76,12 +112,12 @@
         </article>
     </div>
 
-    <section class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
+    <section class="blend-card rounded-3xl border border-white/70 bg-white/90 p-5 shadow-card sm:p-6">
         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="heading-font text-lg font-semibold text-slate-900">Catalog</h2>
             <div class="flex flex-col gap-3 sm:flex-row">
-                <input id="productSearch" type="text" placeholder="Search products..." class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none ring-0 transition focus:border-indigo-300 focus:shadow-sm sm:w-56">
-                <select id="stockFilter" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-300">
+                <input id="productSearch" type="text" placeholder="Search products..." class="blend-field w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none ring-0 transition focus:border-indigo-300 focus:shadow-sm sm:w-56">
+                <select id="stockFilter" class="blend-field rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-300">
                     <option value="">All stock levels</option>
                     <option value="instock">In stock</option>
                     <option value="lowstock">Low stock</option>
@@ -122,8 +158,8 @@
                             <td class="px-3 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">{{ $statusLabel }}</span></td>
                             <td class="px-3 py-3 text-right">
                                 <div class="inline-flex gap-2">
-                                    <button onclick="editProduct('{{ addslashes((string) $product->name) }}')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Edit</button>
-                                    <button onclick="deleteProduct('{{ addslashes((string) $product->name) }}')" class="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>
+                                    <button onclick="editProduct('{{ addslashes((string) $product->name) }}')" class="blend-soft-btn rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Edit</button>
+                                    <button onclick="deleteProduct('{{ addslashes((string) $product->name) }}')" class="blend-soft-btn rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>
                                 </div>
                             </td>
                         </tr>

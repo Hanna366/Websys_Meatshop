@@ -8,10 +8,6 @@
                 <h2 class="heading-font mb-1 text-2xl font-semibold text-slate-900">Tenants</h2>
                 <p class="mb-0 text-sm text-slate-500">Centralized control for all branches, plans, and billing states.</p>
             </div>
-            <a href="/account/create" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
-                <i data-lucide="plus" class="h-4 w-4"></i>
-                Create New Tenant
-            </a>
         </div>
     </div>
 
