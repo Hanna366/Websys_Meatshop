@@ -137,7 +137,7 @@
                     @error('password_confirmation')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                 </div>
                 <div class="sm:col-span-2 lg:col-span-3 flex justify-end mt-2">
-                    <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">Add User</button>
+                    <button type="submit" class="btn-primary-gradient rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors">Add User</button>
                 </div>
             </form>
 

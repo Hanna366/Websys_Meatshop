@@ -150,18 +150,29 @@
 
         main .bg-white,
         main .bg-white\/70,
-        main .bg-slate-50 {
+        main .bg-white\/80,
+        main .bg-white\/90,
+        main .bg-slate-50,
+        main .bg-slate-50\/60,
+        main .bg-slate-50\/70,
+        main [class*="bg-white/"] {
             background: var(--card) !important;
         }
 
         main .border-slate-200,
         main .border-slate-200\/70,
         main .border-slate-300,
-        main .border-slate-100 {
+        main .border-slate-100,
+        main .border-white\/70,
+        main .border-white\/80,
+        main .border-white\/90,
+        main [class*="border-white/"] {
             border-color: var(--card-border) !important;
         }
 
         main .text-slate-900,
+        main .text-slate-950,
+        main .text-slate-800,
         main .text-slate-700,
         main .text-slate-600 {
             color: #ffe9e5 !important;
@@ -176,23 +187,88 @@
         main .bg-emerald-50,
         main .bg-amber-50,
         main .bg-rose-50,
-        main .bg-teal-50 {
+        main .bg-teal-50,
+        main .bg-slate-100,
+        main .bg-slate-200 {
             background: rgba(255, 255, 255, 0.06) !important;
         }
 
         main .hover\:bg-indigo-50:hover,
         main .hover\:bg-indigo-50\/40:hover,
         main .hover\:bg-indigo-100:hover,
-        main .hover\:bg-indigo-600:hover {
-            background: rgba(246, 52, 112, 0.16) !important;
-            color: #fff !important;
+        main .hover\:bg-indigo-600:hover,
+        main .hover\:bg-slate-50:hover,
+        main .hover\:bg-slate-100:hover,
+        main .hover\:bg-rose-50:hover,
+        main .hover\:bg-emerald-50:hover,
+        main .hover\:bg-amber-50:hover {
+            background: rgba(255, 255, 255, 0.03) !important;
+            color: inherit !important;
         }
 
         main .shadow-card,
         main .shadow-sm,
+        main .shadow-md,
+        main .shadow-lg,
         main .hover\:shadow-lg:hover,
         main .hover\:shadow-xl:hover {
             box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28) !important;
+        }
+
+        main select,
+        main select option,
+        main select optgroup {
+            background: rgba(22, 4, 8, 0.98) !important;
+            color: #ffe9e5 !important;
+        }
+
+        main input:not([type="checkbox"]):not([type="radio"]),
+        main textarea {
+            border-color: rgba(255, 255, 255, 0.22) !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            color: #ffe9e5 !important;
+        }
+
+        main input:not([type="checkbox"]):not([type="radio"])::placeholder,
+        main textarea::placeholder {
+            color: #c9a49b !important;
+            opacity: 1;
+        }
+
+        main input:not([type="checkbox"]):not([type="radio"]):focus,
+        main textarea:focus {
+            border-color: rgba(246, 52, 112, 0.75) !important;
+            box-shadow: 0 0 0 2px rgba(246, 52, 112, 0.2) !important;
+            outline: none;
+        }
+
+        main input:-webkit-autofill,
+        main input:-webkit-autofill:hover,
+        main input:-webkit-autofill:focus,
+        main textarea:-webkit-autofill,
+        main select:-webkit-autofill {
+            -webkit-text-fill-color: #ffe9e5 !important;
+            box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.03) inset !important;
+            -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.03) inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+            caret-color: #ffe9e5;
+        }
+
+        main select:focus {
+            border-color: rgba(246, 52, 112, 0.75) !important;
+            box-shadow: 0 0 0 2px rgba(246, 52, 112, 0.2) !important;
+        }
+
+        main option:checked,
+        main option:hover {
+            background: linear-gradient(90deg, rgba(164, 18, 69, 0.95), rgba(246, 52, 112, 0.95)) !important;
+            color: #fff !important;
+        }
+
+        main .hover\:-translate-y-0\.5:hover,
+        main .hover\:-translate-y-1:hover,
+        main .hover\:translate-x-1:hover {
+            transform: none !important;
         }
 
         .sidebar-toggle {
