@@ -32,6 +32,7 @@ class Tenant extends Model implements TenantWithDatabase
         'status',
         'payment_status',
         'suspended_message',
+        'disabled_message',
         'domain',
         'db_name',
         'db_username',
@@ -59,7 +60,8 @@ class Tenant extends Model implements TenantWithDatabase
     protected $attributes = [
         'status' => 'active',
         'payment_status' => 'paid',
-        'suspended_message' => 'Please contact your administrator.'
+        'suspended_message' => 'Please contact your administrator.',
+        'disabled_message' => 'Please contact your administrator.'
     ];
 
     /**

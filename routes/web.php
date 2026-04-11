@@ -65,6 +65,11 @@ Route::middleware(['auth', 'central.admin'])->group(function () {
     // Central tenant management menu entries.
     Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
     Route::get('/tenant/{tenantId}', [TenantController::class, 'show'])->name('tenants.show');
+
+// Dev-only debug endpoint to inspect subscription/session state
+if (config('app.debug')) {
+    Route::get('/_debug/subscription', [App\Http\Controllers\DevDebugController::class, 'subscription'])->name('debug.subscription');
+}
     Route::post('/tenant/{tenantId}', [TenantController::class, 'update'])->name('tenants.update');
     Route::post('/tenant/{tenantId}/status', [TenantController::class, 'updateStatus'])->name('tenants.updateStatus');
     Route::post('/tenant/{tenantId}/subscription', [TenantController::class, 'updateSubscription'])->name('tenants.updateSubscription');

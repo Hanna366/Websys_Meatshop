@@ -29,6 +29,6 @@ class TenantStatusChangedNotification extends Notification implements ShouldQueu
             ->line('Your tenant status has been updated.')
             ->line('Status: ' . ucfirst((string) $this->tenant->status))
             ->line('Payment Status: ' . ucfirst((string) $this->tenant->payment_status))
-            ->line('Message: ' . ($this->tenant->suspended_message ?: 'No additional message.'));
+            ->line('Message: ' . ($this->tenant->disabled_message ?? $this->tenant->suspended_message ?? 'No additional message.'));
     }
 }

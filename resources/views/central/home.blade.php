@@ -123,7 +123,7 @@
         <article class="group rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
-                    <p class="mb-1 text-xs font-medium text-slate-500">Suspended Tenants</p>
+                    <p class="mb-1 text-xs font-medium text-slate-500">Disabled Tenants</p>
                     <h3 class="heading-font text-2xl font-semibold text-amber-600">{{ $stats['suspended_tenants'] ?? 0 }}</h3>
                 </div>
                 <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-700">

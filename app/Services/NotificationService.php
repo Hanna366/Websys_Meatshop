@@ -22,6 +22,27 @@ class NotificationService
         return $this->dispatchMailNotification($tenant, new TenantSignupConfirmationNotification($tenant));
     }
 
+    public function sendCentralApprovalRequest(Tenant $tenant): bool
+    {
+        $adminEmail = env('TENANCY_ADMIN_EMAIL');
+        if (!$adminEmail) {
+            return false;
+        }
+
+        try {
+            Notification::route('mail', $adminEmail)->notify(new \App\Notifications\CentralTenantApprovalRequestNotification($tenant));
+            return true;
+        } catch (\Throwable $e) {
+            \Log::warning('Central approval notification failed.', [
+                'tenant_id' => $tenant->tenant_id,
+                'admin_email' => $adminEmail,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
     public function sendTenantStatusChanged(Tenant $tenant): bool
     {
         return $this->dispatchMailNotification($tenant, new TenantStatusChangedNotification($tenant));

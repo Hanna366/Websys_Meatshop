@@ -37,7 +37,7 @@ router.put('/status',
   authenticateToken,
   requireRole('owner'),
   body('status')
-    .isIn(['active', 'inactive', 'suspended'])
+    .isIn(['active', 'inactive', 'disabled'])
     .withMessage('Valid status is required'),
   body('reason')
     .optional()

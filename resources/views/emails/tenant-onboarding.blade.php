@@ -43,7 +43,7 @@
 
                             <p style="margin:0 0 10px; font-size:14px;"><strong>Getting Started</strong></p>
                             <ol style="margin:0 0 16px 20px; padding:0; font-size:14px; line-height:1.8;">
-                                <li>Open the login URL above and sign in with your admin email@if(!empty($generatedPassword)) and the temporary password@endif.</li>
+                                <li>Open the login URL above and sign in with your admin email <strong>{{ $adminEmail }}</strong>@if(!empty($generatedPassword)) and the temporary password <strong>{{ $generatedPassword }}</strong>@endif.</li>
                                 @if(!empty($passwordSetupUrl))
                                     <li>If this is your first login or you forgot your password, set/reset it here: <a href="{{ $passwordSetupUrl }}" style="color:#0f766e; text-decoration:none;">{{ $passwordSetupUrl }}</a></li>
                                 @else

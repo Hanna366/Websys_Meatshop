@@ -13,7 +13,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    @env('local')
+        <script src="https://cdn.tailwindcss.com"></script>
+    @endenv
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
@@ -100,10 +102,35 @@
         .text-emerald-700 {
             color: #7be6be !important;
         }
+
+        /* Themed select styling to blend dropdown with app theme */
+        select.theme-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.12) 50%), linear-gradient(135deg, rgba(255,255,255,0.12) 50%, transparent 50%);
+            background-position: calc(100% - 1rem) calc(50% - 6px), calc(100% - 0.5rem) calc(50% - 6px);
+            background-size: 6px 6px, 6px 6px;
+            background-repeat: no-repeat;
+            padding-right: 2.25rem !important;
+            color: #ffe9e5 !important;
+        }
+
+        select.theme-input option {
+            background: rgba(8,6,6,0.95);
+            color: #ffe9e5;
+        }
+
+        /* Hide default IE/Edge dropdown arrow */
+        select.theme-input::-ms-expand {
+            display: none;
+        }
     </style>
 </head>
 <body class="min-h-screen antialiased">
-    @php($selectedPlan = old('plan', request('plan', 'basic')))
+    @php
+        $selectedPlan = old('plan', request('plan', 'basic'));
+    @endphp
 
     <main class="mx-auto flex min-h-screen w-full max-w-6xl items-center p-4 sm:p-6 lg:p-8">
         <div class="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
@@ -219,12 +246,19 @@
 
                     <div class="theme-block rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                         <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-700">Initial Plan</h3>
-                        <select id="plan" name="plan" class="theme-input h-11 w-full rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:border-indigo-500 focus:ring-2 @error('plan') border-rose-300 ring-rose-200 @enderror" required>
-                            <option value="basic" {{ $selectedPlan === 'basic' ? 'selected' : '' }}>Basic</option>
-                            <option value="standard" {{ $selectedPlan === 'standard' ? 'selected' : '' }}>Standard</option>
-                            <option value="premium" {{ $selectedPlan === 'premium' ? 'selected' : '' }}>Premium</option>
-                            <option value="enterprise" {{ $selectedPlan === 'enterprise' ? 'selected' : '' }}>Enterprise</option>
-                        </select>
+                        <div class="relative">
+                            <input type="hidden" id="plan" name="plan" value="{{ old('plan', request('plan', 'basic')) }}">
+                            <button type="button" id="planToggle" class="theme-input h-11 w-full rounded-lg border border-slate-300 bg-transparent px-4 text-sm text-slate-700 outline-none text-left flex items-center justify-between" aria-haspopup="listbox" aria-expanded="false">
+                                <span id="planLabel">{{ ucfirst(old('plan', request('plan', 'basic'))) }}</span>
+                                <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <ul id="planList" role="listbox" tabindex="-1" class="absolute z-50 mt-2 w-full rounded-lg border border-slate-700 bg-[#0b0606] shadow-lg p-2 hidden">
+                                @foreach(['basic','standard','premium','enterprise'] as $planKey)
+                                    @php $label = ucfirst($planKey); @endphp
+                                    <li data-value="{{ $planKey }}" class="plan-item cursor-pointer rounded-md px-3 py-2 text-sm text-slate-200 hover:bg-[#2a0b12]">{{ $label }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
                     </div>
 
                     @if (($showRecaptcha ?? false) && config('services.recaptcha.site_key'))
@@ -296,6 +330,46 @@
             submitButton.disabled = true;
             submitLabel.textContent = 'Creating Account...';
         });
+
+        // Custom themed plan select
+        (function () {
+            const toggle = document.getElementById('planToggle');
+            const list = document.getElementById('planList');
+            const hidden = document.getElementById('plan');
+            const label = document.getElementById('planLabel');
+
+            if (!toggle || !list || !hidden || !label) return;
+
+            function openList() {
+                list.classList.remove('hidden');
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+
+            function closeList() {
+                list.classList.add('hidden');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            toggle.addEventListener('click', function (e) {
+                if (list.classList.contains('hidden')) openList(); else closeList();
+            });
+
+            list.addEventListener('click', function (e) {
+                const item = e.target.closest('.plan-item');
+                if (!item) return;
+                const val = item.getAttribute('data-value');
+                hidden.value = val;
+                label.textContent = item.textContent.trim();
+                closeList();
+            });
+
+            // close on outside click
+            document.addEventListener('click', function (e) {
+                if (!toggle.contains(e.target) && !list.contains(e.target)) {
+                    closeList();
+                }
+            });
+        })();
     </script>
 </body>
 </html>

@@ -71,7 +71,7 @@ const updateSupplierValidation = [
     .withMessage('Valid primary contact email is required'),
   body('status')
     .optional()
-    .isIn(['active', 'inactive', 'suspended', 'under_review'])
+    .isIn(['active', 'inactive', 'disabled', 'under_review'])
     .withMessage('Invalid status'),
   body('preferences.preferred_supplier')
     .optional()
