@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use App\Models\Domain;
 use App\Services\NotificationService;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class TenantController extends Controller
 {
@@ -17,6 +19,16 @@ class TenantController extends Controller
 
     public function index(Request $request)
     {
+        // Debug: record incoming query string for troubleshooting UI filter issues.
+        try {
+            $qs = (string) $request->getQueryString();
+            if ($qs !== null) {
+                file_put_contents(storage_path('logs/tenant_filter_debug.log'), date('c') . " " . $qs . "\n", FILE_APPEND | LOCK_EX);
+            }
+        } catch (\Throwable $e) {
+            // swallow errors to avoid disrupting normal flow
+        }
+
         $query = Tenant::query();
 
         if ($request->filled('q')) {
@@ -32,7 +44,14 @@ class TenantController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('status', (string) $request->input('status'));
+            $status = (string) $request->input('status');
+            // When the UI selects "disabled", return only tenants whose status is
+            // explicitly 'disabled' (do not include legacy 'suspended' rows).
+            if ($status === 'disabled') {
+                $query->where('status', 'disabled');
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         if ($request->filled('plan')) {
@@ -109,7 +128,10 @@ class TenantController extends Controller
 
         $domain = $validated['domain'] ?? null;
 
-        $tenant = TenantService::createTenant([
+        // Create a pending tenant record in central. Provisioning (DB, admin user)
+        // will occur only after central approval.
+        $tenant = Tenant::create([
+            'tenant_id' => Str::uuid()->toString(),
             'business_name' => $validated['business_name'],
             'business_email' => $validated['business_email'],
             'business_phone' => $validated['business_phone'] ?? null,
@@ -118,22 +140,32 @@ class TenantController extends Controller
             'admin_email' => $validated['admin_email'],
             'plan' => $validated['plan'],
             'domain' => $domain,
-            'password' => $validated['password'] ?? null,
+            'status' => 'pending',
             'subscription' => [
                 'plan' => $validated['plan'],
-                'status' => 'active',
+                'status' => 'pending',
             ],
+            // Provide defaults for non-nullable JSON columns to avoid DB errors.
+            'settings' => [],
+            'usage' => [],
+            'limits' => [],
         ]);
 
-        $lifecycleNotificationSent = $this->notificationService->sendTenantSignupConfirmation($tenant);
-        $onboardingEmailSent = (bool) $tenant->getAttribute('onboarding_email_sent');
+        // Ensure domains table maps the tenant -> domain for Stancl tenancy domain resolution
+        if (!empty($domain) && Schema::hasTable('domains')) {
+            Domain::firstOrCreate([
+                'domain' => $domain,
+            ], [
+                'tenant_id' => $tenant->id,
+            ]);
+        }
 
-        $message = ($lifecycleNotificationSent || $onboardingEmailSent)
-            ? 'Tenant created successfully! Admin notification email has been sent.'
-            : 'Tenant created successfully, but email notification failed. Please verify SMTP credentials (MAIL_USERNAME/MAIL_PASSWORD).';
+        // Notify tenant (signup confirmation) and request central approval.
+        $this->notificationService->sendTenantSignupConfirmation($tenant);
+        $this->notificationService->sendCentralApprovalRequest($tenant);
 
         return redirect()->route('tenants.show', $tenant->tenant_id)
-            ->with('success', $message);
+            ->with('success', 'Tenant signup submitted and is pending central approval.');
     }
 
     public function update(Request $request, string $tenantId)
@@ -172,14 +204,17 @@ class TenantController extends Controller
     {
         $tenant = Tenant::where('tenant_id', $tenantId)->firstOrFail();
 
+        $previousStatus = $tenant->status;
+
         $request->merge([
             'domain' => $this->normalizeDomain($request->input('domain')),
         ]);
 
         $validated = $request->validate([
-            'status' => 'required|in:active,inactive,suspended,unpaid',
+            'status' => 'required|in:active,inactive,disabled,unpaid',
             'payment_status' => 'nullable|in:paid,unpaid,overdue',
             'suspended_message' => 'nullable|string|max:500',
+            'disabled_message' => 'nullable|string|max:500',
             'domain' => [
                 'nullable',
                 'string',
@@ -193,11 +228,29 @@ class TenantController extends Controller
         TenantService::updateTenantLifecycle($tenantId, [
             'status' => $validated['status'],
             'payment_status' => $validated['payment_status'] ?? ($validated['status'] === 'unpaid' ? 'unpaid' : 'paid'),
-            'suspended_message' => $validated['suspended_message'] ?? 'Please contact your administrator.',
+            'suspended_message' => $validated['suspended_message'] ?? ($validated['disabled_message'] ?? 'Please contact your administrator.'),
+            'disabled_message' => $validated['disabled_message'] ?? ($validated['suspended_message'] ?? 'Please contact your administrator.'),
             'domain' => $domain,
         ]);
 
         $tenant->refresh();
+
+        // If tenant was pending and is now being activated, provision tenant resources.
+        if ($previousStatus === 'pending' && ($validated['status'] ?? '') === 'active') {
+            try {
+                // Request provisioning and ask the service to return the generated
+                // password if one was auto-created so the central admin can copy it.
+                $result = TenantService::provisionTenant($tenant, true);
+
+                if (is_array($result) && !empty($result['generated_password'])) {
+                    // Flash the generated password into session so the UI can show it.
+                    session()->flash('generated_tenant_password', $result['generated_password']);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('Provisioning failed during approval.', ['tenant_id' => $tenantId, 'error' => $e->getMessage()]);
+            }
+        }
+
         $this->notificationService->sendTenantStatusChanged($tenant);
 
         if (($validated['payment_status'] ?? null) === 'unpaid' || $validated['status'] === 'unpaid') {

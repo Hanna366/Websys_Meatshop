@@ -69,7 +69,7 @@ const updateCustomerValidation = [
     .withMessage('Valid email is required'),
   body('status')
     .optional()
-    .isIn(['active', 'inactive', 'suspended', 'blacklisted'])
+    .isIn(['active', 'inactive', 'disabled', 'blacklisted'])
     .withMessage('Invalid status'),
   body('loyalty.is_member')
     .optional()

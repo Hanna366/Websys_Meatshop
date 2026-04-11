@@ -29,7 +29,7 @@ class TenantMiddleware
             if (in_array($tenant->status, ['inactive', 'suspended', 'unpaid'], true) || in_array($tenant->payment_status, ['unpaid', 'overdue'], true)) {
                 return response()->view('tenant.blocked', [
                     'tenant' => $tenant,
-                    'message' => $tenant->suspended_message ?: 'Please contact your administrator.',
+                    'message' => $tenant->disabled_message ?? $tenant->suspended_message ?? 'Please contact your administrator.',
                 ], 403);
             }
 

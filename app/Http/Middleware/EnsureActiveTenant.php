@@ -35,7 +35,7 @@ class EnsureActiveTenant
             || $isExpiredByDate) {
             return response()->view('tenant.blocked', [
                 'tenant' => $tenant,
-                'message' => $tenant->suspended_message ?: 'Tenant access is currently unavailable. Please contact your administrator.',
+                'message' => $tenant->disabled_message ?? $tenant->suspended_message ?? 'Tenant access is currently unavailable. Please contact your administrator.',
             ], 403);
         }
 

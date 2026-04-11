@@ -55,7 +55,9 @@ class SubscriptionService
      */
     public static function getCurrentSubscription()
     {
-        if (!session('authenticated')) {
+        // Allow deriving a subscription for tenant context even when session auth
+        // is not present (useful for tenant-scoped UI that shows plan features).
+        if (!session('authenticated') && !app()->bound('tenant')) {
             return null;
         }
 

@@ -90,7 +90,7 @@
                         <select name="status" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
                             <option value="active" {{ ($tenant->status ?? 'active') === 'active' ? 'selected' : '' }}>Active</option>
                             <option value="inactive" {{ ($tenant->status ?? '') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            <option value="suspended" {{ ($tenant->status ?? '') === 'suspended' ? 'selected' : '' }}>Suspended</option>
+                            <option value="disabled" {{ ($tenant->status ?? '') === 'disabled' ? 'selected' : '' }}>Disabled</option>
                             <option value="unpaid" {{ ($tenant->status ?? '') === 'unpaid' ? 'selected' : '' }}>Unpaid</option>
                         </select>
                     </div>
@@ -103,8 +103,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Suspension Message</label>
-                        <input type="text" name="suspended_message" value="{{ old('suspended_message', $tenant->suspended_message ?? 'Please contact your administrator.') }}" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
+                        <label class="mb-1 block text-sm font-medium text-slate-700">Disabled Message</label>
+                        <input type="text" name="disabled_message" value="{{ old('disabled_message', $tenant->disabled_message ?? $tenant->suspended_message ?? 'Please contact your administrator.') }}" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
                     </div>
                     <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-600 hover:text-white">Update Lifecycle</button>
                 </form>
@@ -115,13 +115,34 @@
                 <form method="POST" action="{{ route('tenants.updateSubscription', $tenant->tenant_id) }}" class="space-y-3">
                     @csrf
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Plan</label>
-                        <select name="plan" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
-                            <option value="basic" {{ ($tenant->plan ?? 'basic') === 'basic' ? 'selected' : '' }}>Basic</option>
-                            <option value="standard" {{ ($tenant->plan ?? '') === 'standard' ? 'selected' : '' }}>Standard</option>
-                            <option value="premium" {{ ($tenant->plan ?? '') === 'premium' ? 'selected' : '' }}>Premium</option>
-                            <option value="enterprise" {{ ($tenant->plan ?? '') === 'enterprise' ? 'selected' : '' }}>Enterprise</option>
-                        </select>
+                                <label class="mb-1 block text-sm font-medium text-slate-700">Plan</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    @php
+                                        $plans = array_keys(
+                                            (array) config('plans.definitions', ['basic'=>[],'standard'=>[],'premium'=>[],'enterprise'=>[]])
+                                        );
+                                        $currentPlan = strtolower((string) ($tenant->plan ?? data_get($tenant->subscription, 'plan', 'basic')));
+                                        $badgeMap = [
+                                            'primary' => 'bg-indigo-600 text-white',
+                                            'warning' => 'bg-amber-400 text-black',
+                                            'danger' => 'bg-rose-600 text-white',
+                                            'dark' => 'bg-slate-800 text-white',
+                                        ];
+                                    @endphp
+
+                                    @foreach($plans as $planKey)
+                                        @php
+                                            $badge = \App\Services\SubscriptionService::getPlanBadgeColor($planKey);
+                                            $badgeClass = $badgeMap[$badge] ?? 'bg-slate-100 text-slate-800';
+                                            $isSelected = $currentPlan === strtolower($planKey);
+                                        @endphp
+                                        <label class="inline-flex items-center gap-3 rounded-xl border px-3 py-2 cursor-pointer transition {{ $isSelected ? 'ring-2 ring-indigo-300' : 'hover:shadow-sm' }}">
+                                            <input type="radio" name="plan" value="{{ $planKey }}" class="hidden" {{ $isSelected ? 'checked' : '' }}>
+                                            <span class="inline-flex items-center justify-center h-6 w-6 rounded-full {{ $badgeClass }} text-xs font-semibold">{{ ucfirst($planKey[0]) }}</span>
+                                            <span class="text-sm font-medium text-slate-700">{{ ucfirst($planKey) }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
                     </div>
                     <div>
                         <label class="mb-1 block text-sm font-medium text-slate-700">Billing Cycle</label>

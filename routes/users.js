@@ -24,7 +24,7 @@ router.get('/',
     .withMessage('Invalid role'),
   query('status')
     .optional()
-    .isIn(['active', 'inactive', 'suspended'])
+    .isIn(['active', 'inactive', 'disabled'])
     .withMessage('Invalid status'),
   async (req, res) => {
     try {
@@ -200,7 +200,7 @@ router.put('/:user_id',
     .withMessage('Valid role is required'),
   body('status')
     .optional()
-    .isIn(['active', 'inactive', 'suspended'])
+    .isIn(['active', 'inactive', 'disabled'])
     .withMessage('Invalid status'),
   body('profile.first_name')
     .optional()

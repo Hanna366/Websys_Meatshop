@@ -14,16 +14,16 @@
     <section class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
         <div class="flex flex-col gap-3 border-b border-slate-200/70 px-5 py-4 md:flex-row md:items-center md:justify-between">
             <h3 class="heading-font mb-0 text-lg font-semibold text-slate-900">Tenant Directory</h3>
-            <form method="GET" action="{{ route('tenants.index') }}" class="flex flex-col gap-2 md:flex-row md:items-center">
+            <form id="tenantFilterForm" method="GET" action="{{ route('tenants.index') }}" class="flex flex-col gap-2 md:flex-row md:items-center">
                 <div class="relative">
                     <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
                     <input type="text" name="q" value="{{ request('q') }}" class="h-10 w-72 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100" placeholder="Search by tenant, domain, or plan">
                 </div>
-                <select name="status" class="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
+                <select name="status" onchange="document.getElementById('tenantFilterForm').submit()" class="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
                     <option value="">All Statuses</option>
                     <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                    <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
+                    <option value="disabled" {{ request('status') === 'disabled' ? 'selected' : '' }}>Disabled</option>
                     <option value="unpaid" {{ request('status') === 'unpaid' ? 'selected' : '' }}>Unpaid</option>
                 </select>
                 <select name="plan" class="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
@@ -91,6 +91,7 @@
                                     $statusClasses = [
                                         'active' => 'bg-emerald-50 text-emerald-700',
                                         'suspended' => 'bg-amber-50 text-amber-700',
+                                        'disabled' => 'bg-amber-50 text-amber-700',
                                         'unpaid' => 'bg-rose-50 text-rose-700',
                                         'inactive' => 'bg-slate-100 text-slate-700',
                                     ][$status] ?? 'bg-slate-100 text-slate-700';
@@ -124,9 +125,9 @@
                                     @if(($tenant->status ?? 'active') === 'active')
                                         <form method="POST" action="{{ route('tenants.updateStatus', $tenant->tenant_id) }}" class="m-0 inline-flex">
                                             @csrf
-                                            <input type="hidden" name="status" value="suspended">
+                                            <input type="hidden" name="status" value="disabled">
                                             <input type="hidden" name="payment_status" value="overdue">
-                                            <input type="hidden" name="suspended_message" value="Please contact your administrator.">
+                                            <input type="hidden" name="disabled_message" value="Please contact your administrator.">
                                             <button type="submit" class="inline-flex items-center gap-1 rounded-xl border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-600 hover:text-white">
                                                 Disable
                                             </button>
@@ -159,5 +160,33 @@
 @push('scripts')
 <script>
     // Tenant filtering is performed server-side via query params.
+</script>
+@endpush
+
+@push('scripts')
+<script>
+    // Fallback JS to ensure the filter submits proper query params even
+    // if a custom UI widget interferes with the native <select> element.
+    (function(){
+        const form = document.getElementById('tenantFilterForm');
+        if (!form) return;
+
+        form.addEventListener('submit', function (ev) {
+            // Build query string from known inputs to guarantee values are sent.
+            ev.preventDefault();
+            const q = (form.querySelector('input[name="q"]') || {}).value || '';
+            const status = (form.querySelector('select[name="status"]') || {}).value || '';
+            const plan = (form.querySelector('select[name="plan"]') || {}).value || '';
+
+            const params = new URLSearchParams();
+            if (q !== '') params.append('q', q);
+            if (status !== '') params.append('status', status);
+            if (plan !== '') params.append('plan', plan);
+
+            const url = form.getAttribute('action') || window.location.pathname;
+            const target = url + (params.toString() ? ('?' + params.toString()) : '');
+            window.location.href = target;
+        });
+    })();
 </script>
 @endpush
