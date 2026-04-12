@@ -166,52 +166,155 @@ class SimpleAuthController extends Controller
             'email' => 'required|email',
         ]);
 
-        $userQuery = User::where('email', $data['email']);
+        $submitted = $data['email'];
 
-        if (app()->bound('tenant') && tenant()) {
-            $userQuery->where('tenant_id', tenant()->tenant_id);
-        }
+        // Resolve tenant context if available
+        $currentTenant = (app()->bound('tenant') && tenant()) ? tenant() : null;
 
-        $user = $userQuery->first();
-
-        if ($user) {
-            $plainToken = Str::random(64);
-
-            DB::table('password_reset_tokens')->updateOrInsert(
-                ['email' => $user->email],
-                [
-                    'token' => Hash::make($plainToken),
-                    'created_at' => now(),
-                ]
-            );
-
-            $resetUrl = url('/reset-password/' . $plainToken) . '?email=' . urlencode($user->email);
+        // 1) Try tenant connection first
+        $user = null;
+        if ($currentTenant) {
             try {
-                Mail::send('emails.password-reset', [
-                    'user' => $user,
-                    'resetUrl' => $resetUrl,
-                ], function ($message) use ($user): void {
-                    $message->to($user->email)
-                        ->subject('Reset your Meat Shop POS password');
-                });
-
-                return back()->with('status', 'If an account with that email exists, a password reset link has been sent.');
+                $user = User::on('tenant')->where('email', $submitted)->first();
             } catch (\Throwable $e) {
-                Log::error('Failed to send password reset email.', [
-                    'email' => $user->email,
-                    'error' => $e->getMessage(),
-                ]);
+                Log::warning('Tenant user lookup failed in sendResetLink', ['error' => $e->getMessage()]);
+                $user = null;
             }
 
-            if (config('app.debug')) {
-                return back()->with([
-                    'status' => 'Could not send email. Use the development reset link below.',
-                    'reset_link' => $resetUrl,
-                ]);
+            if (! $user && strpos($submitted, '@') !== false) {
+                try {
+                    [$local, $domain] = explode('@', $submitted, 2);
+                    $base = preg_replace('/\+.*$/', '', $local);
+                    $user = User::on('tenant')->where('email', 'like', $base . '%@' . $domain)->first();
+                } catch (\Throwable $e) {
+                    // ignore
+                }
             }
         }
 
-        return back()->with('status', 'If an account with that email exists, a password reset link has been generated.');
+        // 2) Fall back to central
+        if (! $user) {
+            $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
+            try {
+                $user = User::on($centralConn)->where('email', $submitted)->first();
+            } catch (\Throwable $e) {
+                try {
+                    $user = User::where('email', $submitted)->first();
+                } catch (\Throwable $inner) {
+                    $user = null;
+                }
+            }
+        }
+
+        // 3) If central user belongs to tenant, copy into tenant DB so tenant flows work
+        if (! $user && $currentTenant) {
+            try {
+                $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
+                $centralUser = User::on($centralConn)->where('email', $submitted)->first();
+                if ($centralUser && ! empty($centralUser->tenant_id) && $centralUser->tenant_id === $currentTenant->tenant_id) {
+                    $now = now();
+                    $tenantValues = [
+                        'tenant_id' => $currentTenant->tenant_id,
+                        'username' => $centralUser->username ?? (string) Str::slug($centralUser->email, '_'),
+                        'name' => $centralUser->name ?? '',
+                        'email' => $centralUser->email,
+                        'password' => $centralUser->password,
+                        'role' => $centralUser->role ?? 'user',
+                        'profile' => is_null($centralUser->profile) ? json_encode(new \stdClass()) : (is_string($centralUser->profile) ? $centralUser->profile : json_encode($centralUser->profile)),
+                        'permissions' => is_null($centralUser->permissions) ? json_encode(new \stdClass()) : (is_string($centralUser->permissions) ? $centralUser->permissions : json_encode($centralUser->permissions)),
+                        'preferences' => is_null($centralUser->preferences) ? null : (is_string($centralUser->preferences) ? $centralUser->preferences : json_encode($centralUser->preferences)),
+                        'last_login' => null,
+                        'login_attempts' => 0,
+                        'lock_until' => null,
+                        'status' => $centralUser->status ?? 'active',
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+
+                    DB::connection('tenant')->table('users')->updateOrInsert(
+                        ['email' => $centralUser->email],
+                        $tenantValues
+                    );
+
+                    $user = User::on('tenant')->where('email', $centralUser->email)->first();
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to copy central user to tenant in sendResetLink', ['email' => $submitted, 'error' => $e->getMessage()]);
+            }
+        }
+
+        if (! $user) {
+            return back()->with('status', 'If an account with that email exists, a password reset link has been generated.');
+        }
+
+        // Generate token and store in central and tenant (when applicable)
+        $plainToken = Str::random(64);
+        $hashed = Hash::make($plainToken);
+        try {
+            $encrypted = encrypt($plainToken);
+        } catch (\Throwable $e) {
+            $encrypted = null;
+        }
+
+        $centralValues = [
+            'token' => $hashed,
+            'created_at' => now(),
+        ];
+
+        try {
+            if (Schema::hasTable('password_reset_tokens') && Schema::hasColumn('password_reset_tokens', 'token_encrypted') && $encrypted !== null) {
+                $centralValues['token_encrypted'] = $encrypted;
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        DB::table('password_reset_tokens')->updateOrInsert([
+            'email' => $user->email,
+        ], $centralValues);
+
+        if ($currentTenant) {
+            try {
+                $tenantValues = [
+                    'token' => $hashed,
+                    'created_at' => now(),
+                ];
+
+                try {
+                    if (Schema::connection('tenant')->hasTable('password_reset_tokens') && Schema::connection('tenant')->hasColumn('password_reset_tokens', 'token_encrypted') && $encrypted !== null) {
+                        $tenantValues['token_encrypted'] = $encrypted;
+                    }
+                } catch (\Throwable $e) {
+                    // ignore
+                }
+
+                DB::connection('tenant')->table('password_reset_tokens')->updateOrInsert([
+                    'email' => $user->email,
+                ], $tenantValues);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to write tenant password reset token', ['error' => $e->getMessage()]);
+            }
+        }
+
+        $tenantHost = $currentTenant->domain ?? $request->getHost();
+        $scheme = $request->getScheme() ?: 'https';
+        $port = (int) $request->getPort();
+        if ($port && ! in_array($port, [80, 443], true)) {
+            $hostWithPort = $tenantHost . ':' . $port;
+        } else {
+            $hostWithPort = $tenantHost;
+        }
+        $resetUrl = $scheme . '://' . $hostWithPort . '/reset-password/' . $plainToken . '?email=' . urlencode($user->email);
+
+        try {
+            Mail::send('emails.password-reset', ['user' => $user, 'resetUrl' => $resetUrl], function ($message) use ($user) {
+                $message->to($user->email)->subject('Reset your Meat Shop POS password');
+            });
+        } catch (\Throwable $e) {
+            Log::error('Failed to send password reset email', ['email' => $user->email, 'error' => $e->getMessage()]);
+        }
+
+        return back()->with('status', 'If an account with that email exists, a password reset link has been sent.');
     }
 
     public function showResetPasswordForm(Request $request, string $token)
@@ -230,30 +333,245 @@ class SimpleAuthController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        $tokenRecord = DB::table('password_reset_tokens')
-            ->where('email', $data['email'])
-            ->first();
-
-        if (! $tokenRecord) {
-            return back()->withErrors(['email' => 'Invalid or expired reset token.'])->withInput();
+        // Ensure tenant context is bound if the request host belongs to a tenant.
+        if (! (app()->bound('tenant') && tenant())) {
+            $resolved = $this->resolveTenantFromHost($request);
+            if ($resolved) {
+                app()->instance('tenant', $resolved);
+                config(['database.connections.tenant' => $resolved->getTenantDatabaseConfig()]);
+                DB::purge('tenant');
+                config(['database.default' => 'tenant']);
+            }
         }
 
-        $isExpired = now()->diffInMinutes($tokenRecord->created_at) > 60;
-        $isTokenValid = Hash::check($data['token'], $tokenRecord->token);
-
-        if ($isExpired || ! $isTokenValid) {
-            return back()->withErrors(['email' => 'Invalid or expired reset token.'])->withInput();
+        // Try the active/default connection first (tenant when bound).
+        try {
+            if (app()->bound('tenant') && tenant()) {
+                $tokenRecord = DB::connection('tenant')->table('password_reset_tokens')
+                    ->where('email', $data['email'])
+                    ->first();
+            } else {
+                $tokenRecord = DB::table('password_reset_tokens')
+                    ->where('email', $data['email'])
+                    ->first();
+            }
+        } catch (\Throwable $e) {
+            // If the preferred connection/table lookup failed for any reason,
+            // fall back to the default DB connection.
+            try {
+                $tokenRecord = DB::table('password_reset_tokens')
+                    ->where('email', $data['email'])
+                    ->first();
+            } catch (\Throwable $inner) {
+                $tokenRecord = null;
+            }
         }
 
-        $userQuery = User::where('email', $data['email']);
+        // If we're handling a tenant request and the token wasn't found in the
+        // tenant DB, try the central DB as a fallback (tokens may have been
+        // generated from the central site).
+        if (! $tokenRecord && app()->bound('tenant') && tenant()) {
+            $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
+            try {
+                $centralRecord = DB::connection($centralConn)->table('password_reset_tokens')
+                    ->where('email', $data['email'])
+                    ->first();
+                if ($centralRecord) {
+                    $tokenRecord = $centralRecord;
+                    // For diagnostics below, prefer to indicate where the token came from
+                    // by temporarily setting the database.default value for the scope.
+                    config(['_password_reset_token_source_connection' => $centralConn]);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to query central password_reset_tokens as fallback', ['error' => $e->getMessage()]);
+            }
+        }
 
+        // Debug diagnostics to help diagnose expired/invalid tokens
+        try {
+            $connectionName = (string) (config('_password_reset_token_source_connection') ?? config('database.default'));
+            $dbName = (string) (config("database.connections.{$connectionName}.database") ?? config('database.connections.tenant.database'));
+
+            if (! $tokenRecord) {
+                Log::debug('Password reset token not found for email on connection.', [
+                    'email' => $data['email'],
+                    'connection' => $connectionName,
+                    'database' => $dbName,
+                ]);
+                if (config('app.debug')) {
+                    return back()->withErrors(['email' => 'Invalid or expired reset token.', 'debug' => "token_not_found|conn={$connectionName}|db={$dbName}"])->withInput();
+                }
+                return back()->withErrors(['email' => 'Invalid or expired reset token.'])->withInput();
+            }
+
+            $createdAt = $tokenRecord->created_at;
+            $diff = now()->diffInMinutes($createdAt);
+            $isExpired = $diff > 60;
+
+            // Additional diagnostic logging to inspect token strings and lengths.
+            $givenToken = (string) ($data['token'] ?? '');
+            $dbTokenHash = (string) ($tokenRecord->token ?? '');
+            $givenLen = strlen($givenToken);
+            $dbLen = strlen($dbTokenHash);
+
+            // Use both Hash::check and raw password_verify as diagnostics.
+            $hashCheck = Hash::check($givenToken, $dbTokenHash);
+            $pv = function_exists('password_verify') ? password_verify($givenToken, $dbTokenHash) : null;
+
+            Log::debug('Password reset token check', [
+                'email' => $data['email'],
+                'connection' => $connectionName,
+                'database' => $dbName,
+                'created_at' => $createdAt,
+                'minutes_since' => $diff,
+                'given_token' => $givenToken,
+                'given_len' => $givenLen,
+                'db_token_hash' => $dbTokenHash,
+                'db_hash_len' => $dbLen,
+                'hash_check' => $hashCheck,
+                'password_verify' => $pv,
+            ]);
+
+            $isTokenValid = (bool) $hashCheck;
+
+            // Fallback attempts: try common decoding/transformations of the token
+            if (! $isTokenValid) {
+                $attempts = [];
+                $raw = $givenToken;
+                $attempts[] = urldecode($raw);
+                $attempts[] = rawurldecode($raw);
+                $attempts[] = trim($raw);
+                $attempts[] = str_replace(' ', '+', $raw);
+                $attempts[] = rtrim($raw, '\\r\\n');
+
+                foreach ($attempts as $alt) {
+                    if ($alt === $raw) continue;
+                    $check = Hash::check($alt, $dbTokenHash);
+                    if ($check) {
+                        $isTokenValid = true;
+                        Log::debug('Password reset token matched after transformation', ['email' => $data['email'], 'transformed' => $alt]);
+                        break;
+                    }
+                }
+            }
+            
+            // Final fallback: if we stored an encrypted copy of the original token,
+            // decrypt it and compare for exact match. This avoids failures caused by
+            // hashing differences while keeping the token secret in DB.
+            if (! $isTokenValid && ! empty($tokenRecord->token_encrypted)) {
+                try {
+                    $decrypted = decrypt($tokenRecord->token_encrypted);
+                    if ($decrypted === $givenToken) {
+                        $isTokenValid = true;
+                        Log::debug('Password reset token matched using encrypted fallback', ['email' => $data['email']]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to decrypt stored reset token', ['email' => $data['email'], 'error' => $e->getMessage()]);
+                }
+            }
+            if ($isExpired || ! $isTokenValid) {
+                if (config('app.debug')) {
+                    return back()->withErrors(['email' => 'Invalid or expired reset token.', 'debug' => "expired={$isExpired}|valid={$isTokenValid}|minutes={$diff}"])->withInput();
+                }
+                return back()->withErrors(['email' => 'Invalid or expired reset token.'])->withInput();
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error during password reset diagnostic check', ['error' => $e->getMessage()]);
+        }
+
+        // Prefer tenant DB lookup when handling a tenant-scoped reset. This
+        // ensures we find users that live only in the tenant database.
+        $user = null;
         if (app()->bound('tenant') && tenant()) {
-            $userQuery->where('tenant_id', tenant()->tenant_id);
+            try {
+                $user = User::on('tenant')->where('email', $data['email'])->first();
+            } catch (\Throwable $e) {
+                Log::warning('Tenant user lookup failed during reset; falling back', ['error' => $e->getMessage()]);
+                $user = null;
+            }
+
+            // Normalized plus-address fallback on tenant connection
+            if (! $user) {
+                try {
+                    if (strpos($data['email'], '@') !== false) {
+                        [$local, $domain] = explode('@', $data['email'], 2);
+                        $normalized = preg_replace('/\+.*$/', '', $local);
+                        $alt = User::on('tenant')
+                            ->where('email', 'like', $normalized . '+%@' . $domain)
+                            ->orWhere('email', $data['email'])
+                            ->first();
+                        if ($alt) {
+                            $user = $alt;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Alt tenant email lookup failed during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
+                }
+            }
+        } else {
+            $user = User::where('email', $data['email'])->first();
         }
 
-        $user = $userQuery->first();
+        // If the tenant user is missing during a tenant-scoped reset, attempt
+        // to copy the central user into the tenant DB so the reset can complete.
+        if (! $user && app()->bound('tenant') && tenant()) {
+            try {
+                $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
+                $centralUser = User::on($centralConn)->where('email', $data['email'])->first();
+                if ($centralUser) {
+                    // Only copy the central user into the tenant DB when the central
+                    // record explicitly belongs to that tenant (tenant_id matches).
+                    // This prevents backup/contact emails from becoming tenant logins.
+                    if (! empty($centralUser->tenant_id) && $centralUser->tenant_id === tenant()->tenant_id) {
+                        $tenant = tenant();
+                        $now = now();
+                        $tenantValues = [
+                        'tenant_id' => $tenant->tenant_id,
+                        'username' => $centralUser->username ?? (string) Str::slug($centralUser->email, '_'),
+                        'name' => $centralUser->name ?? '',
+                        'email' => $centralUser->email,
+                        // Preserve the central hashed password so the user can sign in immediately.
+                        'password' => $centralUser->password,
+                        'role' => $centralUser->role ?? 'user',
+                        'profile' => is_null($centralUser->profile) ? json_encode(new \stdClass()) : (is_string($centralUser->profile) ? $centralUser->profile : json_encode($centralUser->profile)),
+                        'permissions' => is_null($centralUser->permissions) ? json_encode(new \stdClass()) : (is_string($centralUser->permissions) ? $centralUser->permissions : json_encode($centralUser->permissions)),
+                        'preferences' => is_null($centralUser->preferences) ? null : (is_string($centralUser->preferences) ? $centralUser->preferences : json_encode($centralUser->preferences)),
+                        'last_login' => null,
+                        'login_attempts' => 0,
+                        'lock_until' => null,
+                        'status' => $centralUser->status ?? 'active',
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+
+                        DB::connection('tenant')->table('users')->updateOrInsert(
+                            ['email' => $centralUser->email],
+                            $tenantValues
+                        );
+
+                        // Reload the user from tenant DB for subsequent steps.
+                        $user = User::on('tenant')->where('email', $data['email'])->first();
+                    } else {
+                        Log::debug('Central user exists but tenant_id does not match; not copying into tenant', [
+                            'email' => $data['email'],
+                            'central_tenant_id' => $centralUser->tenant_id ?? null,
+                            'resolved_tenant_id' => tenant()->tenant_id,
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to copy central user to tenant DB during password reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
+            }
+        }
 
         if (! $user) {
+            Log::debug('Password reset: user lookup failed', [
+                'email' => $data['email'],
+                'tenant_bound' => app()->bound('tenant') && tenant() ? true : false,
+                'tenant_id' => app()->bound('tenant') && tenant() ? tenant()->tenant_id : null,
+                'token_source' => config('_password_reset_token_source_connection') ?? config('database.default'),
+            ]);
+
             return back()->withErrors(['email' => 'No user found for this reset request.'])->withInput();
         }
 
@@ -262,7 +580,18 @@ class SimpleAuthController extends Controller
         $user->lock_until = null;
         $user->save();
 
-        DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+        // Delete the reset token from the same connection where it was stored.
+        $tokenSource = (string) (config('_password_reset_token_source_connection') ?? config('database.default'));
+        try {
+            DB::connection($tokenSource)->table('password_reset_tokens')->where('email', $data['email'])->delete();
+        } catch (\Throwable $e) {
+            // Fallback: try default connection
+            try {
+                DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+            } catch (\Throwable $inner) {
+                Log::warning('Failed to delete reset token after password reset', ['email' => $data['email'], 'error' => $inner->getMessage()]);
+            }
+        }
 
         return redirect('/login')->with('status', 'Password updated successfully. You can now sign in.');
     }
