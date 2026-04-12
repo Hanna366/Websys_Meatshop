@@ -12,7 +12,7 @@
         </div>
 
         <div style="padding: 22px;">
-            <p style="margin-top: 0;">Hi {{ $user->name ?? $user->email ?? $email }},</p>
+            <p style="margin-top: 0;">Hi {{ $userName ?? ($user->name ?? $user->email ?? $email) }},</p>
             <p>We received a request to reset your password. Click the button below to continue.</p>
 
             <p style="margin: 22px 0;">
@@ -21,6 +21,15 @@
 
             <p>This link will expire in 60 minutes.</p>
             <p>If you did not request this, you can safely ignore this email.</p>
+
+            @if (!empty($altEmails) && is_array($altEmails))
+                <p style="font-size: 13px; color: #6b7280;">This reset link was requested for <strong>{{ $email }}</strong>. If you have another email address for this account, you can also use one of the following addresses to access the reset form:</p>
+                <ul style="font-size: 13px; color: #6b7280;">
+                    @foreach ($altEmails as $alt)
+                        <li>{{ $alt }}</li>
+                    @endforeach
+                </ul>
+            @endif
 
             <p style="font-size: 13px; color: #6b7280; word-break: break-all;">If the button does not work, copy and paste this URL into your browser:<br>{{ $resetUrl }}</p>
         </div>

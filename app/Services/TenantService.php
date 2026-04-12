@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Mail\TenantOnboardingMail;
+use App\Mail\TenantCredentialsMail;
 use App\Models\Domain;
 use App\Models\Tenant;
 use App\Helpers\EmailHelper;
@@ -203,14 +203,14 @@ class TenantService
             $loginUrl = self::buildTenantUrl($tenant, '/login');
             $passwordSetupUrl = self::buildTenantUrl($tenant, '/forgot-password');
 
-            Mail::to($adminEmail)->queue(new TenantOnboardingMail(
-                businessName: (string) $tenant->business_name,
+            Mail::to($adminEmail)->queue(new TenantCredentialsMail(
+                tenantName: (string) $tenant->business_name,
                 adminName: $adminName,
                 adminEmail: $adminEmail,
-                loginUrl: $loginUrl,
-                passwordSetupUrl: $passwordSetupUrl,
-                plan: (string) ($tenant->plan ?? data_get($tenant->subscription, 'plan', 'basic')),
                 generatedPassword: $generatedPassword,
+                plan: (string) ($tenant->plan ?? data_get($tenant->subscription, 'plan', 'basic')),
+                loginUrl: $loginUrl,
+                resetUrl: $passwordSetupUrl,
             ));
 
             return true;

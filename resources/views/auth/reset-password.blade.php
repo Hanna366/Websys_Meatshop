@@ -36,8 +36,8 @@
 <main class="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center p-4 sm:p-6">
     <section class="w-full max-w-md rounded-3xl border p-6 shadow-2xl backdrop-blur sm:p-8" style="border-color: var(--card-border); background: rgba(8, 2, 2, 0.74); box-shadow: 0 35px 90px rgba(0, 0, 0, 0.45);">
         <div class="mb-6 text-center">
-            <h1 class="heading-font text-2xl font-semibold" style="color: var(--text);">Reset Password</h1>
-            <p class="mt-1 text-sm" style="color: var(--muted);">Set a new password for your account.</p>
+            <h1 class="heading-font text-2xl font-semibold" style="color: var(--text);">Set New Password</h1>
+            <p class="mt-1 text-sm" style="color: var(--muted);">Create a secure password for your account.</p>
         </div>
 
         @if($errors->any())
@@ -54,22 +54,30 @@
             @csrf
             <input type="hidden" name="token" value="{{ $token }}">
 
-            <div>
-                <label for="email" class="mb-1 block text-sm font-medium" style="color: #f7dbd4;">Email Address</label>
-                <input type="email" id="email" name="email" value="{{ old('email', $email ?? '') }}" class="h-11 w-full rounded-lg border bg-white/5 px-3 text-sm text-rose-50 outline-none transition placeholder:text-rose-200/55 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/35" style="border-color: rgba(255, 255, 255, 0.28);" required>
-            </div>
+            @if(!empty($email))
+                <input type="hidden" name="email" value="{{ $email }}">
+            @else
+                <div>
+                    <label for="email" class="mb-1 block text-sm font-medium" style="color: #f7dbd4;">Email Address</label>
+                    <input type="email" id="email" name="email" value="{{ old('email', $email ?? '') }}" class="h-11 w-full rounded-lg border bg-white/5 px-3 text-sm text-rose-50 outline-none transition placeholder:text-rose-200/55 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/35" style="border-color: rgba(255, 255, 255, 0.28);" required>
+                </div>
+            @endif
 
             <div>
                 <label for="password" class="mb-1 block text-sm font-medium" style="color: #f7dbd4;">New Password</label>
-                <input type="password" id="password" name="password" class="h-11 w-full rounded-lg border bg-white/5 px-3 text-sm text-rose-50 outline-none transition placeholder:text-rose-200/55 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/35" style="border-color: rgba(255, 255, 255, 0.28);" required>
+                <input type="password" id="password" name="password" class="h-11 w-full rounded-lg border bg-white/5 px-3 text-sm text-rose-50 outline-none transition placeholder:text-rose-200/55 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/35" style="border-color: rgba(255, 255, 255, 0.28);" placeholder="Enter new password" required>
             </div>
 
             <div>
                 <label for="password_confirmation" class="mb-1 block text-sm font-medium" style="color: #f7dbd4;">Confirm Password</label>
-                <input type="password" id="password_confirmation" name="password_confirmation" class="h-11 w-full rounded-lg border bg-white/5 px-3 text-sm text-rose-50 outline-none transition placeholder:text-rose-200/55 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/35" style="border-color: rgba(255, 255, 255, 0.28);" required>
+                <input type="password" id="password_confirmation" name="password_confirmation" class="h-11 w-full rounded-lg border bg-white/5 px-3 text-sm text-rose-50 outline-none transition placeholder:text-rose-200/55 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/35" style="border-color: rgba(255, 255, 255, 0.28);" placeholder="Confirm new password" required>
             </div>
 
-            <button type="submit" class="inline-flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-rose-800 to-rose-500 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-rose-950/40" style="box-shadow: 0 10px 28px rgba(246, 52, 112, 0.28);">Reset Password</button>
+            <div class="rounded-xl border border-white/15 bg-white/[0.03] px-4 py-3 text-sm text-rose-100/90">
+                Password should be at least 8 characters and include mixed character types.
+            </div>
+
+            <button type="submit" class="inline-flex h-11 w-full items-center justify-center rounded-lg px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2" style="background: linear-gradient(90deg,#a41245,#f63470); box-shadow: 0 10px 28px rgba(246, 52, 112, 0.28);">Reset Password</button>
         </form>
 
         <div class="mt-4 text-center text-sm">

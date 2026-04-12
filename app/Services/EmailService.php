@@ -84,23 +84,27 @@ class EmailService
     /**
      * Send password reset email
      */
-    public static function sendPasswordReset(string $email, string $businessName, string $resetToken, ?string $baseUrl = null)
+    public static function sendPasswordReset(string $email, string $businessName, string $resetToken, ?string $baseUrl = null, ?string $fromAddress = null, ?string $fromName = null, ?string $userName = null, array $altEmails = [])
     {
         try {
             $baseUrl = rtrim((string) ($baseUrl ?: config('app.url')), '/');
 
-            $mailable = new class($email, $businessName, $resetToken, $baseUrl) extends Mailable {
+            $mailable = new class($email, $businessName, $resetToken, $baseUrl, $userName, $altEmails) extends Mailable {
                 private $email;
                 private $businessName;
                 private $resetToken;
                 private $baseUrl;
+                private $userName;
+                private $altEmails;
 
-                public function __construct($email, $businessName, $resetToken, $baseUrl)
+                public function __construct($email, $businessName, $resetToken, $baseUrl, $userName, $altEmails)
                 {
                     $this->email = $email;
                     $this->businessName = $businessName;
                     $this->resetToken = $resetToken;
                     $this->baseUrl = $baseUrl;
+                    $this->userName = $userName;
+                    $this->altEmails = $altEmails;
                 }
 
                 public function envelope()
@@ -112,13 +116,15 @@ class EmailService
 
                 public function content()
                 {
-                    return new \Illuminate\Mail\Mailables\Content(
+                    return new \\Illuminate\\Mail\\Mailables\\Content(
                         view: 'emails.password-reset',
                         with: [
                             'email' => $this->email,
                             'businessName' => $this->businessName,
                             'resetToken' => $this->resetToken,
-                            'resetUrl' => $this->baseUrl . "/reset-password/{$this->resetToken}"
+                            'resetUrl' => $this->baseUrl . "/reset-password/{$this->resetToken}",
+                            'userName' => $this->userName,
+                            'altEmails' => $this->altEmails,
                         ]
                     );
                 }
@@ -129,11 +135,11 @@ class EmailService
                 }
             };
 
-            // Always use configured sender to satisfy SMTP provider policies.
-            $mailable->from(
-                (string) config('mail.from.address'),
-                (string) config('mail.from.name')
-            );
+            // Use provided sender when available, otherwise fall back to configured sender.
+            $fromAddr = $fromAddress ?: (string) config('mail.from.address');
+            $fromNm = $fromName ?: (string) config('mail.from.name');
+
+            $mailable->from($fromAddr, $fromNm);
 
             Mail::to($email)
                 ->send($mailable);

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 class TenantController extends Controller
 {
@@ -254,8 +255,11 @@ class TenantController extends Controller
                 $result = TenantService::provisionTenant($tenant, true);
 
                 if (is_array($result) && !empty($result['generated_password'])) {
-                    // Flash the generated password into session so the UI can show it.
-                    session()->flash('generated_tenant_password', $result['generated_password']);
+                    // For security, do NOT expose plaintext passwords in the central UI.
+                    // The generated password is sent to the tenant admin via email.
+                    // Instead, flash a flag so the UI can inform admins that the
+                    // temporary password was emailed (no plaintext shown).
+                    session()->flash('tenant_password_emailed', true);
                 }
             } catch (\Throwable $e) {
                 \Log::error('Provisioning failed during approval.', ['tenant_id' => $tenantId, 'error' => $e->getMessage()]);

@@ -104,6 +104,143 @@ Route::get('/test', function () {
     return 'Laravel Meat Shop POS is working!';
 });
 
+// Dev-only user inspection route (debug only)
+if (config('app.debug')) {
+    Route::get('/_debug/user-check', function (\Illuminate\Http\Request $request) {
+        $email = (string) $request->query('email', '');
+        $host = strtolower((string) $request->query('domain', $request->getHost()));
+        $centralDomains = array_map('strtolower', (array) config('tenancy.central_domains', []));
+        $tenant = null;
+
+        if ($host !== '' && !in_array($host, $centralDomains, true)) {
+            if (\Illuminate\Support\Facades\Schema::hasTable('domains')) {
+                $domain = \App\Models\Domain::where('domain', $host)->first();
+                if ($domain && $domain->tenant) {
+                    $tenant = $domain->tenant;
+                }
+            }
+
+            if (!$tenant && \Illuminate\Support\Facades\Schema::hasTable('tenants') && \Illuminate\Support\Facades\Schema::hasColumn('tenants', 'domain')) {
+                $tenant = \App\Models\Tenant::where('domain', $host)->first();
+            }
+        }
+
+        $defaultUser = \App\Models\User::where('email', $email)->first();
+
+        $tenantUser = null;
+        if ($tenant) {
+            config(['database.connections.tenant' => $tenant->getTenantDatabaseConfig()]);
+            \Illuminate\Support\Facades\DB::purge('tenant');
+            $tenantUser = \App\Models\User::on('tenant')->where('email', $email)->first();
+        }
+
+        return response()->json([
+            'host' => $host,
+            'tenant' => $tenant ? [
+                'tenant_id' => $tenant->tenant_id ?? null,
+                'domain' => $tenant->domain ?? null
+            ] : null,
+            'default_user' => $defaultUser ? [
+                'id' => $defaultUser->id,
+                'connection' => $defaultUser->getConnectionName(),
+                'tenant_id' => $defaultUser->tenant_id,
+                'password_preview' => substr($defaultUser->password, 0, 60),
+                'updated_at' => (string) $defaultUser->updated_at,
+            ] : null,
+            'tenant_user' => $tenantUser ? [
+                'id' => $tenantUser->id,
+                'connection' => $tenantUser->getConnectionName(),
+                'tenant_id' => $tenantUser->tenant_id,
+                'password_preview' => substr($tenantUser->password, 0, 60),
+                'updated_at' => (string) $tenantUser->updated_at,
+            ] : null,
+        ]);
+    })->name('debug.user_check');
+
+    Route::post('/_debug/set-tenant-password', function (\Illuminate\Http\Request $request) {
+        $email = (string) $request->input('email', '');
+        $domain = (string) $request->input('domain', $request->getHost());
+
+        $tenant = null;
+        if ($domain !== '') {
+            if (\Illuminate\Support\Facades\Schema::hasTable('domains')) {
+                $d = \App\Models\Domain::where('domain', $domain)->first();
+                if ($d && $d->tenant) {
+                    $tenant = $d->tenant;
+                }
+            }
+
+            if (!$tenant && \Illuminate\Support\Facades\Schema::hasTable('tenants') && \Illuminate\Support\Facades\Schema::hasColumn('tenants', 'domain')) {
+                $tenant = \App\Models\Tenant::where('domain', $domain)->first();
+            }
+        }
+
+        if (!$tenant) {
+            return response()->json(['success' => false, 'error' => 'Tenant not found for domain: '.$domain], 404);
+        }
+
+        config(['database.connections.tenant' => $tenant->getTenantDatabaseConfig()]);
+        \Illuminate\Support\Facades\DB::purge('tenant');
+
+        $user = \App\Models\User::on('tenant')->where('email', $email)->first();
+        if (! $user) {
+            return response()->json(['success' => false, 'error' => 'User not found in tenant DB: '.$email], 404);
+        }
+
+        $password = (string) $request->input('password', '');
+        if ($password === '') {
+            $password = substr(bin2hex(random_bytes(8)), 0, 12);
+        }
+
+        $user->password = \Illuminate\Support\Facades\Hash::make($password);
+        $user->save();
+
+        return response()->json(['success' => true, 'email' => $email, 'password' => $password]);
+    })->name('debug.set_tenant_password');
+
+    // GET version for quick dev use (avoids CSRF token during local debugging)
+    Route::get('/_debug/set-tenant-password', function (\Illuminate\Http\Request $request) {
+        $email = (string) $request->query('email', '');
+        $domain = (string) $request->query('domain', $request->getHost());
+
+        $tenant = null;
+        if ($domain !== '') {
+            if (\Illuminate\Support\Facades\Schema::hasTable('domains')) {
+                $d = \App\Models\Domain::where('domain', $domain)->first();
+                if ($d && $d->tenant) {
+                    $tenant = $d->tenant;
+                }
+            }
+
+            if (!$tenant && \Illuminate\Support\Facades\Schema::hasTable('tenants') && \Illuminate\Support\Facades\Schema::hasColumn('tenants', 'domain')) {
+                $tenant = \App\Models\Tenant::where('domain', $domain)->first();
+            }
+        }
+
+        if (!$tenant) {
+            return response()->json(['success' => false, 'error' => 'Tenant not found for domain: '.$domain], 404);
+        }
+
+        config(['database.connections.tenant' => $tenant->getTenantDatabaseConfig()]);
+        \Illuminate\Support\Facades\DB::purge('tenant');
+
+        $user = \App\Models\User::on('tenant')->where('email', $email)->first();
+        if (! $user) {
+            return response()->json(['success' => false, 'error' => 'User not found in tenant DB: '.$email], 404);
+        }
+
+        $password = (string) $request->query('password', '');
+        if ($password === '') {
+            $password = substr(bin2hex(random_bytes(8)), 0, 12);
+        }
+
+        $user->password = \Illuminate\Support\Facades\Hash::make($password);
+        $user->save();
+
+        return response()->json(['success' => true, 'email' => $email, 'password' => $password]);
+    });
+}
+
 // Logo testing routes
 Route::get('/logo/test', [App\Http\Controllers\LogoController::class, 'testLogos']);
 Route::get('/logo/generate/{tenantId?}', [App\Http\Controllers\LogoController::class, 'generateLogo']);

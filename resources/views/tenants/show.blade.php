@@ -28,17 +28,16 @@
         </div>
     @endif
 
-    @if(session('generated_tenant_password'))
+    @if(session('tenant_password_emailed'))
         <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
             <div class="flex items-start justify-between gap-4">
                 <div>
-                    <div class="font-semibold">Temporary admin password</div>
-                    <div class="mt-1">This tenant was provisioned with an auto-generated temporary password because no password was supplied during signup. Copy it now and share securely with the tenant admin.</div>
+                    <div class="font-semibold">Temporary admin password emailed</div>
+                    <div class="mt-1">This tenant was provisioned with an auto-generated temporary password. For security, the temporary password is sent to the tenant admin only and is not displayed here.</div>
                 </div>
                 <div class="text-right">
                     <div class="inline-flex items-center gap-2">
-                        <code id="generatedPassword" class="rounded px-3 py-2 bg-white text-slate-900">{{ session('generated_tenant_password') }}</code>
-                        <button id="copyGeneratedPassword" class="inline-flex items-center rounded border border-slate-200 px-3 py-2 text-sm font-semibold">Copy</button>
+                        <button onclick="window.location.href='mailto:' + '{{ $tenant->admin_email }}'" class="inline-flex items-center rounded border border-slate-200 px-3 py-2 text-sm font-semibold">Email Admin</button>
                     </div>
                 </div>
             </div>
