@@ -60,6 +60,17 @@ class TenantController extends Controller
 
         $tenants = $query->orderBy('created_at', 'desc')->get();
 
+        // Debug: log count and a short summary of returned tenants to help
+        // diagnose why the UI might still display all rows.
+        try {
+            $summary = $tenants->take(10)->map(function ($t) {
+                return ($t->tenant_id ?? substr((string) $t->business_name, 0, 24)) . '|' . ($t->status ?? '');
+            })->implode(',');
+            file_put_contents(storage_path('logs/tenant_filter_debug.log'), date('c') . " RESULT count=" . $tenants->count() . " rows=" . $summary . "\n", FILE_APPEND | LOCK_EX);
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
         return view('tenants.index', [
             'tenants' => $tenants,
         ]);

@@ -1,14 +1,14 @@
 <?php
 
+use App\Models\Tenant;
+use App\Services\TenantService;
+
 require __DIR__ . '/../vendor/autoload.php';
 
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
-
-use App\Models\Tenant;
-use App\Services\TenantService;
 
 $term = isset($argv[1]) ? trim($argv[1]) : '';
 

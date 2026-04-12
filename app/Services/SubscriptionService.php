@@ -287,19 +287,65 @@ class SubscriptionService
             ];
         }
 
-        // Simulate payment processing
-        $subscriptionId = 'sub_' . uniqid();
+        // If we're in a tenant context, create a central subscription request
+        // and require central approval when a payment was made.
+        try {
+            $tenant = null;
+            if (app()->bound('tenant') && tenant()) {
+                $tenant = tenant();
+            }
 
-        // Update session with new subscription
-        $user = session('user');
-        $user['plan'] = ucfirst($plan);
-        session(['user' => $user]);
+            // Simulate payment only for tenants (demo). In real world integrate gateway here.
+            $paymentReference = 'pay_' . uniqid();
 
-        return [
-            'success' => true,
-            'subscription_id' => $subscriptionId,
-            'message' => 'Subscription updated successfully'
-        ];
+            if ($tenant) {
+                // Record the request centrally so central admins can approve
+                $centralConn = config('tenancy.database.central_connection', config('database.default'));
+                $now = now();
+                \DB::connection($centralConn)->table('subscription_requests')->insert([
+                    'tenant_id' => (string) $tenant->tenant_id,
+                    'requested_plan' => $plan,
+                    'payment_method' => $paymentMethod,
+                    'payment_reference' => $paymentReference,
+                    'amount' => (float) $price,
+                    'status' => 'pending',
+                    'metadata' => json_encode([]),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+
+                // Notify central admins about the pending approval
+                try {
+                    app(\App\Services\NotificationService::class)->sendCentralApprovalRequest($tenant);
+                } catch (\Throwable $e) {
+                    \Log::warning('Failed to notify central admin about subscription request', ['tenant' => $tenant->tenant_id, 'error' => $e->getMessage()]);
+                }
+
+                return [
+                    'success' => true,
+                    'pending' => true,
+                    'payment_reference' => $paymentReference,
+                    'message' => 'Subscription change requested. Pending central approval.'
+                ];
+            }
+
+            // Central context: apply immediately (demo behavior)
+            $subscriptionId = 'sub_' . uniqid();
+
+            // Update session with new subscription
+            $user = session('user');
+            $user['plan'] = ucfirst($plan);
+            session(['user' => $user]);
+
+            return [
+                'success' => true,
+                'subscription_id' => $subscriptionId,
+                'message' => 'Subscription updated successfully'
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('Failed to process subscription request', ['error' => $e->getMessage()]);
+            return ['success' => false, 'message' => 'Unable to process subscription request at this time'];
+        }
     }
 
     /**

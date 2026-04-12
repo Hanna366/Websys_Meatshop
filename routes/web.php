@@ -42,6 +42,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/versions/github-releases', [VersionController::class, 'getGitHubReleases'])->name('versions.github-releases');
 });
 
+// Central subscription approval UI
+use App\Http\Controllers\CentralSubscriptionController;
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
+    Route::get('/subscription-requests', [CentralSubscriptionController::class, 'index'])->name('admin.subscription_requests.index');
+    Route::post('/subscription-requests/{id}/approve', [CentralSubscriptionController::class, 'approve'])->name('admin.subscription_requests.approve');
+    Route::post('/subscription-requests/{id}/reject', [CentralSubscriptionController::class, 'reject'])->name('admin.subscription_requests.reject');
+});
+
+// Backwards-compatible redirect for legacy/non-prefixed URL
+Route::get('/subscription-requests', function () {
+    return redirect('/admin/subscription-requests');
+});
+
 Route::get('/', [CentralDashboardController::class, 'welcome'])->name('central.welcome');
 Route::get('/central', [CentralDashboardController::class, 'index'])->name('central.home');
 

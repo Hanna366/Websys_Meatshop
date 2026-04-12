@@ -29,12 +29,16 @@ class CheckRbacPermission
         }
 
         if (!RbacService::userHasPermission($user, $permission)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Insufficient permissions to perform this action.',
-                'required_permission' => $permission,
-                'user_role' => $user->role,
-            ], 403);
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient permissions to perform this action.',
+                    'required_permission' => $permission,
+                    'user_role' => $user->role,
+                ], 403);
+            }
+
+            return redirect('/dashboard')->with('error', 'You do not have permission to access that page.');
         }
 
         return $next($request);
