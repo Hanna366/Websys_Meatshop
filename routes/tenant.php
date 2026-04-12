@@ -36,6 +36,9 @@ Route::middleware([
         Route::post('/subscription/process', [SubscriptionController::class, 'processSubscription'])
             ->middleware('tenant.owner')
             ->name('tenant.subscription.process');
+        Route::post('/subscription/request', [SubscriptionController::class, 'requestSubscription'])
+            ->middleware('tenant.owner')
+            ->name('tenant.subscription.request');
         Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])
             ->middleware('tenant.owner')
             ->name('tenant.subscription.cancel');
@@ -59,8 +62,11 @@ Route::middleware([
             ->middleware(['subscription', 'tenant.owner'])
             ->name('tenant.products');
 
+        // Allow users with the modular `inventory.view` permission (admins also have all permissions)
+        // Use RBAC fallback middleware so tenants that haven't been seeded with
+        // Spatie permissions yet still work via the legacy role-based checks.
         Route::get('/inventory', [TenantPageController::class, 'inventory'])
-            ->middleware(['subscription', 'tenant.owner'])
+            ->middleware(['subscription', 'rbac.permission:inventory.view'])
             ->name('tenant.inventory');
 
         Route::get('/sales', [TenantPageController::class, 'sales'])

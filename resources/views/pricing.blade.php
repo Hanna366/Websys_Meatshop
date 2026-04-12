@@ -5,19 +5,23 @@
 @section('content')
 @php
     $isTenant = app()->bound('tenant');
-    $billingRoute = null;
 
+    // When rendering in a tenant context, prefer tenant-scoped billing routes
+    // and avoid falling back to central billing. If tenant billing isn't
+    // available, direct to tenant signup instead of central billing.
+    $billingUrl = null;
     if ($isTenant) {
         if (\Illuminate\Support\Facades\Route::has('tenant.subscription.billing')) {
-            $billingRoute = 'tenant.subscription.billing';
-        } elseif (\Illuminate\Support\Facades\Route::has('subscription.billing')) {
-            $billingRoute = 'subscription.billing';
+            $billingUrl = route('tenant.subscription.billing');
+        } else {
+            $billingUrl = null; // intentionally avoid central fallback for tenant
         }
-    } elseif (\Illuminate\Support\Facades\Route::has('subscription.billing')) {
-        $billingRoute = 'subscription.billing';
+    } else {
+        if (\Illuminate\Support\Facades\Route::has('subscription.billing')) {
+            $billingUrl = route('subscription.billing');
+        }
     }
 
-    $billingUrl = $billingRoute ? route($billingRoute) : null;
     $planSelectBaseUrl = $billingUrl ?? route('tenants.create');
 
     $plans = [
@@ -173,12 +177,66 @@
 @endsection
 
 @push('scripts')
+<div id="toastContainer" aria-live="polite" class="fixed inset-0 flex items-end px-4 py-6 pointer-events-none sm:p-6 z-50">
+    <div id="toast" class="mx-auto w-full max-w-sm rounded-lg bg-slate-900 text-white p-3 shadow-lg pointer-events-auto hidden"></div>
+</div>
 <script>
     const planSelectBaseUrl = @json($planSelectBaseUrl);
 
     function selectPlan(plan) {
         const normalized = String(plan || '').toLowerCase();
-        window.location.href = planSelectBaseUrl + '?plan=' + encodeURIComponent(normalized);
+        @if($isTenant)
+            // Tenant context: POST a subscription request so we don't redirect
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            // Use a relative tenant URL so the browser stays on the current host
+            // and include credentials so session cookie + CSRF are sent.
+            fetch('/subscription/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ plan: normalized })
+            }).then(function (res) {
+                if (!res.ok) {
+                    return res.text().then(function (text) {
+                        throw new Error('Request failed: ' + res.status + ' ' + text);
+                    });
+                }
+                return res.json();
+            }).then(function (payload) {
+                if (payload && payload.success) {
+                    showToast(payload.message || 'Subscription requested. Pending approval.');
+                    if (typeof refreshBillingFromApi === 'function') {
+                        refreshBillingFromApi();
+                    }
+                } else {
+                    showToast((payload && payload.error) || 'Failed to request subscription');
+                }
+            }).catch(function (err) {
+                console.error(err);
+                showToast('Unable to request subscription. ' + (err && err.message ? err.message : 'Please try again later.'));
+            });
+        @else
+            window.location.href = planSelectBaseUrl + '?plan=' + encodeURIComponent(normalized);
+        @endif
+    }
+
+    function showToast(message, timeout = 5000) {
+        try {
+            const toast = document.getElementById('toast');
+            if (!toast) return alert(message);
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, timeout);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     function setBillingMode(mode) {

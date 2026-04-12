@@ -615,6 +615,13 @@ class TenantService
                 '--force' => true,
             ]);
 
+            // Ensure module-based permissions are seeded for tenant
+            Artisan::call('db:seed', [
+                '--database' => 'tenant',
+                '--class' => \Database\Seeders\TenantPermissionSeeder::class,
+                '--force' => true,
+            ]);
+
             Artisan::call('db:seed', [
                 '--database' => 'tenant',
                 '--class' => \Database\Seeders\KitayamaRetail2025Seeder::class,

@@ -16,10 +16,35 @@ class SubscriptionController extends Controller
     {
         [$subscription, $billingHistory, $centralBillingMode] = $this->resolveBillingPayload();
 
+        // If tenancy middleware didn't run for some reason (host routed to central),
+        // attempt to initialize tenancy from the request host so tenant pages
+        // still surface tenant-scoped data like pending subscription requests.
+        $this->ensureTenantInitializedFromHost();
+
+        $pendingRequest = null;
+        if (!$centralBillingMode && app()->bound('tenant') && tenant()) {
+            try {
+                $pendingRequest = \App\Models\SubscriptionRequest::where('tenant_id', tenant()->tenant_id)
+                    ->where('status', 'pending')
+                    ->orderByDesc('created_at')
+                    ->first();
+            } catch (\Throwable $e) {
+                $pendingRequest = null;
+            }
+        }
+
         return view('subscription.billing', [
             'subscription' => $subscription,
             'billingHistory' => $billingHistory,
             'centralBillingMode' => $centralBillingMode,
+            'pending_request' => $pendingRequest ? [
+                'id' => $pendingRequest->id,
+                'payment_reference' => $pendingRequest->payment_reference,
+                'amount' => $pendingRequest->amount,
+                'requested_plan' => $pendingRequest->requested_plan,
+                'created_at' => $pendingRequest->created_at->toDateTimeString(),
+            ] : null,
+            'pending_count' => $centralBillingMode ? \App\Models\SubscriptionRequest::where('status','pending')->count() : 0,
         ]);
     }
 
@@ -30,14 +55,67 @@ class SubscriptionController extends Controller
     {
         [$subscription, $billingHistory, $centralBillingMode] = $this->resolveBillingPayload();
 
+        // Ensure tenant initialization as above for JSON API calls used by tenant UI.
+        $this->ensureTenantInitializedFromHost();
+
+        $pendingRequest = null;
+        if (!$centralBillingMode && app()->bound('tenant') && tenant()) {
+            try {
+                $pendingRequest = \App\Models\SubscriptionRequest::where('tenant_id', tenant()->tenant_id)
+                    ->where('status', 'pending')
+                    ->orderByDesc('created_at')
+                    ->first();
+            } catch (\Throwable $e) {
+                $pendingRequest = null;
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
                 'subscription' => $subscription,
                 'history' => $billingHistory,
                 'central_mode' => $centralBillingMode,
+                'pending_request' => $pendingRequest ? [
+                    'id' => $pendingRequest->id,
+                    'payment_reference' => $pendingRequest->payment_reference,
+                    'amount' => $pendingRequest->amount,
+                    'requested_plan' => $pendingRequest->requested_plan,
+                    'created_at' => $pendingRequest->created_at->toDateTimeString(),
+                ] : null,
             ],
         ]);
+
+    }
+
+    /**
+     * Try to initialize tenancy from the current request host when tenancy
+     * hasn't been bound yet. Safe no-op if tenancy is already initialized.
+     */
+    private function ensureTenantInitializedFromHost(): void
+    {
+        if (app()->bound('tenant') && tenant()) {
+            return;
+        }
+
+        try {
+            $host = request()->getHost();
+            if (! $host) {
+                return;
+            }
+
+            $tenant = \App\Models\Tenant::where('domain', $host)->first();
+            if ($tenant) {
+                if (function_exists('tenancy')) {
+                    tenancy()->initialize($tenant);
+                } else {
+                    app(\Stancl\Tenancy\Tenancy::class)->initialize($tenant);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Don't block page on tenancy init failures; log for debugging.
+            \Log::warning('Failed to initialize tenancy from host', ['host' => request()->getHost(), 'error' => $e->getMessage()]);
+        }
     }
 
     private function resolveBillingPayload(): array
@@ -218,6 +296,15 @@ class SubscriptionController extends Controller
         $result = SubscriptionService::processSubscription($plan, $paymentMethod);
         
         if ($result['success']) {
+            // If the request is pending central approval, return that state
+            if (!empty($result['pending'])) {
+                return response()->json([
+                    'success' => true,
+                    'pending' => true,
+                    'message' => $result['message'],
+                    'payment_reference' => $result['payment_reference'] ?? null,
+                ]);
+            }
             // Update user session
             $user = session('user');
             $user['plan'] = SubscriptionService::getPlanDisplayName($plan);
@@ -232,6 +319,71 @@ class SubscriptionController extends Controller
         }
 
         return response()->json(['error' => $result['message']], 400);
+    }
+
+    /**
+     * Tenant-only: create a subscription request (no payment yet).
+     * This lets a tenant select a plan without navigating to central billing.
+     */
+    public function requestSubscription(Request $request)
+    {
+        if (!session('authenticated')) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
+        $request->validate([
+            'plan' => 'required|in:basic,standard,premium,enterprise',
+        ]);
+
+        $plan = $request->plan;
+
+        try {
+            if (!app()->bound('tenant') || !tenant()) {
+                return response()->json(['error' => 'Not in tenant context'], 400);
+            }
+
+            $tenant = tenant();
+            $pricing = SubscriptionService::getPlanPricing();
+            $amount = (float) ($pricing[$plan] ?? 0);
+
+            // Write to the central DB explicitly so tenant connection overrides do not
+            // cause the insert to target the tenant database (which lacks the table).
+            $centralConn = config('tenancy.database.central_connection', config('database.default'));
+            $now = now();
+            $id = \DB::connection($centralConn)->table('subscription_requests')->insertGetId([
+                'tenant_id' => (string) $tenant->tenant_id,
+                'requested_plan' => $plan,
+                'payment_method' => null,
+                'payment_reference' => null,
+                'amount' => $amount,
+                'status' => 'pending',
+                'metadata' => json_encode([]),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            $req = \DB::connection($centralConn)->table('subscription_requests')->where('id', $id)->first();
+
+            try {
+                app(\App\Services\NotificationService::class)->sendCentralApprovalRequest($tenant);
+            } catch (\Throwable $e) {
+                \Log::warning('Failed to notify central admin about subscription request', ['tenant' => $tenant->tenant_id, 'error' => $e->getMessage()]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'pending' => true,
+                'message' => 'Subscription change requested. Pending central approval.',
+                'request_id' => $req->id,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Failed to request subscription', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            if (config('app.debug')) {
+                return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+            }
+
+            return response()->json(['error' => 'Unable to request subscription at this time'], 500);
+        }
     }
 
     /**
@@ -316,7 +468,6 @@ class SubscriptionController extends Controller
             ]
         ]);
     }
-
     /**
      * Get billing history
      */

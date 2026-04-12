@@ -7,7 +7,9 @@
 @php
     $canExportInventory = \App\Services\SubscriptionService::hasFeature('data_export')
         || \App\Services\SubscriptionService::hasFeature('export_csv');
-    $canManageInventory = \App\Services\SubscriptionService::hasFeature('inventory_tracking');
+    // Permission flags are now provided by the controller (RBAC/Spatie-aware)
+    $canManageInventory = $canManageInventory ?? false;
+    $canViewInventory = $canViewInventory ?? true; // default to true for backward compatibility
     $hasAdvancedInventory = \App\Services\SubscriptionService::hasFeature('batch_operations');
 @endphp
 
@@ -92,7 +94,13 @@
                             <td class="px-3 py-3">{{ number_format($reorderLevel, 2) }}</td>
                             <td class="px-3 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">{{ $statusLabel }}</span></td>
                             <td class="px-3 py-3">{{ optional($product->updated_at)->format('Y-m-d H:i') ?? '-' }}</td>
-                            <td class="px-3 py-3 text-right"><button onclick="addStock('{{ addslashes((string) $product->name) }}')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">+ Stock</button></td>
+                            <td class="px-3 py-3 text-right">
+                                @if($canManageInventory)
+                                    <button onclick="addStock('{{ addslashes((string) $product->name) }}')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">+ Stock</button>
+                                @else
+                                    <span class="text-xs text-slate-400">-</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
@@ -108,6 +116,8 @@
 
 @push('scripts')
 <script>
+window.canManageInventory = {{ $canManageInventory ? 'true' : 'false' }};
+
 function notify(message, icon = 'success') {
     if (window.Swal) {
         Swal.fire({ toast: true, position: 'top-end', timer: 2300, showConfirmButton: false, icon, title: message });
@@ -125,6 +135,12 @@ function editStock(productName) {
 }
 
 function addStock(productName) {
+    if (!window.canManageInventory) {
+        notify('You do not have permission to add stock.', 'error');
+        return;
+    }
+
+    // TODO: call backend API to add stock; currently UI placeholder
     notify('Adding stock for: ' + productName, 'success');
 }
 

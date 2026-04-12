@@ -88,7 +88,53 @@ class RbacService
             return $userPermissions[$permission] === true;
         }
 
-        // Fall back to role-based permissions
+        // Map modular permissions (module.action) to legacy role flags or role names
+        $map = [
+            // Sales
+            'sales.view' => ['flags' => ['can_process_sales'], 'roles' => []],
+            'sales.create' => ['flags' => ['can_process_sales'], 'roles' => []],
+            'sales.refund' => ['flags' => [], 'roles' => ['owner', 'manager']],
+
+            // Inventory
+            'inventory.view' => ['flags' => ['can_manage_inventory', 'can_process_sales'], 'roles' => []],
+            'inventory.add_stock' => ['flags' => ['can_manage_inventory'], 'roles' => []],
+            'inventory.update_stock' => ['flags' => ['can_manage_inventory'], 'roles' => []],
+            'inventory.adjust_stock' => ['flags' => ['can_manage_inventory'], 'roles' => []],
+
+            // Products
+            'products.view' => ['flags' => ['can_manage_inventory', 'can_process_sales'], 'roles' => []],
+            'products.create' => ['flags' => ['can_manage_inventory'], 'roles' => []],
+            'products.update' => ['flags' => ['can_manage_inventory'], 'roles' => []],
+            'products.delete' => ['flags' => ['can_manage_inventory'], 'roles' => []],
+
+            // Users
+            'users.view' => ['flags' => ['can_manage_users'], 'roles' => []],
+            'users.create' => ['flags' => ['can_manage_users'], 'roles' => []],
+            'users.assign_roles' => ['flags' => ['can_manage_users'], 'roles' => []],
+
+            // Settings
+            'settings.manage' => ['flags' => ['can_manage_settings'], 'roles' => []],
+        ];
+
+        if (isset($map[$permission])) {
+            $entry = $map[$permission];
+
+            // Check flags (legacy boolean permission keys)
+            foreach ($entry['flags'] as $flag) {
+                if (self::roleHasPermission($user->role, $flag)) {
+                    return true;
+                }
+            }
+
+            // Check explicit allowed roles
+            if (!empty($entry['roles']) && in_array($user->role, $entry['roles'], true)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // Fallback: if legacy flag with same name exists, check it
         return self::roleHasPermission($user->role, $permission);
     }
 

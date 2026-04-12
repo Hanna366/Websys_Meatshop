@@ -132,6 +132,19 @@
             box-shadow: 0 14px 30px rgba(246, 52, 112, 0.35);
         }
 
+        .btn-danger-gradient {
+            background: linear-gradient(90deg, #d32f2f, #e53935);
+            color: #fff;
+            border: 0;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 20px rgba(229, 57, 53, 0.18);
+        }
+
+        .btn-danger-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(229, 57, 53, 0.22);
+        }
+
         .avatar-ring {
             background: linear-gradient(135deg, #ff9b8d 0%, var(--accent) 100%);
         }

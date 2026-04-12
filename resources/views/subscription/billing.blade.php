@@ -23,10 +23,21 @@
                 </p>
             </div>
             <div class="flex items-center gap-2">
-                <a href="{{ route('pricing') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
-                    <i data-lucide="badge-dollar-sign" class="h-4 w-4"></i>
-                    View Plans
-                </a>
+                @if($centralBillingMode)
+                    @php $adminRequestsRoute = Route::has('admin.subscription_requests.index') ? route('admin.subscription_requests.index') : url('/admin/subscription-requests'); @endphp
+                    <a href="{{ $adminRequestsRoute }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                        <i data-lucide="badge-dollar-sign" class="h-4 w-4"></i>
+                        Pending Payments
+                        @if(!empty($pending_count) && $pending_count > 0)
+                            <span class="ml-2 inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">{{ $pending_count }}</span>
+                        @endif
+                    </a>
+                @else
+                    <a href="{{ route('pricing') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                        <i data-lucide="badge-dollar-sign" class="h-4 w-4"></i>
+                        View Plans
+                    </a>
+                @endif
             </div>
         </div>
     </section>
@@ -98,6 +109,19 @@
             </div>
         </article>
     </section>
+
+    <div id="pendingRequestBanner" class="px-6 py-4">
+        @if (!empty($pending_request))
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 mb-4 text-amber-800">
+                <strong>Pending payment:</strong>
+                {{ $pending_request['requested_plan'] ?? '-' }} —
+                Ref: {{ $pending_request['payment_reference'] ?? '-' }} —
+                ${{ number_format((float) ($pending_request['amount'] ?? 0), 2) }}
+            </div>
+        @endif
+    </div>
+
+    
 
     <section class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
         <div class="flex flex-col gap-3 border-b border-slate-200/70 px-5 py-4 md:flex-row md:items-center md:justify-between">
@@ -186,11 +210,13 @@
 
     async function refreshBillingFromApi() {
         try {
-            const response = await fetch('{{ route('subscription.billing.data') }}', {
+            const billingDataUrl = {{ $centralBillingMode ? "'" . route('subscription.billing.data') . "'" : "'/subscription/billing/data'" }};
+            const response = await fetch(billingDataUrl, {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
-                }
+                },
+                credentials: 'same-origin'
             });
 
             if (!response.ok) {
@@ -200,6 +226,23 @@
             const payload = await response.json();
             if (!payload || !payload.success || !payload.data || !Array.isArray(payload.data.history)) {
                 return;
+            }
+            // Show pending subscription request (if present)
+            const pending = payload.data.pending_request;
+            const pendingEl = document.getElementById('pendingRequestBanner');
+            if (pendingEl) {
+                if (pending) {
+                    pendingEl.innerHTML = `
+                        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 mb-4 text-amber-800">
+                            <strong>Pending payment:</strong>
+                            ${pending.requested_plan ?? '-'} —
+                            Ref: ${pending.payment_reference ?? '-'} —
+                            $${Number(pending.amount ?? 0).toFixed(2)}
+                        </div>
+                    `;
+                } else {
+                    pendingEl.innerHTML = '';
+                }
             }
 
             const body = document.getElementById('billingTableBody');
