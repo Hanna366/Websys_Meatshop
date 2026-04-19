@@ -84,20 +84,21 @@ class EmailService
     /**
      * Send password reset email
      */
-    public static function sendPasswordReset(string $email, string $businessName, string $resetToken, ?string $baseUrl = null, ?string $fromAddress = null, ?string $fromName = null, ?string $userName = null, array $altEmails = [])
+    public static function sendPasswordReset(string $email, string $businessName, string $resetToken, ?string $baseUrl = null, ?string $fromAddress = null, ?string $fromName = null, ?string $userName = null, array $altEmails = [], string $viewName = 'emails.password-reset')
     {
         try {
             $baseUrl = rtrim((string) ($baseUrl ?: config('app.url')), '/');
 
-            $mailable = new class($email, $businessName, $resetToken, $baseUrl, $userName, $altEmails) extends Mailable {
+            $mailable = new class($email, $businessName, $resetToken, $baseUrl, $userName, $altEmails, $viewName) extends Mailable {
                 private $email;
                 private $businessName;
                 private $resetToken;
                 private $baseUrl;
                 private $userName;
                 private $altEmails;
+                private $viewName;
 
-                public function __construct($email, $businessName, $resetToken, $baseUrl, $userName, $altEmails)
+                public function __construct($email, $businessName, $resetToken, $baseUrl, $userName, $altEmails, $viewName)
                 {
                     $this->email = $email;
                     $this->businessName = $businessName;
@@ -105,6 +106,7 @@ class EmailService
                     $this->baseUrl = $baseUrl;
                     $this->userName = $userName;
                     $this->altEmails = $altEmails;
+                    $this->viewName = $viewName;
                 }
 
                 public function envelope()
@@ -116,8 +118,8 @@ class EmailService
 
                 public function content()
                 {
-                    return new \\Illuminate\\Mail\\Mailables\\Content(
-                        view: 'emails.password-reset',
+                    return new \Illuminate\Mail\Mailables\Content(
+                        view: $this->viewName,
                         with: [
                             'email' => $this->email,
                             'businessName' => $this->businessName,

@@ -20,7 +20,7 @@ use App\Http\Controllers\VersionController;
 */
 
 // Version Management Routes (Admin only)
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
     Route::get('/versions', [VersionController::class, 'index'])->name('versions.index');
     Route::get('/versions/create', [VersionController::class, 'create'])->name('versions.create');
     Route::post('/versions', [VersionController::class, 'store'])->name('versions.store');
