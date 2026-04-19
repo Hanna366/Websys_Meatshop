@@ -404,6 +404,18 @@
 
             <div class="auth-footer">
                 <a href="/">Back to homepage</a>
+                @php
+                    $centralDomains = (array) config('tenancy.central_domains', []);
+                    $centralHost = count($centralDomains) ? $centralDomains[0] : request()->getHost();
+                    $scheme = request()->getScheme() ?: 'https';
+                    $centralLogin = $scheme . '://' . $centralHost . '/login?force_login=1';
+                @endphp
+                @if(isset($tenant) || ! in_array(strtolower((string) request()->getHost()), array_map('strtolower', $centralDomains ?? []), true))
+                    <div style="margin-top:0.5rem;font-size:0.9rem;color:var(--muted);">
+                        Central administrators should sign in on the central site:
+                        <a href="{{ $centralLogin }}" class="link">Sign in to Central</a>
+                    </div>
+                @endif
             </div>
 
             @if (Route::has('google.redirect'))

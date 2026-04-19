@@ -54,7 +54,9 @@ class AccountController extends Controller
             $plainPassword = Str::random(16);
         }
 
-        // Create the tenant in the central system and prepare its database.
+        // Create the tenant central record but do NOT provision it yet.
+        // Provisioning (DB, tenant migrations, tenant admin user, onboarding
+        // email) will occur only after central admin approval.
         $tenant = TenantService::createTenant([
             'business_name' => $request->business_name,
             'business_email' => $request->email,
@@ -66,33 +68,20 @@ class AccountController extends Controller
             'password' => $plainPassword,
             'subscription' => [
                 'plan' => $request->plan,
-                'status' => 'active',
+                // Do not mark active yet; the tenant requires approval.
+                'status' => 'pending',
                 'starts_at' => now(),
                 'expires_at' => now()->addMonth(),
             ],
-        ]);
+        ], false);
 
-        // Create the user in the central system so the tenant can log in.
-        // The tenant's own database also has a users table, but we use the central
-        // users table for authentication across the platform.
-        User::create([
-            'tenant_id' => $tenant->tenant_id,
-            'username' => $username,
-            'name' => $fullName,
-            'email' => $request->email,
-            'password' => Hash::make($plainPassword),
-            'role' => 'owner',
-            'profile' => [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'full_name' => $fullName,
-            ],
-        ]);
+        // Do NOT create a central user for the tenant admin. Tenant admin
+        // accounts must live only in the tenant database after provisioning.
 
         // Redirect to a success page or login.
         // Onboarding email is sent by TenantService after provisioning.
-        $message = 'Account created successfully! Check your email for login instructions.';
-        
-        return redirect('/login')->with('success', $message);
+        $message = 'Tenant request submitted. It will be provisioned after central approval.';
+
+        return redirect('/')->with('success', $message);
     }
 }

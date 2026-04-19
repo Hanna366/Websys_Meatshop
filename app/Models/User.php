@@ -50,6 +50,7 @@ class User extends Authenticatable
         'username',
         'name',
         'email',
+        'recovery_email',
         'password',
         'role',
         'profile',

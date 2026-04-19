@@ -25,7 +25,13 @@ class EnsureCentralAdmin
         $isCentralUser = empty($user->tenant_id);
         $isPrivilegedRole = in_array($role, ['owner', 'admin', 'administrator', 'super_admin', 'superadmin'], true);
 
-        if (!$isCentralUser || !$isPrivilegedRole) {
+        // Allow access when the user has a privileged role and either:
+        // - the user is a central user (no tenant_id), or
+        // - the current session auth context is explicitly central (user logged in on central host).
+        $sessionContext = (string) session('auth_context', '');
+        $isSessionCentral = $sessionContext === 'central';
+
+        if (! $isPrivilegedRole || (! $isCentralUser && ! $isSessionCentral)) {
             abort(403, 'Only central administrators can manage tenants.');
         }
 

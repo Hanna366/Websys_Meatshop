@@ -36,12 +36,15 @@ class SimpleAuthController extends Controller
             ]);
         }
 
+        // If an authenticated session exists but for a different auth context
+        // (central vs tenant), clear it so users aren't accidentally treated
+        // as logged in for the wrong site. This enforces strict separation.
+        if (session('authenticated') && session('auth_context') !== $currentContext) {
+            session()->forget(['authenticated', 'auth_context', 'user']);
+        }
+
         // Tenant domains should always show the login screen when opened.
         if (str_starts_with($currentContext, 'tenant:')) {
-            if (session('authenticated') && session('auth_context') === $currentContext) {
-                session()->forget(['authenticated', 'auth_context', 'user']);
-            }
-
             return view('auth.login', [
                 'showRecaptcha' => false,
                 'tenant' => $tenant
@@ -91,12 +94,92 @@ class SimpleAuthController extends Controller
             app()->instance('tenant', $currentTenant);
             config(['database.connections.tenant' => $currentTenant->getTenantDatabaseConfig()]);
             DB::purge('tenant');
+            // Prevent unapproved tenants from allowing login attempts on tenant site
+            if (strtolower((string) ($currentTenant->status ?? '')) !== 'active') {
+                return back()->withErrors([
+                    'email' => 'This tenant account is not active. Please wait for central approval.',
+                ]);
+            }
         }
 
-        // Attempt to authenticate against the user table first.
-        $user = $currentTenant
-            ? User::on('tenant')->where('email', $credentials['email'])->first()
-            : User::where('email', $credentials['email'])->first();
+        // Attempt to authenticate against the user table with fallbacks:
+        // 1) exact email or recovery_email on tenant/default
+        // 2) normalized plus-address pattern (base%+@domain) on tenant/default
+        // 3) fallback to central connection when tenant bound
+        $user = null;
+        $submitted = $credentials['email'];
+
+        // Helper to query a connection for exact or plus-pattern matches
+        $findOnConnection = function ($connName, $email) {
+            try {
+                if ($connName === 'tenant') {
+                    $q = User::on('tenant');
+                } elseif (is_string($connName) && $connName !== '') {
+                    $q = User::on($connName);
+                } else {
+                    $q = User::query();
+                }
+                // Attempt exact match on the account's login email only.
+                // Do NOT allow `recovery_email` as a login credential.
+                $found = $q->where('email', $email)->first();
+                if ($found) return $found;
+
+                // Try normalized plus-address fallback
+                if (strpos($email, '@') !== false) {
+                    [$local, $domain] = explode('@', $email, 2);
+                    $base = preg_replace('/\+.*$/', '', $local);
+                    $pattern = $base . '%@' . $domain;
+                    // Try normalized plus-address fallback against the login email only.
+                    $found = $q->where(function ($qq) use ($pattern, $email) {
+                        $qq->where('email', 'like', $pattern)
+                           ->orWhere('email', $email);
+                    })->first();
+                    if ($found) return $found;
+                }
+            } catch (\Throwable $e) {
+                Log::debug('Auth lookup failed on connection ' . $connName, ['error' => $e->getMessage()]);
+            }
+
+            return null;
+        };
+
+        if ($currentTenant) {
+            // Tenant context: only authenticate against tenant DB. Do NOT
+            // accept central-only accounts for tenant sign-in, even if
+            // central record references this tenant. This prevents a
+            // delivery/recovery email stored centrally from being used to
+            // sign in on a tenant site.
+            $user = $findOnConnection('tenant', $submitted);
+            if (! $user) {
+                // If the submitted email exists on the central connection,
+                // return a clearer message so admins aren't confused when
+                // they attempt to sign in from a tenant site.
+                try {
+                    $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
+                    $centralUser = User::on($centralConn)->where('email', $submitted)->first();
+                } catch (\Throwable $e) {
+                    $centralUser = null;
+                }
+
+                if ($centralUser) {
+                    $centralDomains = (array) config('tenancy.central_domains', []);
+                    $centralHost = count($centralDomains) ? $centralDomains[0] : $request->getHost();
+                    $scheme = $request->getScheme() ?: 'https';
+                    $centralUrl = $scheme . '://' . $centralHost . '/login';
+
+                    return back()->withErrors([
+                        'email' => 'This email belongs to a central account. Please sign in at: ' . $centralUrl,
+                    ]);
+                }
+
+                return back()->withErrors([
+                    'email' => 'Invalid credentials.',
+                ]);
+            }
+        } else {
+            // Central context: authenticate against central/default connection
+            $user = $findOnConnection(config('tenancy.central_connection', env('DB_CONNECTION', 'mysql')), $submitted);
+        }
 
         if ($user && Hash::check($credentials['password'], $user->password)) {
             if (strtolower((string) ($user->status ?? 'active')) !== 'active') {
@@ -168,8 +251,26 @@ class SimpleAuthController extends Controller
 
         $submitted = $data['email'];
 
-        // Resolve tenant context if available
+        // Resolve tenant context if available (also attempt domain resolution when tenancy
+        // middleware hasn't bound the tenant). This ensures requests on tenant hosts
+        // are handled as tenant-scoped.
         $currentTenant = (app()->bound('tenant') && tenant()) ? tenant() : null;
+        if (! $currentTenant) {
+            $resolved = $this->resolveTenantFromHost($request);
+            if ($resolved) {
+                app()->instance('tenant', $resolved);
+                config(['database.connections.tenant' => $resolved->getTenantDatabaseConfig()]);
+                DB::purge('tenant');
+                $currentTenant = $resolved;
+            }
+        }
+
+        // If tenant exists but is not active, disallow password reset requests
+        if ($currentTenant && strtolower((string) ($currentTenant->status ?? '')) !== 'active') {
+            return back()->withErrors([
+                'email' => 'Password resets are disabled for tenants pending approval.',
+            ]);
+        }
 
         // 1) Try tenant connection first
         $user = null;
@@ -231,10 +332,34 @@ class SimpleAuthController extends Controller
                         'updated_at' => $now,
                     ];
 
-                    DB::connection('tenant')->table('users')->updateOrInsert(
-                        ['email' => $centralUser->email],
-                        $tenantValues
-                    );
+                    $tenantTable = DB::connection('tenant')->table('users');
+
+                    // Try to find an existing tenant row by email or recovery_email
+                    $existing = $tenantTable->where(function ($q) use ($centralUser) {
+                        $q->where('email', $centralUser->email)->orWhere('recovery_email', $centralUser->email);
+                    })->first();
+
+                    if ($existing) {
+                        // Update non-email fields only to avoid overriding tenant's configured emails
+                        $updateFields = [
+                            'tenant_id' => $currentTenant->tenant_id,
+                            'username' => $tenantValues['username'],
+                            'name' => $tenantValues['name'],
+                            'password' => $tenantValues['password'],
+                            'role' => $tenantValues['role'],
+                            'profile' => $tenantValues['profile'],
+                            'permissions' => $tenantValues['permissions'],
+                            'preferences' => $tenantValues['preferences'],
+                            'last_login' => $tenantValues['last_login'],
+                            'login_attempts' => $tenantValues['login_attempts'],
+                            'lock_until' => $tenantValues['lock_until'],
+                            'status' => $tenantValues['status'],
+                            'updated_at' => $tenantValues['updated_at'],
+                        ];
+                        $tenantTable->where('id', $existing->id)->update($updateFields);
+                    } else {
+                        $tenantTable->insert($tenantValues);
+                    }
 
                     $user = User::on('tenant')->where('email', $centralUser->email)->first();
                 }
@@ -307,9 +432,15 @@ class SimpleAuthController extends Controller
         $resetUrl = $scheme . '://' . $hostWithPort . '/reset-password/' . $plainToken . '?email=' . urlencode($user->email);
 
         try {
-            Mail::send('emails.password-reset', ['user' => $user, 'resetUrl' => $resetUrl], function ($message) use ($user) {
-                $message->to($user->email)->subject('Reset your Meat Shop POS password');
-            });
+            if ($currentTenant) {
+                Mail::send('emails.tenant-password-reset', ['user' => $user, 'resetUrl' => $resetUrl], function ($message) use ($user) {
+                    $message->to($user->email)->subject('Reset your Tenant Account password');
+                });
+            } else {
+                Mail::send('emails.password-reset', ['email' => $user->email, 'token' => $plainToken, 'resetUrl' => $resetUrl], function ($message) use ($user) {
+                    $message->to($user->email)->subject('Reset your Password');
+                });
+            }
         } catch (\Throwable $e) {
             Log::error('Failed to send password reset email', ['email' => $user->email, 'error' => $e->getMessage()]);
         }
@@ -342,6 +473,11 @@ class SimpleAuthController extends Controller
                 DB::purge('tenant');
                 config(['database.default' => 'tenant']);
             }
+        }
+
+        // Disallow resetting passwords for tenants that are not active
+        if (app()->bound('tenant') && tenant() && strtolower((string) (tenant()->status ?? '')) !== 'active') {
+            return back()->withErrors(['email' => 'Cannot reset password for a tenant pending approval.']);
         }
 
         // Try the active/default connection first (tenant when bound).
@@ -544,10 +680,32 @@ class SimpleAuthController extends Controller
                         'updated_at' => $now,
                     ];
 
-                        DB::connection('tenant')->table('users')->updateOrInsert(
-                            ['email' => $centralUser->email],
-                            $tenantValues
-                        );
+                        $tenantTable = DB::connection('tenant')->table('users');
+
+                        $existing = $tenantTable->where(function ($q) use ($centralUser) {
+                            $q->where('email', $centralUser->email)->orWhere('recovery_email', $centralUser->email);
+                        })->first();
+
+                        if ($existing) {
+                            $updateFields = [
+                                'tenant_id' => $tenant->tenant_id,
+                                'username' => $tenantValues['username'],
+                                'name' => $tenantValues['name'],
+                                'password' => $tenantValues['password'],
+                                'role' => $tenantValues['role'],
+                                'profile' => $tenantValues['profile'],
+                                'permissions' => $tenantValues['permissions'],
+                                'preferences' => $tenantValues['preferences'],
+                                'last_login' => $tenantValues['last_login'],
+                                'login_attempts' => $tenantValues['login_attempts'],
+                                'lock_until' => $tenantValues['lock_until'],
+                                'status' => $tenantValues['status'],
+                                'updated_at' => $tenantValues['updated_at'],
+                            ];
+                            $tenantTable->where('id', $existing->id)->update($updateFields);
+                        } else {
+                            $tenantTable->insert($tenantValues);
+                        }
 
                         // Reload the user from tenant DB for subsequent steps.
                         $user = User::on('tenant')->where('email', $data['email'])->first();
@@ -575,10 +733,59 @@ class SimpleAuthController extends Controller
             return back()->withErrors(['email' => 'No user found for this reset request.'])->withInput();
         }
 
-        $user->password = Hash::make($data['password']);
-        $user->login_attempts = 0;
-        $user->lock_until = null;
-        $user->save();
+        $newHashed = Hash::make($data['password']);
+
+        try {
+            $user->password = $newHashed;
+            $user->login_attempts = 0;
+            $user->lock_until = null;
+            $user->save();
+        } catch (\Throwable $e) {
+            Log::warning('Failed to save password on user model during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
+        }
+
+        // Best-effort: update exact and plus-address variants across central and tenant
+        $candidates = array_values(array_unique(array_filter([$data['email'], (string) ($user->email ?? '')])));
+        $patterns = [];
+        foreach ($candidates as $addr) {
+            if (strpos($addr, '@') !== false) {
+                [$local, $domain] = explode('@', $addr, 2);
+                $base = preg_replace('/\+.*$/', '', $local);
+                $patterns[] = $base . '%@' . $domain;
+            }
+        }
+
+        $applyUpdate = function ($conn) use ($candidates, $patterns, $newHashed) {
+            try {
+                $q = $conn->table('users');
+                $q->where(function ($qq) use ($candidates, $patterns) {
+                    if (! empty($candidates)) {
+                        $qq->whereIn('email', $candidates);
+                    }
+                    foreach ($patterns as $p) {
+                        $qq->orWhere('email', 'like', $p);
+                    }
+                });
+                $q->update(['password' => $newHashed]);
+            } catch (\Throwable $e) {
+                Log::debug('Password bulk update failed', ['error' => $e->getMessage()]);
+            }
+        };
+
+        try {
+            $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
+            $applyUpdate(DB::connection($centralConn));
+        } catch (\Throwable $e) {
+            Log::debug('Central user password update failed during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
+        }
+
+        try {
+            if (! empty(config('database.connections.tenant'))) {
+                $applyUpdate(DB::connection('tenant'));
+            }
+        } catch (\Throwable $e) {
+            Log::debug('Tenant user password update failed during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
+        }
 
         // Delete the reset token from the same connection where it was stored.
         $tokenSource = (string) (config('_password_reset_token_source_connection') ?? config('database.default'));

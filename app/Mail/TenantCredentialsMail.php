@@ -26,7 +26,8 @@ class TenantCredentialsMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: "[MeatShopPOS] Your tenant is ready — access details");
+        $subject = "Your {$this->tenantName} tenant is ready — access details";
+        return new Envelope(subject: $subject);
     }
 
     public function content(): Content
