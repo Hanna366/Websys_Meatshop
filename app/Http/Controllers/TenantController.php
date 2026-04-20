@@ -247,22 +247,14 @@ class TenantController extends Controller
 
         $tenant->refresh();
 
-        // If tenant was pending and is now being activated, provision tenant resources.
+        // If tenant was pending and is now being activated, queue provisioning
+        // to avoid long-running web requests that can exceed PHP's execution time.
         if ($previousStatus === 'pending' && ($validated['status'] ?? '') === 'active') {
             try {
-                // Request provisioning and ask the service to return the generated
-                // password if one was auto-created so the central admin can copy it.
-                $result = TenantService::provisionTenant($tenant, true);
-
-                if (is_array($result) && !empty($result['generated_password'])) {
-                    // For security, do NOT expose plaintext passwords in the central UI.
-                    // The generated password is sent to the tenant admin via email.
-                    // Instead, flash a flag so the UI can inform admins that the
-                    // temporary password was emailed (no plaintext shown).
-                    session()->flash('tenant_password_emailed', true);
-                }
+                \App\Jobs\ProvisionTenantJob::dispatch($tenant->tenant_id, true);
+                session()->flash('tenant_provisioning_queued', true);
             } catch (\Throwable $e) {
-                \Log::error('Provisioning failed during approval.', ['tenant_id' => $tenantId, 'error' => $e->getMessage()]);
+                \Log::error('Failed to dispatch provisioning job during approval.', ['tenant_id' => $tenantId, 'error' => $e->getMessage()]);
             }
         }
 

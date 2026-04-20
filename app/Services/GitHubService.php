@@ -1,4 +1,5 @@
 <?php
+// cleaned: single-class implementation
 
 namespace App\Services;
 
@@ -8,337 +9,269 @@ use Illuminate\Support\Facades\Cache;
 
 class GitHubService
 {
-    /**
-     * Get GitHub releases from repository
-     */
-    public static function getReleases(): array
+    protected string $owner;
+    protected string $repo;
+    protected ?string $token;
+
+    public function __construct()
     {
-        $cacheKey = 'github_releases_' . env('GITHUB_REPO_OWNER', 'Hanna366') . '_' . env('GITHUB_REPO_NAME', 'Websys_Meatshop');
-        
-        return Cache::remember($cacheKey, 3600, function () {
-            try {
-                $owner = env('GITHUB_REPO_OWNER', 'Hanna366');
-                $repo = env('GITHUB_REPO_NAME', 'Websys_Meatshop');
-                $token = env('GITHUB_TOKEN'); // Optional: for private repos or higher rate limits
-                
-                $url = "https://api.github.com/repos/{$owner}/{$repo}/releases";
-                
-                $headers = [
-                    'Accept' => 'application/vnd.github.v3+json',
-                    'User-Agent' => 'MeatShop-POS/' . config('app.version', '1.0.0'),
-                ];
-                
-                if ($token) {
-                    $headers['Authorization'] = 'token ' . $token;
-                }
-                
-                $response = Http::timeout(30)
-                    ->withHeaders($headers)
-                    ->get($url);
-                
-                if (!$response->successful()) {
-                    Log::error('GitHub API error: ' . $response->status() . ' - ' . $response->body());
-                    return [];
-                }
-                
-                $releases = $response->json();
-                
-                // Format releases for our system
-                $formattedReleases = [];
-                foreach ($releases as $release) {
-                    // Skip draft releases and pre-releases unless configured otherwise
-                    if ($release['draft'] || ($release['prerelease'] && !env('GITHUB_INCLUDE_PRERELEASE', false))) {
-                        continue;
-                    }
-                    
-                    $formattedReleases[] = [
-                        'tag_name' => $release['tag_name'],
-                        'name' => $release['name'],
-                        'body' => $release['body'],
-                        'published_at' => $release['published_at'],
-                        'html_url' => $release['html_url'],
-                        'assets' => $release['assets'],
-                        'is_prerelease' => $release['prerelease'],
-                        'is_latest' => $release['tag_name'] === ($releases[0]['tag_name'] ?? null),
-                        'download_count' => array_sum(array_column($release['assets'], 'download_count')),
-                    ];
-                }
-                
-                return $formattedReleases;
-                
-            } catch (\Exception $e) {
-                Log::error('Failed to fetch GitHub releases: ' . $e->getMessage());
-                return [];
-            }
-        });
+        $repoFull = env('GITHUB_REPOSITORY', 'Hanna366/Websys_Meatshop');
+        $parts = explode('/', $repoFull);
+        $this->owner = env('GITHUB_REPO_OWNER') ?: ($parts[0] ?? 'Hanna366');
+        $this->repo = env('GITHUB_REPO_NAME') ?: ($parts[1] ?? ($parts[0] ?? 'Websys_Meatshop'));
+        $this->token = env('GITHUB_TOKEN');
     }
-    
-    /**
-     * Get latest release from GitHub
-     */
-    public static function getLatestRelease(): ?array
+
+    public function client()
     {
-        $releases = self::getReleases();
-        return $releases[0] ?? null;
-    }
-    
-    /**
-     * Get release by tag name
-     */
-    public static function getReleaseByTag(string $tag): ?array
-    {
-        $releases = self::getReleases();
-        
-        foreach ($releases as $release) {
-            if ($release['tag_name'] === $tag) {
-                return $release;
-            }
+        $headers = [
+            'Accept' => 'application/vnd.github.v3+json',
+            'User-Agent' => 'MeatShop-App/' . config('app.version', '1.0.0'),
+        ];
+
+        if ($this->token) {
+            $headers['Authorization'] = 'token ' . $this->token;
         }
-        
+
+        return Http::withHeaders($headers)->timeout(30);
+    }
+
+    public function fetchReleases(): array
+    {
+        try {
+            $res = $this->client()->get("https://api.github.com/repos/{$this->owner}/{$this->repo}/releases");
+            if ($res->ok()) {
+                return $res->json();
+            }
+            Log::warning('GitHub releases fetch failed', ['status' => $res->status()]);
+        } catch (\Throwable $e) {
+            Log::error('GitHubService::fetchReleases error: ' . $e->getMessage());
+        }
+
+        return [];
+    }
+
+    public function fetchReleaseByTag(string $tag): ?array
+    {
+        try {
+            $res = $this->client()->get("https://api.github.com/repos/{$this->owner}/{$this->repo}/releases/tags/" . rawurlencode($tag));
+            if ($res->ok()) {
+                return $res->json();
+            }
+        } catch (\Throwable $e) {
+            Log::error('GitHubService::fetchReleaseByTag error: ' . $e->getMessage());
+        }
+
         return null;
     }
-    
-    /**
-     * Download release asset
-     */
-    public static function downloadAsset(string $downloadUrl, string $token = null): array
+
+    /* Static helpers for compatibility */
+    public static function getReleases(): array
+    {
+        $svc = new self();
+        $cacheKey = 'github_releases_' . $svc->owner . '_' . $svc->repo;
+
+        return Cache::remember($cacheKey, 3600, function () use ($svc) {
+            $raw = $svc->fetchReleases();
+            $formatted = [];
+
+            foreach ($raw as $release) {
+                if (!empty($release['draft'])) continue;
+                if (!empty($release['prerelease']) && !env('GITHUB_INCLUDE_PRERELEASE', false)) continue;
+
+                $assets = $release['assets'] ?? [];
+
+                $formatted[] = [
+                    'tag_name' => $release['tag_name'] ?? null,
+                    'name' => $release['name'] ?? null,
+                    'body' => $release['body'] ?? null,
+                    'published_at' => $release['published_at'] ?? null,
+                    'html_url' => $release['html_url'] ?? null,
+                    'assets' => $assets,
+                    'is_prerelease' => $release['prerelease'] ?? false,
+                    'is_latest' => false,
+                    'download_count' => !empty($assets) ? array_sum(array_column($assets, 'download_count')) : 0,
+                ];
+            }
+
+            if (!empty($formatted)) {
+                $formatted[0]['is_latest'] = true;
+                return $formatted;
+            }
+
+            // fallback to tags
+            try {
+                $tagsUrl = "https://api.github.com/repos/{$svc->owner}/{$svc->repo}/tags?per_page=100";
+                $resp = $svc->client()->get($tagsUrl);
+                if ($resp->ok()) {
+                    $tags = $resp->json();
+                    $out = [];
+                    foreach ($tags as $t) {
+                        $name = $t['name'] ?? null;
+                        if (!$name) continue;
+                        $out[] = [
+                            'tag_name' => $name,
+                            'name' => $name,
+                            'body' => '',
+                            'published_at' => null,
+                            'html_url' => "https://github.com/{$svc->owner}/{$svc->repo}/tree/{$name}",
+                            'assets' => [],
+                            'is_prerelease' => false,
+                            'is_latest' => false,
+                            'download_count' => 0,
+                        ];
+                    }
+                    return $out;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('GitHub tags fallback failed: ' . $e->getMessage());
+            }
+
+            return [];
+        });
+    }
+
+    public static function getLatestRelease(): ?array
+    {
+        $rels = self::getReleases();
+        return $rels[0] ?? null;
+    }
+
+    public static function getReleaseByTag(string $tag): ?array
+    {
+        foreach (self::getReleases() as $r) {
+            if (($r['tag_name'] ?? null) === $tag) return $r;
+        }
+        return null;
+    }
+
+    public static function downloadAsset(string $downloadUrl, ?string $token = null): array
     {
         try {
             $headers = [
                 'Accept' => 'application/octet-stream',
-                'User-Agent' => 'MeatShop-POS/' . config('app.version', '1.0.0'),
+                'User-Agent' => 'MeatShop-App/' . config('app.version', '1.0.0'),
             ];
-            
-            if ($token) {
-                $headers['Authorization'] = 'token ' . $token;
+
+            if ($token) $headers['Authorization'] = 'token ' . $token;
+
+            $resp = Http::withHeaders($headers)->timeout(300)->get($downloadUrl);
+            if (!$resp->successful()) {
+                return ['success' => false, 'error' => 'Download failed: ' . $resp->status()];
             }
-            
-            $response = Http::timeout(300) // 5 minutes for large files
-                ->withHeaders($headers)
-                ->get($downloadUrl);
-            
-            if (!$response->successful()) {
-                return [
-                    'success' => false,
-                    'error' => 'Download failed: ' . $response->status(),
-                ];
-            }
-            
-            return [
-                'success' => true,
-                'content' => $response->body(),
-                'size' => strlen($response->body()),
-                'content_type' => $response->header('Content-Type'),
-            ];
-            
-        } catch (\Exception $e) {
-            Log::error('Failed to download GitHub asset: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-            ];
+            return ['success' => true, 'content' => $resp->body(), 'size' => strlen($resp->body()), 'content_type' => $resp->header('Content-Type')];
+        } catch (\Throwable $e) {
+            Log::error('GitHubService::downloadAsset error: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
         }
     }
-    
-    /**
-     * Compare local version with latest GitHub release
-     */
+
     public static function compareVersions(): array
     {
-        $currentVersion = config('app.version', '1.0.0');
-        $latestRelease = self::getLatestRelease();
-        
-        if (!$latestRelease) {
-            return [
-                'update_available' => false,
-                'current_version' => $currentVersion,
-                'latest_version' => $currentVersion,
-                'message' => 'No releases found on GitHub',
-                'github_data' => null,
-            ];
-        }
-        
-        $latestVersion = ltrim($latestRelease['tag_name'], 'v'); // Remove 'v' prefix if present
-        $hasUpdate = version_compare($latestVersion, $currentVersion, '>');
-        
-        return [
-            'update_available' => $hasUpdate,
-            'current_version' => $currentVersion,
-            'latest_version' => $latestVersion,
-            'message' => $hasUpdate 
-                ? "Update to version {$latestVersion} available on GitHub" 
-                : "You are on the latest version",
-            'github_data' => $latestRelease,
-            'release_url' => $latestRelease['html_url'],
-            'published_at' => $latestRelease['published_at'],
-            'download_count' => $latestRelease['download_count'],
-        ];
+        $current = config('app.version', '1.0.0');
+        $latest = self::getLatestRelease();
+        if (!$latest) return ['update_available' => false, 'current_version' => $current, 'latest_version' => $current];
+        $latestVersion = ltrim($latest['tag_name'] ?? $current, 'v');
+        return ['update_available' => version_compare($latestVersion, $current, '>'), 'current_version' => $current, 'latest_version' => $latestVersion, 'github_data' => $latest];
     }
-    
-    /**
-     * Sync GitHub releases to local database
-     */
+
     public static function syncReleases(): array
     {
         $releases = self::getReleases();
-        $synced = 0;
-        $updated = 0;
-        $errors = [];
-        
+        if (empty($releases)) {
+            Log::warning('GitHubService::syncReleases - no releases');
+            // Treat no remote releases as a successful sync with zero results
+            return ['success' => true, 'synced' => 0, 'updated' => 0, 'errors' => [], 'total_releases' => 0];
+        }
+
+        $synced = 0; $updated = 0; $errors = [];
         foreach ($releases as $release) {
             try {
-                $version = \App\Models\Version::firstOrCreate(
-                    ['version' => ltrim($release['tag_name'], 'v')],
+                $versionStr = ltrim($release['tag_name'] ?? '', 'v');
+                if (!$versionStr) continue;
+                $model = \App\Models\Version::firstOrCreate(
+                    ['version' => $versionStr],
                     [
-                        'release_name' => $release['name'],
-                        'description' => $release['body'],
-                        'type' => self::determineReleaseType($release['tag_name'], $release['body']),
-                        'status' => $release['is_prerelease'] ? 'testing' : 'stable',
-                        'release_date' => $release['published_at'],
-                        'features' => self::extractFeatures($release['body']),
-                        'fixes' => self::extractFixes($release['body']),
-                        'download_url' => self::getPrimaryDownloadUrl($release['assets']),
-                        'checksum' => null, // Will be set when downloading
+                        'release_name' => $release['name'] ?? null,
+                        'description' => $release['body'] ?? null,
+                        'type' => self::determineReleaseType($release['tag_name'] ?? '' , $release['body'] ?? ''),
+                        'status' => !empty($release['is_prerelease']) ? 'testing' : 'stable',
+                        'release_date' => $release['published_at'] ?? null,
+                        'features' => self::extractFeatures($release['body'] ?? ''),
+                        'fixes' => self::extractFixes($release['body'] ?? ''),
+                        'download_url' => self::getPrimaryDownloadUrl($release['assets'] ?? []),
+                        'checksum' => null,
                         'is_mandatory' => false,
                         'auto_update' => false,
                     ]
                 );
-                
-                if ($version->wasRecentlyCreated) {
-                    $synced++;
-                } else {
-                    $updated++;
-                }
-                
-            } catch (\Exception $e) {
-                $errors[] = "Failed to sync release {$release['tag_name']}: " . $e->getMessage();
-                Log::error("Failed to sync GitHub release: " . $e->getMessage());
+                if ($model->wasRecentlyCreated) $synced++; else $updated++;
+            } catch (\Throwable $e) {
+                $errors[] = $e->getMessage();
+                Log::error('GitHubService::syncReleases error: ' . $e->getMessage());
             }
         }
-        
-        return [
-            'success' => empty($errors),
-            'synced' => $synced,
-            'updated' => $updated,
-            'errors' => $errors,
-            'total_releases' => count($releases),
-        ];
+
+        return ['success' => empty($errors), 'synced' => $synced, 'updated' => $updated, 'errors' => $errors, 'total_releases' => count($releases)];
     }
-    
-    /**
-     * Determine release type from tag and description
-     */
+
     private static function determineReleaseType(string $tag, string $description): string
     {
         $version = ltrim($tag, 'v');
         $parts = explode('.', $version);
-        
         if (count($parts) >= 3) {
             $major = (int)($parts[0] ?? 0);
             $minor = (int)($parts[1] ?? 0);
             $patch = (int)($parts[2] ?? 0);
-            
-            if ($major > 1) {
-                return 'major';
-            } elseif ($minor > 0 && $patch === 0) {
-                return 'minor';
-            } elseif ($patch > 0) {
-                return 'patch';
-            }
+            if ($major > 0 && $minor === 0 && $patch === 0) return 'major';
+            if ($minor > 0 && $patch === 0) return 'minor';
+            if ($patch > 0) return 'patch';
         }
-        
-        // Check description for hints
-        $descriptionLower = strtolower($description);
-        
-        if (strpos($descriptionLower, 'hotfix') !== false || strpos($descriptionLower, 'urgent') !== false) {
-            return 'hotfix';
-        } elseif (strpos($descriptionLower, 'breaking') !== false || strpos($descriptionLower, 'major') !== false) {
-            return 'major';
-        } elseif (strpos($descriptionLower, 'feature') !== false || strpos($descriptionLower, 'enhancement') !== false) {
-            return 'minor';
-        }
-        
+        $d = strtolower($description);
+        if (str_contains($d, 'hotfix') || str_contains($d, 'urgent')) return 'hotfix';
+        if (str_contains($d, 'breaking') || str_contains($d, 'major')) return 'major';
+        if (str_contains($d, 'feature') || str_contains($d, 'enhancement')) return 'minor';
         return 'patch';
     }
-    
-    /**
-     * Extract features from release description
-     */
+
     private static function extractFeatures(string $description): array
     {
-        $features = [];
-        $lines = explode("\n", $description);
-        
-        foreach ($lines as $line) {
-            $line = trim($line);
-            
-            // Look for feature indicators
-            if (preg_match('/^(?:\*|\-|\+|\s*New|Added|Feature)/i', $line)) {
-                // Remove markdown and clean up
-                $feature = preg_replace('/^(\*|\-|\+|\s*New|Added|Feature)\s*/i', '', $line);
-                $feature = trim($feature, " \t\n\r\0\x0B-");
-                
-                if (!empty($feature) && strlen($feature) > 3) {
-                    $features[] = $feature;
-                }
+        $out = [];
+        $lines = preg_split('/\r?\n/', $description);
+        foreach ($lines as $l) {
+            $t = trim($l);
+            if (preg_match('/^(?:\*|\-|\+|New|Added|Feature)/i', $t)) {
+                $t = preg_replace('/^(?:\*|\-|\+|New|Added|Feature)\s*/i', '', $t);
+                $t = trim($t, " \t\n\r\0\x0B-:.");
+                if ($t && strlen($t) > 3) $out[] = $t;
             }
         }
-        
-        return array_slice($features, 0, 10); // Limit to 10 features
+        return $out;
     }
-    
-    /**
-     * Extract fixes from release description
-     */
+
     private static function extractFixes(string $description): array
     {
-        $fixes = [];
-        $lines = explode("\n", $description);
-        
-        foreach ($lines as $line) {
-            $line = trim($line);
-            
-            // Look for fix indicators
-            if (preg_match('/^(?:\*|\-|\+|\s*Fixed|Fix|Bug)/i', $line)) {
-                // Remove markdown and clean up
-                $fix = preg_replace('/^(\*|\-|\+|\s*Fixed|Fix|Bug)\s*/i', '', $line);
-                $fix = trim($fix, " \t\n\r\0\x0B-");
-                
-                if (!empty($fix) && strlen($fix) > 3) {
-                    $fixes[] = $fix;
-                }
+        $out = [];
+        $lines = preg_split('/\r?\n/', $description);
+        foreach ($lines as $l) {
+            $t = trim($l);
+            if (preg_match('/^(?:Fix|Fixes|Fixed|Bug|Patch)/i', $t)) {
+                $t = preg_replace('/^(?:Fix|Fixes|Fixed|Bug|Patch)\s*/i', '', $t);
+                $t = trim($t, " \t\n\r\0\x0B-:.");
+                if ($t && strlen($t) > 3) $out[] = $t;
             }
         }
-        
-        return array_slice($fixes, 0, 10); // Limit to 10 fixes
+        return $out;
     }
-    
-    /**
-     * Get primary download URL from assets
-     */
+
     private static function getPrimaryDownloadUrl(array $assets): ?string
     {
-        if (empty($assets)) {
-            return null;
+        if (empty($assets)) return null;
+        foreach ($assets as $a) {
+            if (stripos($a['name'] ?? '', '.zip') !== false) return $a['browser_download_url'] ?? null;
         }
-        
-        // Look for ZIP file first
-        foreach ($assets as $asset) {
-            if (strpos(strtolower($asset['name']), '.zip') !== false) {
-                return $asset['browser_download_url'];
-            }
-        }
-        
-        // Return first asset if no ZIP found
         return $assets[0]['browser_download_url'] ?? null;
     }
-    
-    /**
-     * Clear GitHub releases cache
-     */
-    public static function clearCache(): void
-    {
-        $cacheKey = 'github_releases_' . env('GITHUB_REPO_OWNER', 'Hanna366') . '_' . env('GITHUB_REPO_NAME', 'Websys_Meatshop');
-        Cache::forget($cacheKey);
-    }
 }
+
+// VSCODE_REFRESH

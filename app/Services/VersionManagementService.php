@@ -97,7 +97,60 @@ class VersionManagementService
             return ['success' => false, 'error' => 'Version not found'];
         }
 
+        // If no download_url is configured on the Version, look for a local manifest
         if (!$versionInfo->download_url) {
+            $manifestPath = storage_path('app/updates/update-' . $version . '.zip.manifest.json');
+            if (file_exists($manifestPath)) {
+                $m = json_decode(file_get_contents($manifestPath), true);
+                if (!empty($m['file_path'])) {
+                    // Create update log
+                    $updateLog = UpdateLog::create([
+                        'tenant_id' => $tenantId,
+                        'from_version' => self::getCurrentVersion(),
+                        'to_version' => $version,
+                        'status' => 'completed',
+                        'started_at' => now(),
+                        'completed_at' => now(),
+                        'update_data' => ['file_path' => $m['file_path'], 'source' => 'local']
+                    ]);
+
+                    return [
+                        'success' => true,
+                        'file_path' => $m['file_path'],
+                        'version' => $version,
+                        'log_id' => $updateLog->id,
+                        'source' => 'local'
+                    ];
+                }
+            }
+
+            // also check a releases.json aggregate manifest
+            $aggregate = storage_path('app/updates/releases.json');
+            if (file_exists($aggregate)) {
+                $list = json_decode(file_get_contents($aggregate), true) ?: [];
+                foreach ($list as $entry) {
+                    if (($entry['version'] ?? '') === $version && !empty($entry['file'])) {
+                        $updateLog = UpdateLog::create([
+                            'tenant_id' => $tenantId,
+                            'from_version' => self::getCurrentVersion(),
+                            'to_version' => $version,
+                            'status' => 'completed',
+                            'started_at' => now(),
+                            'completed_at' => now(),
+                            'update_data' => ['file_path' => $entry['file'], 'source' => 'local']
+                        ]);
+
+                        return [
+                            'success' => true,
+                            'file_path' => $entry['file'],
+                            'version' => $version,
+                            'log_id' => $updateLog->id,
+                            'source' => 'local'
+                        ];
+                    }
+                }
+            }
+
             return ['success' => false, 'error' => 'No download URL available'];
         }
 
@@ -404,13 +457,19 @@ class VersionManagementService
      */
     public static function createVersion(array $data): Version
     {
+        // Normalize release_date: treat empty string as null to avoid SQL errors
+        $releaseDate = null;
+        if (isset($data['release_date']) && $data['release_date'] !== '') {
+            $releaseDate = $data['release_date'];
+        }
+
         return Version::create([
             'version' => $data['version'],
             'release_name' => $data['release_name'] ?? null,
             'description' => $data['description'] ?? null,
             'type' => $data['type'],
             'status' => $data['status'] ?? 'stable',
-            'release_date' => $data['release_date'] ?? now(),
+            'release_date' => $releaseDate,
             'features' => $data['features'] ?? [],
             'fixes' => $data['fixes'] ?? [],
             'requirements' => $data['requirements'] ?? [],

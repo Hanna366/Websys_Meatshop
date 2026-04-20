@@ -1,5 +1,7 @@
 <?php
 
+// Version / Update Management (handled below within PHP tags)
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CentralDashboardController;
 use App\Http\Controllers\SimpleAuthController;
@@ -7,6 +9,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\VersionController;
+use App\Http\Controllers\UpdateController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +37,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->g
     Route::post('/versions/download', [VersionController::class, 'downloadUpdate'])->name('versions.download');
     Route::post('/versions/install', [VersionController::class, 'installUpdate'])->name('versions.install');
     Route::post('/versions/upload', [VersionController::class, 'uploadPackage'])->name('versions.upload');
+    Route::post('/versions/simulate', [VersionController::class, 'simulateUpdate'])->name('versions.simulate');
+    Route::get('/versions/update-files', [VersionController::class, 'listUpdateFiles'])->name('versions.update-files');
     Route::get('/versions/status', [VersionController::class, 'getUpdateStatus'])->name('versions.status');
     
     // GitHub integration endpoints
@@ -244,4 +249,18 @@ if (config('app.debug')) {
 // Logo testing routes
 Route::get('/logo/test', [App\Http\Controllers\LogoController::class, 'testLogos']);
 Route::get('/logo/generate/{tenantId?}', [App\Http\Controllers\LogoController::class, 'generateLogo']);
+
+// System update UI (admin only)
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
+    Route::get('/update', [UpdateController::class, 'index'])->name('update.index');
+    Route::post('/update', [UpdateController::class, 'update'])->name('update.perform');
+    Route::get('/update/status', [UpdateController::class, 'status'])->name('update.status');
+});
+
+// System update API endpoints (admin only)
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
+    Route::get('/updates/releases', [App\Http\Controllers\SystemUpdateController::class, 'listReleases'])->name('updates.releases');
+    Route::post('/updates/download-latest', [App\Http\Controllers\SystemUpdateController::class, 'downloadLatest'])->name('updates.download-latest');
+    Route::get('/updates/status', [App\Http\Controllers\SystemUpdateController::class, 'status'])->name('updates.status');
+});
 

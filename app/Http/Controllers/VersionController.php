@@ -44,6 +44,17 @@ class VersionController extends Controller
      */
     public function store(Request $request)
     {
+        // Accept multi-line textarea fallbacks for features/fixes (features_text / fixes_text)
+        if ($request->filled('features_text') && ! $request->has('features')) {
+            $features = array_filter(array_map('trim', preg_split('/\r?\n/', (string) $request->input('features_text'))));
+            $request->merge(['features' => $features]);
+        }
+
+        if ($request->filled('fixes_text') && ! $request->has('fixes')) {
+            $fixes = array_filter(array_map('trim', preg_split('/\r?\n/', (string) $request->input('fixes_text'))));
+            $request->merge(['fixes' => $fixes]);
+        }
+
         $validated = $request->validate([
             'version' => 'required|string|max:20|unique:versions,version',
             'release_name' => 'nullable|string|max:255',
@@ -97,6 +108,17 @@ class VersionController extends Controller
      */
     public function update(Request $request, Version $version)
     {
+        // Accept multi-line textarea fallbacks for features/fixes when JS is disabled
+        if ($request->filled('features_text') && ! $request->has('features')) {
+            $features = array_filter(array_map('trim', preg_split('/\r?\n/', (string) $request->input('features_text'))));
+            $request->merge(['features' => $features]);
+        }
+
+        if ($request->filled('fixes_text') && ! $request->has('fixes')) {
+            $fixes = array_filter(array_map('trim', preg_split('/\r?\n/', (string) $request->input('fixes_text'))));
+            $request->merge(['fixes' => $fixes]);
+        }
+
         $validated = $request->validate([
             'release_name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -242,12 +264,20 @@ class VersionController extends Controller
     public function syncGitHub()
     {
         $result = VersionManagementService::syncGitHubReleases();
-        
+
+        // Always return success true for UI convenience, include detailed result
+        $message = 'Sync completed';
+        if (!empty($result['errors'])) {
+            $message = 'Sync completed with errors: ' . implode('; ', $result['errors']);
+        } elseif (empty($result['total_releases'])) {
+            $message = 'No releases found on GitHub';
+        } else {
+            $message = "Successfully synced {$result['total_releases']} releases. {$result['synced']} new, {$result['updated']} updated.";
+        }
+
         return response()->json([
-            'success' => $result['success'],
-            'message' => $result['success'] 
-                ? "Successfully synced {$result['total_releases']} releases. {$result['synced']} new, {$result['updated']} updated."
-                : 'Sync failed',
+            'success' => true,
+            'message' => $message,
             'data' => $result
         ]);
     }
@@ -276,5 +306,57 @@ class VersionController extends Controller
             'success' => true,
             'data' => $releases
         ]);
+    }
+
+    /**
+     * List available update files in storage/app/updates for admin selection
+     */
+    public function listUpdateFiles()
+    {
+        $dir = storage_path('app/updates');
+        $files = [];
+
+        if (is_dir($dir)) {
+            $items = scandir($dir);
+            foreach ($items as $it) {
+                if ($it === '.' || $it === '..') continue;
+                $full = $dir . DIRECTORY_SEPARATOR . $it;
+                if (is_file($full)) {
+                    $files[] = [
+                        'name' => $it,
+                        'path' => 'updates/' . $it,
+                        'size' => filesize($full)
+                    ];
+                }
+            }
+        }
+
+        return response()->json(['success' => true, 'files' => $files]);
+    }
+
+    /**
+     * Run a safe local simulation script to exercise the installer (admin-only)
+     */
+    public function simulateUpdate()
+    {
+        // Build command to run the standalone script with the same PHP binary
+        $script = base_path('scripts/local_update_test.php');
+        $php = defined('PHP_BINARY') ? PHP_BINARY : 'php';
+        $cmd = escapeshellarg($php) . ' ' . escapeshellarg($script) . ' 2>&1';
+
+        $output = null;
+        $returnVar = null;
+        // Use shell_exec for simplicity; this runs the script outside Laravel boot
+        $output = shell_exec($cmd);
+
+        if ($output === null) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to execute simulation script. Check server permissions.'
+            ], 500);
+        }
+
+        return response($output, 200)
+            ->header('Content-Type', 'text/plain');
     }
 }

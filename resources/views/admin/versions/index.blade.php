@@ -103,7 +103,7 @@
                     <i data-lucide="github" class="h-4 w-4 text-slate-600"></i>
                     <span class="text-slate-600">{{ env('GITHUB_REPO_OWNER', 'Hanna366') }}/{{ env('GITHUB_REPO_NAME', 'Websys_Meatshop') }}</span>
                 </div>
-                <button onclick="syncGitHub()" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                <button onclick="syncGitHub(event)" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
                     <i data-lucide="refresh-cw" class="h-4 w-4"></i>
                     Sync GitHub
                 </button>
@@ -278,10 +278,15 @@
         <div class="px-5 py-4">
             <div class="space-y-3">
                 @foreach(array_slice($updateHistory, 0, 5) as $log)
+                    @php
+                        $statusColor = $log['status_color'] ?? 'slate';
+                        $statusIcon = $log['status_icon'] ?? 'refresh-cw';
+                        $statusLabel = ucfirst($log['status'] ?? 'unknown');
+                    @endphp
                     <div class="flex items-center justify-between rounded-lg border border-slate-200 p-3">
                         <div class="flex items-center gap-3">
-                            <div class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-{{ $log['status_color'] }}-50 text-{{ $log['status_color'] }}-700">
-                                <i data-lucide="{{ $log['status_icon'] }}" class="h-4 w-4"></i>
+                            <div class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-{{ $statusColor }}-50 text-{{ $statusColor }}-700">
+                                <i data-lucide="{{ $statusIcon }}" class="h-4 w-4"></i>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-slate-900">
@@ -296,8 +301,8 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <span class="inline-flex items-center rounded-full bg-{{ $log['status_color'] }}-50 px-2 py-1 text-xs font-medium text-{{ $log['status_color'] }}-700">
-                                {{ ucfirst($log['status']) }}
+                            <span class="inline-flex items-center rounded-full bg-{{ $statusColor }}-50 px-2 py-1 text-xs font-medium text-{{ $statusColor }}-700">
+                                {{ $statusLabel }}
                             </span>
                         </div>
                     </div>
@@ -356,11 +361,13 @@ function downloadUpdate(version) {
     }
 }
 
-function syncGitHub() {
-    const button = event.target;
-    button.disabled = true;
-    button.innerHTML = '<i data-lucide="refresh-cw" class="h-4 w-4 animate-spin"></i> Syncing...';
-    
+function syncGitHub(e) {
+    const button = e && e.currentTarget ? e.currentTarget : (e && e.target) || document.querySelector('button[onclick^="syncGitHub"]');
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i data-lucide="refresh-cw" class="h-4 w-4 animate-spin"></i> Syncing...';
+    }
+
     fetch('{{ route("admin.versions.sync-github") }}', {
         method: 'POST',
         headers: {
@@ -368,21 +375,36 @@ function syncGitHub() {
         }
     })
     .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('GitHub sync completed successfully!');
-            location.reload();
-        } else {
-            alert('GitHub sync failed: ' + data.message);
+    .then(payload => {
+        // payload may be { success: true, message: '', data: { success: false, errors: [...], total_releases: 0 } }
+        const result = payload && payload.data ? payload.data : payload;
+
+        if (result && result.success === false) {
+            // Detailed failure reported by backend
+            alert('GitHub sync completed with errors: ' + (payload.message || (result.errors || []).join('; ') || 'Unknown error'));
+            return;
         }
+
+        if (result && typeof result.total_releases !== 'undefined' && result.total_releases === 0) {
+            alert(payload.message || 'No releases found on GitHub');
+            // still reload to show empty state
+            location.reload();
+            return;
+        }
+
+        // Otherwise treat as success
+        alert(payload.message || 'GitHub sync completed successfully!');
+        location.reload();
     })
     .catch(error => {
         console.error('Error syncing GitHub:', error);
         alert('Error syncing GitHub releases');
     })
     .finally(() => {
-        button.disabled = false;
-        button.innerHTML = '<i data-lucide="refresh-cw" class="h-4 w-4"></i> Sync GitHub';
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = '<i data-lucide="refresh-cw" class="h-4 w-4"></i> Sync GitHub';
+        }
     });
 }
 
@@ -415,3 +437,4 @@ function viewAllGitHubReleases() {
 }
 </script>
 @endpush
+

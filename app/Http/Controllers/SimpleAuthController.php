@@ -744,47 +744,30 @@ class SimpleAuthController extends Controller
             Log::warning('Failed to save password on user model during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
         }
 
-        // Best-effort: update exact and plus-address variants across central and tenant
-        $candidates = array_values(array_unique(array_filter([$data['email'], (string) ($user->email ?? '')])));
-        $patterns = [];
-        foreach ($candidates as $addr) {
-            if (strpos($addr, '@') !== false) {
-                [$local, $domain] = explode('@', $addr, 2);
-                $base = preg_replace('/\+.*$/', '', $local);
-                $patterns[] = $base . '%@' . $domain;
-            }
-        }
-
-        $applyUpdate = function ($conn) use ($candidates, $patterns, $newHashed) {
-            try {
-                $q = $conn->table('users');
-                $q->where(function ($qq) use ($candidates, $patterns) {
-                    if (! empty($candidates)) {
-                        $qq->whereIn('email', $candidates);
-                    }
-                    foreach ($patterns as $p) {
-                        $qq->orWhere('email', 'like', $p);
-                    }
-                });
-                $q->update(['password' => $newHashed]);
-            } catch (\Throwable $e) {
-                Log::debug('Password bulk update failed', ['error' => $e->getMessage()]);
-            }
-        };
-
+        // Only update the exact user record affected by this reset to avoid
+        // altering other accounts (e.g., tenant admin) accidentally.
         try {
-            $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
-            $applyUpdate(DB::connection($centralConn));
-        } catch (\Throwable $e) {
-            Log::debug('Central user password update failed during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
-        }
-
-        try {
-            if (! empty(config('database.connections.tenant'))) {
-                $applyUpdate(DB::connection('tenant'));
+            if (app()->bound('tenant') && tenant()) {
+                // Tenant-scoped reset: update the specific tenant user by id
+                try {
+                    DB::connection('tenant')->table('users')->where('id', $user->id)->update(['password' => $newHashed]);
+                } catch (\Throwable $e) {
+                    Log::debug('Tenant user password update failed during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
+                }
+            } else {
+                // Central-scoped reset: update the central user by id (if found)
+                try {
+                    $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
+                    $centralUser = DB::connection($centralConn)->table('users')->where('email', $data['email'])->first();
+                    if ($centralUser && ! empty($centralUser->id)) {
+                        DB::connection($centralConn)->table('users')->where('id', $centralUser->id)->update(['password' => $newHashed]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::debug('Central user password update failed during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
+                }
             }
         } catch (\Throwable $e) {
-            Log::debug('Tenant user password update failed during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
+            Log::debug('Scoped password update failed during reset', ['email' => $data['email'], 'error' => $e->getMessage()]);
         }
 
         // Delete the reset token from the same connection where it was stored.
