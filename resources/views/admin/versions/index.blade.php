@@ -81,10 +81,22 @@
                         <i data-lucide="download" class="h-3 w-3"></i>
                         Download Update
                     </button>
-                    <a href="{{ route('admin.versions.show', $updateInfo['update_info']['id']) }}" class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-200">
-                        <i data-lucide="info" class="h-3 w-3"></i>
-                        View Details
-                    </a>
+                    @if(!empty($updateInfo['update_info']['id']))
+                        <a href="{{ route('admin.versions.show', $updateInfo['update_info']['id']) }}" class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-200">
+                            <i data-lucide="info" class="h-3 w-3"></i>
+                            View Details
+                        </a>
+                    @elseif(!empty($updateInfo['update_info']['release_url']))
+                        <a href="{{ $updateInfo['update_info']['release_url'] }}" target="_blank" class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-200">
+                            <i data-lucide="info" class="h-3 w-3"></i>
+                            View Release
+                        </a>
+                    @else
+                        <button disabled class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-400" title="Details not available">
+                            <i data-lucide="info" class="h-3 w-3"></i>
+                            View Details
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>

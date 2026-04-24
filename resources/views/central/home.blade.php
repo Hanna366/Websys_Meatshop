@@ -169,7 +169,7 @@
                         <span class="text-slate-600">GitHub</span>
                     </div>
                 </div>
-                <a href="/admin/versions" class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-medium text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-600 hover:text-white">
+                <a href="{{ route('admin.versions.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-medium text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-600 hover:text-white">
                     <i data-lucide="settings" class="h-4 w-4"></i>
                     Manage Versions
                 </a>
@@ -345,6 +345,22 @@
 
 @push('scripts')
 <script>
+    function checkForUpdates() {
+        if (!confirm('Check for updates now? This will query the central version service.')) return;
+        fetch('{{ route("admin.versions.check-updates") }}', {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        }).then(function (res) {
+            if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+            return res.json();
+        }).then(function (data) {
+            const msg = data.message || 'Checked for updates.';
+            Swal.fire({ title: 'Update Check', text: msg, icon: data.ok ? 'success' : 'info' });
+        }).catch(function (err) {
+            Swal.fire({ title: 'Update Check Failed', text: err.message || String(err), icon: 'error' });
+        });
+    }
     document.getElementById('tenantSearch')?.addEventListener('input', function (event) {
         const query = event.target.value.trim().toLowerCase();
         document.querySelectorAll('#tenantTable .tenant-row').forEach(function (row) {

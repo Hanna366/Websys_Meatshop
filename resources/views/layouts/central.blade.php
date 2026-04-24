@@ -396,6 +396,10 @@
                     <i data-lucide="badge-dollar-sign" class="h-4 w-4"></i>
                     Plans
                 </a>
+                <a class="nav-item {{ request()->routeIs('admin.versions.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ route('admin.versions.index') }}">
+                    <i data-lucide="package" class="h-4 w-4"></i>
+                    Versions
+                </a>
                 <a class="nav-item {{ request()->routeIs('tenants.create') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ route('tenants.create') }}">
                     <i data-lucide="plus-circle" class="h-4 w-4"></i>
                     Create Tenant

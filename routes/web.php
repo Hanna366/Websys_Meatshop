@@ -264,3 +264,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->g
     Route::get('/updates/status', [App\Http\Controllers\SystemUpdateController::class, 'status'])->name('updates.status');
 });
 
+// Tenant-facing System Updates UI (read-only + reporting)
+Route::middleware(['auth', 'tenant.active'])->group(function () {
+    Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
+    Route::post('/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])->name('tenant.updates.request');
+    Route::post('/dashboard/updates/report', [App\Http\Controllers\TenantUpdateController::class, 'report'])->name('tenant.updates.report');
+    Route::get('/dashboard/updates/history', [App\Http\Controllers\TenantUpdateController::class, 'history'])->name('tenant.updates.history');
+
+    // Tenant support routes
+    Route::get('/dashboard/support', [App\Http\Controllers\SupportTicketController::class, 'index'])->name('tenant.support.index');
+    Route::post('/dashboard/support', [App\Http\Controllers\SupportTicketController::class, 'store'])->name('tenant.support.store');
+});
+

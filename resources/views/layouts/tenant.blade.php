@@ -385,6 +385,10 @@
                     <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
                     Reports
                 </a>
+                <a class="nav-item {{ request()->routeIs('tenant.updates.*') || request()->routeIs('tenant.updates.index') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ route('tenant.updates.index') }}">
+                    <i data-lucide="layers" class="h-4 w-4"></i>
+                    System Updates
+                </a>
                 <a class="nav-item {{ request()->routeIs('tenant.settings') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/settings">
                     <i data-lucide="settings" class="h-4 w-4"></i>
                     Settings

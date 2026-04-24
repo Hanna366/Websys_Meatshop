@@ -296,19 +296,18 @@ class Tenant extends Model implements TenantWithDatabase
      */
     public function getTenantDatabaseConfig(): array
     {
-        $defaultConnection = config('database.default');
-        $baseConfig = config("database.connections.{$defaultConnection}", []);
+        $centralConnection = (string) (config('tenancy.database.central_connection')
+            ?? env('DB_CONNECTION', 'mysql'));
 
-        $driver = $baseConfig['driver'] ?? 'mysql';
+        if ($centralConnection === 'tenant') {
+            $centralConnection = (string) env('DB_CONNECTION', 'mysql');
+        }
+
+        $baseConfig = config("database.connections.{$centralConnection}", []);
+        $driver = $this->resolveTenantDatabaseDriver($baseConfig);
 
         if ($driver === 'sqlite') {
-            // Tenant databases are stored as sqlite files under database/tenants
-            $tenantPath = database_path('tenants');
-            if (!is_dir($tenantPath)) {
-                mkdir($tenantPath, 0755, true);
-            }
-
-            $file = $tenantPath . DIRECTORY_SEPARATOR . ($this->db_name ?? 'tenant') . '.sqlite';
+            $file = $this->tenantSqlitePath();
 
             return [
                 'driver' => 'sqlite',
@@ -339,5 +338,80 @@ class Tenant extends Model implements TenantWithDatabase
             'engine' => $baseConfig['engine'] ?? null,
             'options' => $baseConfig['options'] ?? [],
         ];
+    }
+
+    private function resolveTenantDatabaseDriver(array $baseConfig): string
+    {
+        $storedConnection = (string) ($this->getAttribute('db_connection')
+            ?? $this->getAttribute('db_driver')
+            ?? '');
+
+        if (in_array($storedConnection, ['sqlite', 'mysql', 'mariadb', 'pgsql', 'sqlsrv'], true)) {
+            return $storedConnection;
+        }
+
+        if (in_array(($baseConfig['driver'] ?? null), ['mysql', 'mariadb'], true)
+            && $this->tenantMySqlDatabaseExists($baseConfig)) {
+            return (string) $baseConfig['driver'];
+        }
+
+        if ($this->existingTenantSqlitePath() !== null) {
+            return 'sqlite';
+        }
+
+        return (string) ($baseConfig['driver'] ?? 'mysql');
+    }
+
+    private function tenantSqlitePath(): string
+    {
+        $tenantPath = database_path('tenants');
+        if (!is_dir($tenantPath)) {
+            mkdir($tenantPath, 0755, true);
+        }
+
+        return $this->existingTenantSqlitePath()
+            ?? ($tenantPath . DIRECTORY_SEPARATOR . ($this->db_name ?? 'tenant') . '.sqlite');
+    }
+
+    private function existingTenantSqlitePath(): ?string
+    {
+        if (empty($this->db_name)) {
+            return null;
+        }
+
+        $file = database_path('tenants' . DIRECTORY_SEPARATOR . $this->db_name . '.sqlite');
+
+        return is_file($file) ? $file : null;
+    }
+
+    private function tenantMySqlDatabaseExists(array $baseConfig): bool
+    {
+        if (empty($this->db_name)) {
+            return false;
+        }
+
+        try {
+            $host = (string) ($baseConfig['host'] ?? '127.0.0.1');
+            $port = (string) ($baseConfig['port'] ?? '3306');
+            $username = (string) ($baseConfig['username'] ?? '');
+            $password = (string) ($baseConfig['password'] ?? '');
+
+            $pdo = new \PDO(
+                "mysql:host={$host};port={$port};dbname=information_schema;charset=utf8mb4",
+                $username,
+                $password,
+                [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_TIMEOUT => 2,
+                ]
+            );
+
+            $statement = $pdo->prepare('SELECT SCHEMA_NAME FROM SCHEMATA WHERE SCHEMA_NAME = ? LIMIT 1');
+            $statement->execute([$this->db_name]);
+
+            return (bool) $statement->fetchColumn();
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

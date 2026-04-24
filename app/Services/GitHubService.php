@@ -234,7 +234,7 @@ class GitHubService
         return 'patch';
     }
 
-    private static function extractFeatures(string $description): array
+    public static function extractFeatures(string $description): array
     {
         $out = [];
         $lines = preg_split('/\r?\n/', $description);
@@ -249,7 +249,7 @@ class GitHubService
         return $out;
     }
 
-    private static function extractFixes(string $description): array
+    public static function extractFixes(string $description): array
     {
         $out = [];
         $lines = preg_split('/\r?\n/', $description);

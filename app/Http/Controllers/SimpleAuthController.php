@@ -70,7 +70,7 @@ class SimpleAuthController extends Controller
 
         if (!$this->isAuthDatabaseResponsive()) {
             return back()->withErrors([
-                'email' => 'Login is temporarily unavailable because the database service is not responding. Please restart MySQL and try again.',
+                'email' => __('auth.db_unavailable'),
             ])->withInput($request->only('email'));
         }
 

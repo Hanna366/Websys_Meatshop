@@ -35,18 +35,18 @@ class VersionManagementService
                 'current_version' => $currentVersion,
                 'latest_version' => $githubComparison['latest_version'],
                 'update_info' => [
-                    'version' => $githubComparison['latest_version'],
-                    'type' => self::determineUpdateType($currentVersion, $githubComparison['latest_version']),
+                    'version' => $githubComparison['latest_version'] ?? null,
+                    'type' => self::determineUpdateType($currentVersion, $githubComparison['latest_version'] ?? $currentVersion),
                     'release_name' => $githubComparison['github_data']['name'] ?? null,
                     'description' => $githubComparison['github_data']['body'] ?? null,
-                    'published_at' => $githubComparison['published_at'],
-                    'release_url' => $githubComparison['release_url'],
-                    'download_count' => $githubComparison['download_count'],
+                    'published_at' => $githubComparison['published_at'] ?? null,
+                    'release_url' => $githubComparison['release_url'] ?? null,
+                    'download_count' => $githubComparison['download_count'] ?? null,
                     'source' => 'github',
                     'features' => \App\Services\GitHubService::extractFeatures($githubComparison['github_data']['body'] ?? ''),
                     'fixes' => \App\Services\GitHubService::extractFixes($githubComparison['github_data']['body'] ?? ''),
                 ],
-                'message' => $githubComparison['message'],
+                'message' => $githubComparison['message'] ?? null,
                 'source' => 'github'
             ];
         }
