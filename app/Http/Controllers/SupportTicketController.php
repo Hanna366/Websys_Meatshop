@@ -17,7 +17,7 @@ class SupportTicketController extends Controller
         $tenantId = null;
         if (function_exists('tenant') && tenant()) {
             $tenant = tenant();
-            $tenantId = $tenant->id ?? $tenant->tenant_id ?? null;
+            $tenantId = $tenant->tenant_id ?? $tenant->id ?? null; // prefer UUID
         } else {
             $tenantId = $user->tenant_id ?? null;
         }

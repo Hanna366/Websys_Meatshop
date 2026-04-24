@@ -206,8 +206,10 @@
                         <i data-lucide="history" class="h-4 w-4 text-slate-600"></i>
                         <h3 class="text-sm font-semibold text-slate-900">Update History</h3>
                     </div>
-                    <p class="text-2xl font-bold text-slate-700">0</p>
-                    <p class="mt-1 text-xs text-slate-500">Total updates</p>
+                    <a href="{{ route('admin.update_requests.index') }}" class="inline-block">
+                        <p class="text-2xl font-bold text-slate-700">{{ $pending_update_requests ?? 0 }}</p>
+                        <p class="mt-1 text-xs text-slate-500">Pending update requests</p>
+                    </a>
                 </div>
             </div>
             <div class="mt-4 flex items-center justify-between">

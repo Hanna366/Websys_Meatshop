@@ -19,7 +19,7 @@ class TenantUpdateController extends Controller
         $tenantId = null;
         if (function_exists('tenant') && tenant()) {
             $tenant = tenant();
-            $tenantId = $tenant->id ?? $tenant->tenant_id ?? null;
+            $tenantId = $tenant->tenant_id ?? $tenant->id ?? null; // prefer UUID (`tenant_id`) for central consistency
         } else {
             $tenantId = $user->tenant_id ?? null;
         }
@@ -41,12 +41,16 @@ class TenantUpdateController extends Controller
 
         $updateAvailable = version_compare($latestVersion, $installedVersion, '>');
 
+        // Tenant's own update requests (central table entries)
+        $myRequests = $tenantId ? \App\Models\UpdateRequest::where('tenant_id', $tenantId)->orderBy('requested_at', 'desc')->get() : collect();
+
         return view('tenant.updates', [
             'installedVersion' => $installedVersion,
             'latestVersion' => $latestVersion,
             'updateAvailable' => $updateAvailable,
             'latestRelease' => $latest,
             'lastLog' => $lastLog,
+            'myRequests' => $myRequests,
         ]);
     }
 
@@ -60,7 +64,7 @@ class TenantUpdateController extends Controller
         $tenantId = null;
         if (function_exists('tenant') && tenant()) {
             $tenant = tenant();
-            $tenantId = $tenant->id ?? $tenant->tenant_id ?? null;
+            $tenantId = $tenant->tenant_id ?? $tenant->id ?? null;
         } else {
             $tenantId = $user->tenant_id ?? null;
         }
@@ -86,21 +90,24 @@ class TenantUpdateController extends Controller
         $tenantId = null;
         if (function_exists('tenant') && tenant()) {
             $tenant = tenant();
-            $tenantId = $tenant->id ?? $tenant->tenant_id ?? null;
+            $tenantId = $tenant->tenant_id ?? $tenant->id ?? null;
         } else {
             $tenantId = $user->tenant_id ?? null;
         }
 
         $lastLog = $tenantId ? UpdateLog::where('tenant_id', $tenantId)->orderBy('created_at', 'desc')->first() : null;
 
-        SupportTicket::create([
+        // Determine latest central version
+        $latest = Version::where('status', 'stable')->orderBy('release_date', 'desc')->first();
+
+        // Create a dedicated UpdateRequest so Central can manage approvals
+        \App\Models\UpdateRequest::create([
             'tenant_id' => $tenantId,
             'user_id' => $user->id ?? null,
             'current_version' => $lastLog->to_version ?? VersionManagementService::getCurrentVersion(),
-            'last_update_at' => $lastLog->created_at ?? null,
-            'message' => 'Tenant requested update to: ' . ($request->input('target_version') ?? 'latest'),
-            'status' => 'open',
-            'meta' => ['type' => 'update_request']
+            'requested_version' => $request->input('target_version') ?? ($latest->version ?? VersionManagementService::getCurrentVersion()),
+            'status' => 'pending',
+            'requested_at' => now(),
         ]);
 
         return redirect()->back()->with('success', 'Update request submitted. Central admin will review.');

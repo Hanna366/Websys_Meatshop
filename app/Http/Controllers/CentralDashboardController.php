@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use App\Models\UpdateRequest;
 use App\Services\DatabaseMonitorService;
 
 class CentralDashboardController extends Controller
@@ -34,6 +35,9 @@ class CentralDashboardController extends Controller
         // Check XAMPP MySQL status
         $xamppStatus = DatabaseMonitorService::checkXAMPPStatus();
 
+        // Pending update requests (from tenants)
+        $pendingUpdateRequests = UpdateRequest::where('status', 'pending')->count();
+
         return view('central.home', [
             'stats' => $stats,
             'tenants' => $tenants,
@@ -41,6 +45,7 @@ class CentralDashboardController extends Controller
             'database_summary' => $databaseSummary,
             'database_health' => $databaseHealth,
             'xampp_status' => $xamppStatus,
+            'pending_update_requests' => $pendingUpdateRequests,
         ]);
     }
 }

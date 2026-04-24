@@ -52,7 +52,10 @@
                     <button class="rounded-xl border border-emerald-200 bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-700">Update Now</button>
                 </form>
             @else
-                <form method="POST" action="{{ route('tenant.updates.request') }}">
+                @php
+                    $requestAction = '/dashboard/updates/request' . (request()->query('tenant') ? '?tenant=' . request()->query('tenant') : '');
+                @endphp
+                <form method="POST" action="{{ $requestAction }}">
                     @csrf
                     <input type="hidden" name="target_version" value="{{ $latestVersion }}">
                     <button type="submit" class="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">Request Update</button>
@@ -61,6 +64,30 @@
 
             <button class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600" onclick="document.getElementById('reportModal').classList.remove('hidden')">Report Issue</button>
         </div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200/70 bg-white shadow-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="heading-font text-lg font-semibold">Your Update Requests</h2>
+            <div class="text-xs text-slate-500">Recent</div>
+        </div>
+        @if(isset($myRequests) && $myRequests->isNotEmpty())
+            <div class="space-y-2">
+                @foreach($myRequests as $req)
+                    <div class="rounded-lg border border-slate-100 p-3 flex items-center justify-between">
+                        <div>
+                            <div class="text-sm font-semibold">{{ $req->current_version ?? 'N/A' }} → {{ $req->requested_version ?? 'N/A' }}</div>
+                            <div class="text-xs text-slate-500">Status: {{ ucfirst($req->status) }} · Requested: {{ optional($req->requested_at)->format('M d, Y H:i') }}</div>
+                        </div>
+                        <div>
+                            <a href="{{ route('tenant.updates.history') }}" class="text-xs text-indigo-600">View History</a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p class="text-sm text-slate-500">You have not requested any updates yet.</p>
+        @endif
     </section>
 
     <section class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -95,7 +122,10 @@
 <div id="reportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 hidden">
     <div class="w-full max-w-lg rounded-xl bg-white p-6">
         <h3 class="text-lg font-semibold">Report an Issue</h3>
-        <form method="POST" action="{{ route('tenant.updates.report') }}" class="mt-4">
+        @php
+            $reportAction = '/dashboard/updates/report' . (request()->query('tenant') ? '?tenant=' . request()->query('tenant') : '');
+        @endphp
+        <form method="POST" action="{{ $reportAction }}" class="mt-4">
             @csrf
             <div class="mb-3">
                 <label class="block text-sm text-slate-700">Describe the issue</label>

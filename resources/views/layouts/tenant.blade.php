@@ -351,6 +351,8 @@
                 <p class="mb-1.5 text-xs text-white/80">Tenant Workspace</p>
                 @if(tenant())
                     <p class="mb-0 text-sm text-white/85">{{ tenant()->business_name ?? tenant()->tenant_id }}</p>
+                @elseif(auth()->check())
+                    <p class="mb-0 text-sm text-white/85">{{ auth()->user()->name }}</p>
                 @elseif(session('user.name'))
                     <p class="mb-0 text-sm text-white/85">{{ session('user.name') }}</p>
                 @endif
@@ -385,7 +387,16 @@
                     <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
                     Reports
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.updates.*') || request()->routeIs('tenant.updates.index') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ route('tenant.updates.index') }}">
+                @php
+                    // This is the tenant layout — link to the tenant System Updates page using a relative URL
+                    // so the current host (tenant) is preserved instead of generating an absolute central URL.
+                    $queryTenant = request()->query('tenant') ?? (auth()->check() ? auth()->user()->tenant_id : null);
+                    $updatesUrl = url('/dashboard/updates');
+                    if ($queryTenant) {
+                        $updatesUrl = url('/dashboard/updates') . '?tenant=' . $queryTenant;
+                    }
+                @endphp
+                <a class="nav-item {{ request()->routeIs('tenant.updates.*') || request()->routeIs('tenant.updates.index') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ $updatesUrl }}">
                     <i data-lucide="layers" class="h-4 w-4"></i>
                     System Updates
                 </a>
@@ -431,7 +442,7 @@
                         </a>
                         <div class="avatar-ring inline-flex h-10 w-10 items-center justify-center rounded-full p-[1px]">
                             <div class="inline-flex h-full w-full items-center justify-center rounded-full bg-white text-sm font-semibold text-slate-700">
-                                {{ strtoupper(substr(session('user.name', 'U'), 0, 1)) }}
+                                {{ strtoupper(substr(auth()->check() ? auth()->user()->name : session('user.name', 'U'), 0, 1)) }}
                             </div>
                         </div>
                     </div>

@@ -3,6 +3,10 @@
 // Version / Update Management (handled below within PHP tags)
 
 use Illuminate\Support\Facades\Route;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+use App\Http\Middleware\InitializeTenancyByQuery;
+use App\Http\Middleware\SuppressTenantNotFoundInDebug;
 use App\Http\Controllers\CentralDashboardController;
 use App\Http\Controllers\SimpleAuthController;
 use App\Http\Controllers\SubscriptionController;
@@ -88,9 +92,74 @@ Route::middleware(['auth', 'central.admin'])->group(function () {
 if (config('app.debug')) {
     Route::get('/_debug/subscription', [App\Http\Controllers\DevDebugController::class, 'subscription'])->name('debug.subscription');
 }
+
+// Dev-only: list tenants with quick links to open tenant pages via ?tenant=UUID
+if (config('app.debug')) {
+    Route::get('/_debug/tenants', function () {
+        $tenants = \Stancl\Tenancy\Database\Models\Tenant::all();
+        $items = $tenants->map(function ($t) {
+            $display = $t->name ?? $t->domain ?? $t->tenant_id ?? $t->id;
+            $uuid = $t->tenant_id ?? $t->id;
+            $url = url('/dashboard/updates') . '?tenant=' . $uuid;
+            return "<li><a href=\"{$url}\">{htmlspecialchars($display)} — {$uuid}</a></li>";
+        })->implode('');
+
+        return response("<h1>Tenants</h1><ul>{$items}</ul>", 200)->header('Content-Type', 'text/html');
+    });
+}
+
+// Dev-only: check current tenant initialization (no auth)
+if (config('app.debug')) {
+    Route::get('/_debug/tenant', function () {
+        $tenant = function_exists('tenant') ? tenant() : null;
+        if (! $tenant) {
+            return response()->json(['tenant' => null, 'message' => 'No tenant initialized']);
+        }
+
+        return response()->json([
+            'tenant_id' => $tenant->tenant_id ?? $tenant->id ?? null,
+            'business_name' => $tenant->business_name ?? null,
+            'domain' => $tenant->domain ?? null,
+        ]);
+    });
+}
+
+// Dev-only: lightweight tenant viewer (no auth) to help open tenant pages on localhost
+if (config('app.debug')) {
+    Route::get('/_dev/tenant-view/{id}', function ($id) {
+        $t = \Stancl\Tenancy\Database\Models\Tenant::where('tenant_id', $id)
+            ->orWhere('id', $id)
+            ->first();
+
+        if (! $t) {
+            return response('Tenant not found', 404);
+        }
+
+        $uuid = $t->tenant_id ?? $t->id;
+        $link = url('/dashboard/updates') . '?tenant=' . $uuid;
+
+        return "<h1>Tenant: " . htmlspecialchars($t->business_name ?? $uuid) . "</h1><p>ID: " . htmlspecialchars($uuid) . "</p><p><a href='" . htmlspecialchars($link) . "'>Open Updates (with ?tenant)</a></p>";
+    });
+}
+
+// Dev-only: render real tenant updates page without auth/tenancy (preview)
+if (config('app.debug')) {
+    Route::get('/_dev/preview/{id}', [App\Http\Controllers\DevTenantPreviewController::class, 'preview']);
+}
     Route::post('/tenant/{tenantId}', [TenantController::class, 'update'])->name('tenants.update');
     Route::post('/tenant/{tenantId}/status', [TenantController::class, 'updateStatus'])->name('tenants.updateStatus');
     Route::post('/tenant/{tenantId}/subscription', [TenantController::class, 'updateSubscription'])->name('tenants.updateSubscription');
+});
+
+// Central admin: view tenant support tickets / update requests
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
+    Route::get('/support-tickets', [App\Http\Controllers\CentralSupportTicketsController::class, 'index'])->name('support_tickets.index');
+    Route::get('/support-tickets/{id}', [App\Http\Controllers\CentralSupportTicketsController::class, 'show'])->name('support_tickets.show');
+    Route::post('/support-tickets/{id}/status', [App\Http\Controllers\CentralSupportTicketsController::class, 'updateStatus'])->name('support_tickets.update_status');
+    // Update requests management
+    Route::get('/update-requests', [App\Http\Controllers\CentralUpdateRequestsController::class, 'index'])->name('update_requests.index');
+    Route::get('/update-requests/{id}', [App\Http\Controllers\CentralUpdateRequestsController::class, 'show'])->name('update_requests.show');
+    Route::post('/update-requests/{id}/status', [App\Http\Controllers\CentralUpdateRequestsController::class, 'updateStatus'])->name('update_requests.update_status');
 });
 
 // Subscription routes - require authentication
@@ -108,6 +177,8 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/test', function () {
     return 'Laravel Meat Shop POS is working!';
 });
+
+
 
 // Dev-only user inspection route (debug only)
 if (config('app.debug')) {
@@ -265,7 +336,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->g
 });
 
 // Tenant-facing System Updates UI (read-only + reporting)
-Route::middleware(['auth', 'tenant.active'])->group(function () {
+$tenantMiddleware = ['auth', InitializeTenancyByQuery::class, 'tenant.active'];
+// In non-debug (production-like) environments, initialize tenancy by domain and prevent central-domain access
+if (! config('app.debug')) {
+    // Wrap domain initialization to catch tenant-not-found gracefully
+    $tenantMiddleware[] = SuppressTenantNotFoundInDebug::class;
+    $tenantMiddleware[] = InitializeTenancyByDomain::class;
+    $tenantMiddleware[] = PreventAccessFromCentralDomains::class;
+}
+
+Route::middleware($tenantMiddleware)->group(function () {
     Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
     Route::post('/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])->name('tenant.updates.request');
     Route::post('/dashboard/updates/report', [App\Http\Controllers\TenantUpdateController::class, 'report'])->name('tenant.updates.report');

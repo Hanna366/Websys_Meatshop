@@ -9,9 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    @env('local')
-        <script src="https://cdn.tailwindcss.com"></script>
-    @endenv
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="{{ asset('favicon.ico') }}">
     <script>
         tailwind.config = {
@@ -399,6 +397,14 @@
                 <a class="nav-item {{ request()->routeIs('admin.versions.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ route('admin.versions.index') }}">
                     <i data-lucide="package" class="h-4 w-4"></i>
                     Versions
+                </a>
+                <a class="nav-item {{ request()->routeIs('admin.update_requests.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ route('admin.update_requests.index') }}">
+                    <i data-lucide="upload-cloud" class="h-4 w-4"></i>
+                    Update Requests
+                </a>
+                <a class="nav-item {{ request()->routeIs('admin.support_tickets.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ route('admin.support_tickets.index') }}">
+                    <i data-lucide="help-circle" class="h-4 w-4"></i>
+                    Support Tickets
                 </a>
                 <a class="nav-item {{ request()->routeIs('tenants.create') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ route('tenants.create') }}">
                     <i data-lucide="plus-circle" class="h-4 w-4"></i>

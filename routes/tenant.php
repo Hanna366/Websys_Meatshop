@@ -104,5 +104,11 @@ Route::middleware([
         Route::get('/profile', function () {
             return view('profile');
         })->name('tenant.profile');
+
+        // Tenant System Updates (in-tenant routes) — ensure these are available on tenant domains
+        Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
+        Route::post('/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])->name('tenant.updates.request');
+        Route::post('/dashboard/updates/report', [App\Http\Controllers\TenantUpdateController::class, 'report'])->name('tenant.updates.report');
+        Route::get('/dashboard/updates/history', [App\Http\Controllers\TenantUpdateController::class, 'history'])->name('tenant.updates.history');
     });
 });
