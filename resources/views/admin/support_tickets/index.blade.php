@@ -8,16 +8,28 @@
     @php use Illuminate\Support\Str; @endphp
 
     <div class="mb-4 flex items-center justify-between">
-        <form method="get" class="flex gap-2">
-            <input type="text" name="tenant_id" value="{{ request('tenant_id') }}" placeholder="Tenant ID" class="input" />
-            <select name="status" class="input">
-                <option value="">Any status</option>
-                <option value="open" {{ request('status')=='open' ? 'selected' : '' }}>Open</option>
-                <option value="assigned" {{ request('status')=='assigned' ? 'selected' : '' }}>Assigned</option>
-                <option value="resolved" {{ request('status')=='resolved' ? 'selected' : '' }}>Resolved</option>
-                <option value="closed" {{ request('status')=='closed' ? 'selected' : '' }}>Closed</option>
-            </select>
-            <button class="btn btn-primary-gradient">Filter</button>
+        <form method="get" class="flex gap-2 items-center">
+            <input type="text" name="tenant_id" value="{{ request('tenant_id') }}" placeholder="Tenant ID" class="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100" />
+            <!-- Custom dropdown to allow themed hover styling -->
+            <div class="relative" x-data="{}">
+                <input type="hidden" name="status" id="statusInput" value="{{ request('status') }}">
+                <button type="button" id="statusToggle" aria-haspopup="listbox" aria-expanded="false" class="h-10 w-44 text-left rounded-xl border border-rose-300 bg-white px-4 pr-10 text-sm text-slate-700 outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-50 inline-flex items-center justify-between">
+                    <span id="statusLabel">{{ ucfirst(request('status') ?: 'Any status') }}</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400">
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+
+                <ul id="statusMenu" role="listbox" tabindex="-1" class="hidden absolute mt-2 w-44 rounded-lg border border-rose-200 bg-white shadow-lg z-50 overflow-hidden">
+                    @php $statuses = ['' => 'Any status', 'open' => 'Open', 'assigned' => 'Assigned', 'resolved' => 'Resolved', 'closed' => 'Closed']; @endphp
+                    @foreach($statuses as $val => $label)
+                        <li data-value="{{ $val }}" role="option" aria-selected="{{ request('status') === $val ? 'true' : 'false' }}" class="cursor-pointer px-4 py-2 text-sm text-slate-700 hover:bg-gradient-to-r hover:from-rose-500 hover:to-pink-400 hover:text-white {{ request('status') === $val ? 'bg-rose-100' : '' }}">
+                            {{ $label }}
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+            <button class="h-10 inline-flex items-center gap-2 rounded-xl border border-transparent bg-gradient-to-tr from-rose-500 to-pink-400 px-4 py-2 text-sm font-semibold text-white shadow-md hover:opacity-95">Filter</button>
         </form>
 
         <div>
@@ -66,6 +78,64 @@
             </table>
         </div>
     </div>
+@push('scripts')
+<script>
+    (function () {
+        const toggle = document.getElementById('statusToggle');
+        const menu = document.getElementById('statusMenu');
+        const input = document.getElementById('statusInput');
+        const label = document.getElementById('statusLabel');
+
+        if (!toggle || !menu || !input) return;
+
+        function openMenu() {
+            menu.classList.remove('hidden');
+            toggle.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeMenu() {
+            menu.classList.add('hidden');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        toggle.addEventListener('click', function (e) {
+            if (menu.classList.contains('hidden')) openMenu(); else closeMenu();
+        });
+
+        // click outside
+        document.addEventListener('click', function (e) {
+            if (!toggle.contains(e.target) && !menu.contains(e.target)) closeMenu();
+        });
+
+        menu.querySelectorAll('li[data-value]').forEach(function (li) {
+            li.addEventListener('click', function () {
+                const val = this.getAttribute('data-value');
+                input.value = val;
+                label.textContent = this.textContent.trim();
+                // Update aria-selected
+                menu.querySelectorAll('[role="option"]').forEach(el => el.setAttribute('aria-selected', 'false'));
+                this.setAttribute('aria-selected', 'true');
+                closeMenu();
+            });
+        });
+
+        // keyboard support
+        toggle.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault(); openMenu(); menu.querySelector('[role="option"]').focus();
+            }
+        });
+
+        menu.querySelectorAll('[role="option"]').forEach(function (opt) {
+            opt.setAttribute('tabindex', '-1');
+            opt.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { closeMenu(); toggle.focus(); }
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+            });
+        });
+    })();
+</script>
+@endpush
 
     <div class="mt-4">{{ $tickets->links() }}</div>
 </div>

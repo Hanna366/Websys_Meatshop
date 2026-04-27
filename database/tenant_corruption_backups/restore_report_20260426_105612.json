@@ -1,0 +1,1741 @@
+{
+    "tenant_00f6a9008849": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_0c47e8ff57e1": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 2
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 2
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_24954cbf4f9a": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_2e6d14f1e632": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_35327d94354c": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 3
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 3
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_363b9211fb10": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_3d4bc7740e6e": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_41a99cc297ab": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 3
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 3
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_42773bcec7e4": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_4d34b7e0e131": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 3
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 3
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_4fb538797678": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_76e11c2ffd3a": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_8463914dda73": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_8ee6d14757f1": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 4
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 6
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 37
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 4
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_c9ba16171362": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_cdfc6312b27e": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 2
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 2
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_d378fa7ceaa4": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 3
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_d54d990eea30": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_d7267264cedc": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_d87325fac387": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 4
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 8
+            },
+            {
+                "table": "roles",
+                "rows": 4
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 19
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    },
+    "tenant_dbcbc31ad9ed": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 2
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 2
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    }
+}

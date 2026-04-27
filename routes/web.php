@@ -178,6 +178,22 @@ Route::get('/test', function () {
     return 'Laravel Meat Shop POS is working!';
 });
 
+// GitHub webhook for instant release notifications
+Route::post('/webhook/github', [App\Http\Controllers\WebhookController::class, 'github'])->name('webhook.github');
+
+// Dev-only quick sync endpoint (runs cache clear + sync)
+if (config('app.debug')) {
+    Route::get('/_debug/sync-github', function (\Illuminate\Http\Request $request) {
+        try {
+            \App\Services\GitHubService::clearCache();
+            $result = \App\Services\VersionManagementService::syncGitHubReleases();
+            return response()->json(['success' => true, 'message' => 'Sync completed', 'data' => $result]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    })->name('debug.sync_github');
+}
+
 
 
 // Dev-only user inspection route (debug only)
@@ -326,6 +342,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->g
     Route::get('/update', [UpdateController::class, 'index'])->name('update.index');
     Route::post('/update', [UpdateController::class, 'update'])->name('update.perform');
     Route::get('/update/status', [UpdateController::class, 'status'])->name('update.status');
+    Route::post('/update/sync', [UpdateController::class, 'sync'])->name('update.sync');
 });
 
 // System update API endpoints (admin only)

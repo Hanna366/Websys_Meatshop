@@ -329,6 +329,7 @@ document.addEventListener('click', function(e){
         document.querySelectorAll('[id^="dd-"]').forEach(el=>el.classList.add('hidden'));
     }
 });
+
 </script>
 @endpush
 

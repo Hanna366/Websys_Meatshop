@@ -20,11 +20,37 @@ class VersionManagementService
     }
 
     /**
+     * Get current tenant version
+     */
+    public static function getTenantCurrentVersion($tenantId = null): string
+    {
+        // If tenantId is UUID, convert to integer ID for update_logs lookup
+        if ($tenantId && is_string($tenantId)) {
+            $tenant = \App\Models\Tenant::where('tenant_id', $tenantId)->first();
+            if ($tenant) {
+                $tenantId = $tenant->id;
+            }
+        }
+
+        $lastLog = UpdateLog::where('tenant_id', $tenantId)
+            ->latest('completed_at')
+            ->first();
+
+        if ($lastLog) {
+            return $lastLog->to_version;
+        }
+
+        return self::getCurrentVersion();
+    }
+
+    /**
      * Check for available updates (enhanced with GitHub integration)
      */
-    public static function checkForUpdates(): array
+    public static function checkForUpdates(?int $tenantId = null): array
     {
-        $currentVersion = self::getCurrentVersion();
+        // Installed version (based on last update log for this tenant, fallback to app version)
+        $lastLog = null;
+        $installedVersion = self::getTenantCurrentVersion($tenantId);
         
         // First check GitHub for updates
         $githubComparison = \App\Services\GitHubService::compareVersions();
@@ -32,11 +58,11 @@ class VersionManagementService
         if ($githubComparison['update_available']) {
             return [
                 'update_available' => true,
-                'current_version' => $currentVersion,
+                'current_version' => $installedVersion,
                 'latest_version' => $githubComparison['latest_version'],
                 'update_info' => [
                     'version' => $githubComparison['latest_version'] ?? null,
-                    'type' => self::determineUpdateType($currentVersion, $githubComparison['latest_version'] ?? $currentVersion),
+                    'type' => self::determineUpdateType($installedVersion, $githubComparison['latest_version'] ?? $installedVersion),
                     'release_name' => $githubComparison['github_data']['name'] ?? null,
                     'description' => $githubComparison['github_data']['body'] ?? null,
                     'published_at' => $githubComparison['published_at'] ?? null,
@@ -59,18 +85,18 @@ class VersionManagementService
         if (!$latestVersion) {
             return [
                 'update_available' => false,
-                'current_version' => $currentVersion,
-                'latest_version' => $currentVersion,
+                'current_version' => $installedVersion,
+                'latest_version' => $installedVersion,
                 'message' => 'No updates available',
                 'source' => 'local'
             ];
         }
 
-        $hasUpdate = version_compare($latestVersion->version, $currentVersion, '>');
+        $hasUpdate = version_compare($latestVersion->version, $installedVersion, '>');
 
         return [
             'update_available' => $hasUpdate,
-            'current_version' => $currentVersion,
+            'current_version' => $installedVersion,
             'latest_version' => $latestVersion->version,
             'update_info' => $hasUpdate ? $latestVersion : null,
             'message' => $hasUpdate ? "Update to version {$latestVersion->version} available" : 'You are on the latest version',
@@ -477,6 +503,9 @@ class VersionManagementService
             'checksum' => $data['checksum'] ?? null,
             'is_mandatory' => $data['is_mandatory'] ?? false,
             'auto_update' => $data['auto_update'] ?? false,
+            'is_stable' => $data['is_stable'] ?? (($data['status'] ?? '') === 'stable'),
+            'is_available_to_tenants' => $data['is_available_to_tenants'] ?? (($data['status'] ?? '') === 'stable'),
+            'is_deprecated' => $data['is_deprecated'] ?? (($data['status'] ?? '') === 'deprecated'),
         ]);
     }
     

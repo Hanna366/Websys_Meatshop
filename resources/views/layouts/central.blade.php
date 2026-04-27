@@ -181,14 +181,14 @@
             font-size: 2.2rem;
         }
 
-        .central-header button,
+        .central-header button:not(.btn-primary-gradient),
         .central-header a:not(.btn-primary-gradient) {
             border-color: rgba(255, 255, 255, 0.22) !important;
             background: rgba(255, 255, 255, 0.92) !important;
             color: #3f0f1a !important;
         }
 
-        .central-header button:hover,
+        .central-header button:not(.btn-primary-gradient):hover,
         .central-header a:not(.btn-primary-gradient):hover {
             background: #ffffff !important;
             color: #25070f !important;
@@ -436,16 +436,21 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="flex items-center gap-3 sm:gap-4">
                         @yield('header_actions')
-                        <a href="{{ route('tenants.create') }}" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
-                            <i data-lucide="plus" class="h-4 w-4"></i>
-                            <span class="hidden sm:inline">Create Tenant</span>
-                        </a>
-                        <div class="avatar-ring inline-flex h-10 w-10 items-center justify-center rounded-full p-[1px]">
-                            <div class="inline-flex h-full w-full items-center justify-center rounded-full bg-white text-sm font-semibold text-slate-700">
-                                {{ strtoupper(substr(session('user.name', 'U'), 0, 1)) }}
+                        
+                        <div class="flex items-center gap-2">
+                            <div class="avatar-ring inline-flex h-12 w-12 items-center justify-center rounded-full p-[1px]">
+                                <div class="inline-flex h-full w-full items-center justify-center rounded-full bg-white text-base font-semibold text-slate-700">
+                                    {{ strtoupper(substr(session('user.name', 'U'), 0, 1)) }}
+                                </div>
                             </div>
+
+                            <!-- Visible logout in header for central users -->
+                            <form action="{{ route('logout') }}" method="POST" class="m-0">
+                                @csrf
+                                <button type="submit" class="btn-primary-gradient inline-flex items-center gap-3 rounded-full px-5 py-2.5 text-base font-semibold">Logout</button>
+                            </form>
                         </div>
                     </div>
                 </div>

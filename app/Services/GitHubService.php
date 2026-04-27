@@ -145,6 +145,17 @@ class GitHubService
         return null;
     }
 
+    public static function clearCache(): void
+    {
+        $svc = new self();
+        $cacheKey = 'github_releases_' . $svc->owner . '_' . $svc->repo;
+        try {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+        } catch (\Throwable $e) {
+            Log::warning('GitHubService::clearCache failed: ' . $e->getMessage());
+        }
+    }
+
     public static function downloadAsset(string $downloadUrl, ?string $token = null): array
     {
         try {

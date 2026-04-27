@@ -10,7 +10,7 @@
         "-ExecutionPolicy",
         "Bypass",
         "-Command",
-        "Start-Process -FilePath 'powershell' -Verb RunAs -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','\"${workspaceFolder}\\scripts\\restore_from_known_good_backup.ps1\"'"
+        "Start-Process -FilePath 'powershell' -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File \"${workspaceFolder}\\scripts\\restore_from_known_good_backup.ps1\" \"C:\\xampp\\mysql\\data_ORIG_20260424_122504\"'"
       ],
       "presentation": {
         "echo": true,

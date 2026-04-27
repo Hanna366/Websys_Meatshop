@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\UpdateRequest;
+use App\Models\Version;
 use App\Services\DatabaseMonitorService;
+use App\Services\VersionManagementService;
 
 class CentralDashboardController extends Controller
 {
@@ -38,6 +40,10 @@ class CentralDashboardController extends Controller
         // Pending update requests (from tenants)
         $pendingUpdateRequests = UpdateRequest::where('status', 'pending')->count();
 
+        $currentVersion = VersionManagementService::getCurrentVersion();
+        $latest = Version::where('status', 'stable')->orderBy('release_date', 'desc')->first();
+        $latestVersion = $latest->version ?? $currentVersion;
+
         return view('central.home', [
             'stats' => $stats,
             'tenants' => $tenants,
@@ -46,6 +52,8 @@ class CentralDashboardController extends Controller
             'database_health' => $databaseHealth,
             'xampp_status' => $xamppStatus,
             'pending_update_requests' => $pendingUpdateRequests,
+            'currentVersion' => $currentVersion,
+            'latestVersion' => $latestVersion,
         ]);
     }
 }

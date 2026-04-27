@@ -16,6 +16,12 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('tenant:send-lifecycle-alerts')->dailyAt('08:00');
+        
+        // Auto-sync GitHub releases every hour
+        $schedule->job(new \App\Jobs\SyncGitHubReleases())->hourly();
+        
+        // Also sync every 15 minutes during business hours for faster updates
+        $schedule->job(new \App\Jobs\SyncGitHubReleases())->cron('*/15 8-20 * * *'); // Every 15 mins from 8am to 8pm
     }
 
     /**

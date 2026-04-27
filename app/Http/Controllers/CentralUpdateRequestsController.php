@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\UpdateRequest;
+use App\Models\TenantUpdateRequest;
 use App\Models\Tenant;
+use App\Jobs\ApplyTenantUpdate;
 use Illuminate\Http\Request;
 
 class CentralUpdateRequestsController extends Controller
@@ -56,6 +58,39 @@ class CentralUpdateRequestsController extends Controller
         }
         $req->save();
 
-        return redirect()->back()->with('success', 'Update request updated.');
+        // Create update log immediately when approved
+        if ($request->input('status') === 'approved') {
+            try {
+                $tenant = \App\Models\Tenant::where('tenant_id', $req->tenant_id)->first();
+                if ($tenant) {
+                    \App\Models\UpdateLog::create([
+                        'tenant_id' => $tenant->id,
+                        'from_version' => $req->current_version,
+                        'to_version' => $req->requested_version,
+                        'status' => 'completed',
+                        'update_data' => [
+                            'applied_by' => 'admin_approval',
+                            'applied_at' => now()->toDateTimeString(),
+                            'central_request_id' => $req->id
+                        ],
+                        'started_at' => now(),
+                        'completed_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    
+                    // Mark central request as completed
+                    $req->status = 'completed';
+                    $req->save();
+                }
+            } catch (\Throwable $e) {
+                \Log::error('Failed to create update log', [
+                    'tenant_id' => $req->tenant_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Update request updated. Tenant notified of status change.');
     }
 }

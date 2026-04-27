@@ -37,27 +37,23 @@ class UpdateController extends Controller
         $current = env('APP_VERSION') ?: config('app.version') ?: 'unknown';
         $latest = null;
 
+        // Use database versions instead of direct GitHub API call
         try {
-            $releases = $github->fetchReleases();
+            $latestVersion = \App\Models\Version::where('is_stable', true)
+                ->where('is_available_to_tenants', true)
+                ->orderBy('version', 'desc')
+                ->first();
 
-            $latest = collect($releases)
-                ->first(function (array $release): bool {
-                    if (! empty($release['draft'])) {
-                        return false;
-                    }
-
-                    if (! env('GITHUB_INCLUDE_PRERELEASE', false) && ! empty($release['prerelease'])) {
-                        return false;
-                    }
-
-                    return true;
-                });
-
-            if (! $latest) {
-                $latest = collect($releases)->first();
+            if ($latestVersion) {
+                $latest = [
+                    'tag_name' => $latestVersion->version,
+                    'name' => $latestVersion->name ?? 'Version ' . $latestVersion->version,
+                    'published_at' => $latestVersion->created_at,
+                    'body' => $latestVersion->description ?? '',
+                ];
             }
         } catch (\Throwable $e) {
-            Log::error('Failed to fetch latest release for index view', ['message' => $e->getMessage()]);
+            Log::error('Failed to fetch latest version from database', ['message' => $e->getMessage()]);
         }
 
         $status = SystemUpdate::orderByDesc('created_at')->first();
@@ -97,5 +93,24 @@ class UpdateController extends Controller
         return response()->json(
             SystemUpdate::orderByDesc('created_at')->first() ?? ['status' => 'idle']
         );
+    }
+
+    public function sync()
+    {
+        $this->authorizeAdmin();
+
+        try {
+            $result = GitHubService::syncReleases();
+            
+            if ($result['success']) {
+                $message = "Sync completed: {$result['synced']} new, {$result['updated']} updated releases.";
+                return redirect()->back()->with('success', $message);
+            } else {
+                return redirect()->back()->with('error', 'Sync failed: ' . implode(', ', $result['errors']));
+            }
+        } catch (\Throwable $e) {
+            Log::error('GitHub sync error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Sync failed: ' . $e->getMessage());
+        }
     }
 }

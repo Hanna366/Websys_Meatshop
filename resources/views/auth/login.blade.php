@@ -209,11 +209,38 @@
         }
 
         .recaptcha-wrap {
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--card-border);
             border-radius: 0.75rem;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(30, 10, 20, 0.18);
             padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            overflow: visible;
         }
+
+        .recaptcha-wrap::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 0.75rem;
+            background: rgba(30,10,20,0.32);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .g-recaptcha {
+            opacity: 0.82;
+            z-index: 2;
+            position: relative;
+            filter: grayscale(0.08) brightness(0.97) contrast(1.08);
+            border-radius: 0.5rem;
+            background: transparent !important;
+        }
+
+        .grecaptcha-badge { opacity: 0.32 !important; transition: opacity 0.2s; }
+        .grecaptcha-badge:hover, .grecaptcha-badge:focus { opacity: 1 !important; }
 
         .btn {
             width: 100%;
@@ -392,7 +419,7 @@
 
                 @if (($showRecaptcha ?? false) && config('services.recaptcha.site_key'))
                     <div class="recaptcha-wrap">
-                        <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+                        <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}" data-theme="dark"></div>
                     </div>
                 @endif
 

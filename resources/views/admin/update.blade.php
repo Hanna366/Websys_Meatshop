@@ -14,6 +14,14 @@
                 <p>Latest release: <em>unknown</em></p>
             @endif
 
+            <div class="mt-3">
+                <form method="POST" action="{{ route('admin.update.sync') }}" style="display: inline;">
+                    @csrf
+                    <button type="submit" class="btn btn-secondary btn-sm">Sync GitHub</button>
+                </form>
+                <small class="text-muted">Fetch latest releases from GitHub</small>
+            </div>
+
             <form method="POST" action="{{ route('admin.update.perform') }}">
                 @csrf
                 <div class="mb-3">

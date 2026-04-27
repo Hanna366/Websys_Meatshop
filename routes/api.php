@@ -203,3 +203,7 @@ Route::get('/health', function () {
         'version' => '1.0.0'
     ]);
 });
+
+// Public GitHub webhook (release events)
+use App\Http\Controllers\GitHubWebhookController;
+Route::post('/webhooks/github', [GitHubWebhookController::class, 'handle']);

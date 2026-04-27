@@ -69,6 +69,9 @@ class VersionController extends Controller
             'checksum' => 'nullable|string|max:32',
             'is_mandatory' => 'boolean',
             'auto_update' => 'boolean',
+            'is_stable' => 'boolean',
+            'is_available_to_tenants' => 'boolean',
+            'is_deprecated' => 'boolean',
         ]);
 
         $version = VersionManagementService::createVersion($validated);
@@ -131,6 +134,9 @@ class VersionController extends Controller
             'checksum' => 'nullable|string|max:32',
             'is_mandatory' => 'boolean',
             'auto_update' => 'boolean',
+            'is_stable' => 'boolean',
+            'is_available_to_tenants' => 'boolean',
+            'is_deprecated' => 'boolean',
         ]);
 
         $version->update($validated);

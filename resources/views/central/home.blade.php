@@ -158,11 +158,11 @@
                 <div class="flex items-center gap-3 text-sm">
                     <div class="flex items-center gap-1">
                         <span class="text-slate-500">Current:</span>
-                        <span class="font-medium text-indigo-700">{{ config('app.version', '1.0.0') }}</span>
+                        <span class="font-medium text-indigo-700">{{ $currentVersion ?? config('app.version', '1.0.0') }}</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <span class="text-slate-500">Latest:</span>
-                        <span class="font-medium text-emerald-700">1.0.0</span>
+                        <span class="font-medium text-emerald-700">{{ $latestVersion ?? '1.0.0' }}</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <i data-lucide="github" class="h-3 w-3 text-slate-600"></i>
@@ -182,7 +182,7 @@
                         <i data-lucide="package" class="h-4 w-4 text-indigo-600"></i>
                         <h3 class="text-sm font-semibold text-slate-900">Current Version</h3>
                     </div>
-                    <p class="text-2xl font-bold text-indigo-700">{{ config('app.version', '1.0.0') }}</p>
+                    <p class="text-2xl font-bold text-indigo-700">{{ $currentVersion ?? config('app.version', '1.0.0') }}</p>
                     <p class="mt-1 text-xs text-slate-500">Stable release</p>
                 </div>
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -204,7 +204,7 @@
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <div class="flex items-center gap-2 mb-2">
                         <i data-lucide="history" class="h-4 w-4 text-slate-600"></i>
-                        <h3 class="text-sm font-semibold text-slate-900">Update History</h3>
+                        <h3 class="text-sm font-semibol text-slate-900">Update History</h3>
                     </div>
                     <a href="{{ route('admin.update_requests.index') }}" class="inline-block">
                         <p class="text-2xl font-bold text-slate-700">{{ $pending_update_requests ?? 0 }}</p>

@@ -1,0 +1,85 @@
+{
+    "tenant_00f6a9008849": {
+        "restored": [
+            {
+                "table": "migrations",
+                "rows": 6
+            },
+            {
+                "table": "users",
+                "rows": 1
+            },
+            {
+                "table": "customers",
+                "rows": 0
+            },
+            {
+                "table": "suppliers",
+                "rows": 0
+            },
+            {
+                "table": "products",
+                "rows": 34
+            },
+            {
+                "table": "categories",
+                "rows": 5
+            },
+            {
+                "table": "product_categories",
+                "rows": 0
+            },
+            {
+                "table": "units_of_measure",
+                "rows": 1
+            },
+            {
+                "table": "price_lists",
+                "rows": 1
+            },
+            {
+                "table": "product_prices",
+                "rows": 34
+            },
+            {
+                "table": "price_list_items",
+                "rows": 0
+            },
+            {
+                "table": "sales",
+                "rows": 0
+            },
+            {
+                "table": "inventory_batches",
+                "rows": 0
+            },
+            {
+                "table": "permissions",
+                "rows": 22
+            },
+            {
+                "table": "roles",
+                "rows": 5
+            },
+            {
+                "table": "role_has_permissions",
+                "rows": 36
+            },
+            {
+                "table": "model_has_permissions",
+                "rows": 0
+            },
+            {
+                "table": "model_has_roles",
+                "rows": 1
+            },
+            {
+                "table": "password_reset_tokens",
+                "rows": 0
+            }
+        ],
+        "partial": [],
+        "failed": [],
+        "skipped": []
+    }
+}

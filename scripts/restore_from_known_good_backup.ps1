@@ -18,7 +18,7 @@ If (Test-Path $RepoBackup) {
     Write-Host "Using repository backup: $BACKUP_SRC"
 } elseif (Test-Path $AltBackup) {
     $BACKUP_SRC = $AltBackup
-    Write-Host "Repository backup not found — using XAMPP local backup: $BACKUP_SRC"
+    Write-Host "Repository backup not found - using XAMPP local backup: $BACKUP_SRC"
 } else {
     Write-Error "No backup source found. Checked: $RepoBackup and $AltBackup. Aborting."
     exit 1
@@ -87,9 +87,15 @@ Try {
     Start-Sleep -Seconds 5
 }
 
-# Quick verification
+# Quick verification (run mysql client and capture output to a file)
 $checkOut = Join-Path $env:USERPROFILE "mysql_start_check_$TS.txt"
-& 'C:\xampp\mysql\bin\mysql.exe' -u root -e "SHOW DATABASES;" 2>&1 | Tee-Object -FilePath $checkOut
-Write-Host "Verification output saved to $checkOut"
+Write-Host "Running quick verification: invoking mysql client and saving output to $checkOut"
+Try {
+    & 'C:\xampp\mysql\bin\mysql.exe' -u root -e 'SHOW DATABASES;' 2>&1 | Out-File -FilePath $checkOut -Encoding utf8
+    Write-Host "Verification output saved to $checkOut"
+} Catch {
+    Write-Host "Verification command failed; error will be written to $checkOut"
+    $_ | Out-File -FilePath $checkOut -Encoding utf8
+}
 
 Write-Host "Done. If MySQL failed to start, check C:\xampp\mysql\data\mysql_error.log and share the last 50 lines."

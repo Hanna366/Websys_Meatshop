@@ -24,6 +24,9 @@ class Version extends Model
         'checksum',
         'is_mandatory',
         'auto_update',
+        'is_stable',
+        'is_available_to_tenants',
+        'is_deprecated',
     ];
 
     protected $casts = [
@@ -33,6 +36,9 @@ class Version extends Model
         'requirements' => 'array',
         'is_mandatory' => 'boolean',
         'auto_update' => 'boolean',
+        'is_stable' => 'boolean',
+        'is_available_to_tenants' => 'boolean',
+        'is_deprecated' => 'boolean',
     ];
 
     /**
@@ -64,14 +70,14 @@ class Version extends Model
      */
     public function getFormattedVersionAttribute(): string
     {
-        $typeIcons = [
-            'major' => '2.0.0',
-            'minor' => '1.1.0', 
-            'patch' => '1.0.1',
-            'hotfix' => '1.0.1-hotfix'
-        ];
+        return $this->version . ' (' . ($this->is_stable ? 'Stable' : ucfirst($this->type)) . ')';
+    }
 
-        return $this->version . ' (' . ucfirst($this->type) . ')';
+    public function getStatusLabelAttribute(): string
+    {
+        if ($this->is_deprecated) return 'Deprecated';
+        if ($this->is_stable) return 'Stable';
+        return ucfirst($this->status ?? 'Unknown');
     }
 
     /**

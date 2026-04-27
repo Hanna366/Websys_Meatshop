@@ -13,14 +13,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 
 class SimpleAuthController extends Controller
 {
     public function showLoginForm(Request $request)
     {
         $currentContext = $this->currentAuthContext();
-        // $showRecaptcha = $currentContext === 'central' && (bool) config('services.recaptcha.site_key');
-        $showRecaptcha = false; // Temporarily disabled
+        $showRecaptcha = $this->shouldEnableRecaptcha($request);
 
         // Get tenant information for dynamic logo
         $tenant = null;
@@ -46,7 +46,7 @@ class SimpleAuthController extends Controller
         // Tenant domains should always show the login screen when opened.
         if (str_starts_with($currentContext, 'tenant:')) {
             return view('auth.login', [
-                'showRecaptcha' => false,
+                'showRecaptcha' => $showRecaptcha,
                 'tenant' => $tenant
             ]);
         }
@@ -64,11 +64,14 @@ class SimpleAuthController extends Controller
 
     public function login(Request $request)
     {
-        // Fail fast when local DB is unhealthy to avoid long login hangs.
+        // Keep DB failures predictable during sign-in instead of surfacing as
+        // long hangs or generic credential errors.
         @ini_set('mysql.connect_timeout', (string) env('DB_CONNECT_TIMEOUT', 5));
         @ini_set('default_socket_timeout', (string) env('DB_CONNECT_TIMEOUT', 5));
 
-        if (!$this->isAuthDatabaseResponsive()) {
+        $centralConnection = (string) config('tenancy.central_connection', config('database.default', 'mysql'));
+
+        if (! $this->isAuthDatabaseResponsive($centralConnection)) {
             return back()->withErrors([
                 'email' => __('auth.db_unavailable'),
             ])->withInput($request->only('email'));
@@ -78,6 +81,36 @@ class SimpleAuthController extends Controller
             'email' => 'required|email',
             'password' => 'required',
         ]);
+
+        // Verify reCAPTCHA whenever it's enabled for the current environment (central or tenant).
+        if ($this->shouldEnableRecaptcha($request)) {
+            $token = (string) $request->input('g-recaptcha-response', '');
+            if (empty($token)) {
+                return back()->withErrors([
+                    'email' => 'Please complete the reCAPTCHA verification.',
+                ])->withInput($request->only('email'));
+            }
+
+            try {
+                $resp = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                    'secret' => config('services.recaptcha.secret_key'),
+                    'response' => $token,
+                    'remoteip' => $request->ip(),
+                ]);
+
+                $body = $resp->json();
+                if (! ($body['success'] ?? false)) {
+                    return back()->withErrors([
+                        'email' => 'reCAPTCHA verification failed. Please try again.',
+                    ])->withInput($request->only('email'));
+                }
+            } catch (\Throwable $e) {
+                Log::warning('reCAPTCHA verification error', ['error' => $e->getMessage()]);
+                return back()->withErrors([
+                    'email' => 'Unable to verify reCAPTCHA at this time. Please try again later.',
+                ])->withInput($request->only('email'));
+            }
+        }
 
         $currentContext = $this->currentAuthContext();
         $currentTenant = (app()->bound('tenant') && tenant()) ? tenant() : null;
@@ -100,6 +133,12 @@ class SimpleAuthController extends Controller
                     'email' => 'This tenant account is not active. Please wait for central approval.',
                 ]);
             }
+
+            if (! $this->isAuthDatabaseResponsive('tenant')) {
+                return back()->withErrors([
+                    'email' => __('auth.db_unavailable'),
+                ])->withInput($request->only('email'));
+            }
         }
 
         // Attempt to authenticate against the user table with fallbacks:
@@ -108,9 +147,10 @@ class SimpleAuthController extends Controller
         // 3) fallback to central connection when tenant bound
         $user = null;
         $submitted = $credentials['email'];
+        $primaryLookupFailed = false;
 
         // Helper to query a connection for exact or plus-pattern matches
-        $findOnConnection = function ($connName, $email) {
+        $findOnConnection = function ($connName, $email, bool $trackFailure = false) use (&$primaryLookupFailed) {
             try {
                 if ($connName === 'tenant') {
                     $q = User::on('tenant');
@@ -137,7 +177,13 @@ class SimpleAuthController extends Controller
                     if ($found) return $found;
                 }
             } catch (\Throwable $e) {
-                Log::debug('Auth lookup failed on connection ' . $connName, ['error' => $e->getMessage()]);
+                if ($trackFailure) {
+                    $primaryLookupFailed = true;
+                }
+
+                Log::warning('Auth lookup failed on connection ' . ($connName ?: 'default'), [
+                    'error' => $e->getMessage(),
+                ]);
             }
 
             return null;
@@ -149,13 +195,19 @@ class SimpleAuthController extends Controller
             // central record references this tenant. This prevents a
             // delivery/recovery email stored centrally from being used to
             // sign in on a tenant site.
-            $user = $findOnConnection('tenant', $submitted);
+            $user = $findOnConnection('tenant', $submitted, true);
             if (! $user) {
+                if ($primaryLookupFailed) {
+                    return back()->withErrors([
+                        'email' => __('auth.db_unavailable'),
+                    ])->withInput($request->only('email'));
+                }
+
                 // If the submitted email exists on the central connection,
                 // return a clearer message so admins aren't confused when
                 // they attempt to sign in from a tenant site.
                 try {
-                    $centralConn = config('tenancy.central_connection', env('DB_CONNECTION', 'mysql'));
+                    $centralConn = $centralConnection;
                     $centralUser = User::on($centralConn)->where('email', $submitted)->first();
                 } catch (\Throwable $e) {
                     $centralUser = null;
@@ -178,7 +230,12 @@ class SimpleAuthController extends Controller
             }
         } else {
             // Central context: authenticate against central/default connection
-            $user = $findOnConnection(config('tenancy.central_connection', env('DB_CONNECTION', 'mysql')), $submitted);
+            $user = $findOnConnection($centralConnection, $submitted, true);
+            if (! $user && $primaryLookupFailed) {
+                return back()->withErrors([
+                    'email' => __('auth.db_unavailable'),
+                ])->withInput($request->only('email'));
+            }
         }
 
         if ($user && Hash::check($credentials['password'], $user->password)) {
@@ -830,53 +887,45 @@ class SimpleAuthController extends Controller
         return null;
     }
 
-    private function isAuthDatabaseResponsive(): bool
+    private function shouldEnableRecaptcha(Request $request): bool
     {
-        $defaultConnection = (string) config('database.default', 'mysql');
+        $siteKey = (string) config('services.recaptcha.site_key');
+        $secretKey = (string) config('services.recaptcha.secret_key');
+        $host = strtolower((string) $request->getHost());
 
-        if (!in_array($defaultConnection, ['mysql', 'mariadb'], true)) {
-            return true;
-        }
-
-        if (!function_exists('mysqli_init')) {
-            return true;
-        }
-
-        $host = (string) config("database.connections.{$defaultConnection}.host", '127.0.0.1');
-        $port = (int) config("database.connections.{$defaultConnection}.port", 3306);
-        $username = (string) config("database.connections.{$defaultConnection}.username", 'root');
-        $password = (string) config("database.connections.{$defaultConnection}.password", '');
-        $database = (string) config("database.connections.{$defaultConnection}.database", '');
-        $timeout = max(1, (int) env('DB_CONNECT_TIMEOUT', 5));
-
-        if (function_exists('mysqli_report') && defined('MYSQLI_REPORT_OFF')) {
-            mysqli_report(MYSQLI_REPORT_OFF);
-        }
-
-        $mysqli = mysqli_init();
-
-        if ($mysqli === false) {
+        if ($siteKey === '' || $secretKey === '') {
             return false;
+        }
+
+        return true;
+    }
+
+    private function isAuthDatabaseResponsive(?string $connectionName = null): bool
+    {
+        $connectionName = is_string($connectionName) && $connectionName !== ''
+            ? $connectionName
+            : (string) config('database.default', 'mysql');
+        $driver = (string) config("database.connections.{$connectionName}.driver", '');
+
+        if ($driver === 'sqlite') {
+            return true;
         }
 
         try {
-            mysqli_options($mysqli, MYSQLI_OPT_CONNECT_TIMEOUT, $timeout);
-            mysqli_options($mysqli, MYSQLI_OPT_READ_TIMEOUT, $timeout);
+            $connection = DB::connection($connectionName);
+            $connection->getPdo();
+            $connection->select('select 1');
 
-            $connected = @mysqli_real_connect(
-                $mysqli,
-                $host,
-                $username,
-                $password,
-                $database,
-                $port
-            );
-
-            return $connected === true;
+            return true;
         } catch (\Throwable $e) {
+            Log::warning('Auth database responsiveness check failed', [
+                'connection' => $connectionName,
+                'driver' => $driver,
+                'error' => $e->getMessage(),
+            ]);
+            DB::purge($connectionName);
+
             return false;
-        } finally {
-            @mysqli_close($mysqli);
         }
     }
 }

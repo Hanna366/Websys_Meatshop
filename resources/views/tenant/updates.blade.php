@@ -40,7 +40,52 @@
             <div class="text-xs text-slate-500">Latest</div>
         </div>
         @if($latestRelease)
-            <div class="prose max-w-none text-sm text-slate-700">{!! nl2br(e($latestRelease->description ?? ($latestRelease->release_notes ?? 'No release notes available.'))) !!}</div>
+            @php
+                $features = $latestRelease->features ?? null;
+                $fixes = $latestRelease->fixes ?? null;
+                $desc = $latestRelease->description ?? ($latestRelease->release_notes ?? null);
+                if (is_string($desc)) {
+                    // Try to split into sections if not structured
+                    $lines = preg_split('/\r?\n/', trim($desc));
+                } else {
+                    $lines = [];
+                }
+            @endphp
+
+            <div class="text-sm text-slate-700">
+                <h4 class="font-semibold">What's New in {{ $latestRelease->version ?? $latestVersion }}</h4>
+                @if(!empty($features) && is_array($features) && count($features))
+                    <div class="mt-2">
+                        <div class="text-sm font-medium">Features</div>
+                        <ul class="list-disc list-inside text-sm text-slate-700">
+                            @foreach($features as $f)
+                                <li>{{ $f }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if(!empty($fixes) && is_array($fixes) && count($fixes))
+                    <div class="mt-2">
+                        <div class="text-sm font-medium">Fixes</div>
+                        <ul class="list-disc list-inside text-sm text-slate-700">
+                            @foreach($fixes as $fx)
+                                <li>{{ $fx }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if((empty($features) || count($features) === 0) && (empty($fixes) || count($fixes) === 0))
+                    @if(!empty($lines))
+                        <div class="mt-2 prose max-w-none text-sm text-slate-700">{!! nl2br(e(implode('\n', $lines))) !!}</div>
+                    @elseif(!empty($desc))
+                        <div class="mt-2 prose max-w-none text-sm text-slate-700">{!! nl2br(e($desc)) !!}</div>
+                    @else
+                        <p class="text-sm text-slate-500">No release notes available.</p>
+                    @endif
+                @endif
+            </div>
         @else
             <p class="text-sm text-slate-500">No release information available.</p>
         @endif
@@ -54,12 +99,51 @@
             @else
                 @php
                     $requestAction = '/dashboard/updates/request' . (request()->query('tenant') ? '?tenant=' . request()->query('tenant') : '');
+                    // Filter versions for tenants: stable, available_to_tenants, not deprecated, newer than installed
+                    $availableVersions = collect();
+                    if (isset($versions) && $versions->isNotEmpty()) {
+                        foreach ($versions as $v) {
+                            $ok = true;
+                            if (isset($v->is_stable) && !$v->is_stable) $ok = false;
+                            if (isset($v->is_available_to_tenants) && !$v->is_available_to_tenants) $ok = false;
+                            if (isset($v->is_deprecated) && $v->is_deprecated) $ok = false;
+                            if ($ok && version_compare($v->version, $installedVersion, '>')) {
+                                $availableVersions->push($v);
+                            }
+                        }
+                    }
                 @endphp
-                <form method="POST" action="{{ $requestAction }}">
-                    @csrf
-                    <input type="hidden" name="target_version" value="{{ $latestVersion }}">
-                    <button type="submit" class="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">Request Update</button>
-                </form>
+
+                @if($availableVersions->count() <= 1)
+                    @php
+                        $single = $availableVersions->first();
+                    @endphp
+                    <div>
+                        @if($single)
+                            <div class="text-sm text-slate-700">Latest Version: <strong>{{ $single->version }} <span class="text-xs ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">Stable</span></strong></div>
+                            <form method="POST" action="{{ $requestAction }}" class="mt-2">
+                                @csrf
+                                <input type="hidden" name="target_version" value="{{ $single->version }}">
+                                <button type="submit" class="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">Request Update</button>
+                            </form>
+                        @else
+                            <p class="text-sm text-slate-500">No updates available.</p>
+                        @endif
+                    </div>
+                @else
+                    <form method="POST" action="{{ $requestAction }}" class="flex items-center gap-3">
+                        @csrf
+                        <label class="sr-only">Choose Version</label>
+                        <select name="target_version" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                            @foreach($availableVersions as $v)
+                                <option value="{{ $v->version }}" {{ ($v->version === ($latestVersion ?? '')) ? 'selected' : '' }}>
+                                    {{ $v->version }} ({{ $v->is_stable ? 'Stable' : ucfirst($v->type) }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">Request Update</button>
+                    </form>
+                @endif
             @endif
 
             <button class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600" onclick="document.getElementById('reportModal').classList.remove('hidden')">Report Issue</button>
@@ -140,3 +224,4 @@
 </div>
 
 @endsection
+
