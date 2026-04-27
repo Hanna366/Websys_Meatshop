@@ -339,6 +339,12 @@ Route::get('/logo/generate/{tenantId?}', [App\Http\Controllers\LogoController::c
 
 // System update UI (admin only)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
+    // Admin payments review
+    Route::get('/payments', [App\Http\Controllers\Admin\PaymentsController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{id}', [App\Http\Controllers\Admin\PaymentsController::class, 'show'])->name('payments.show');
+    Route::post('/payments/{id}/approve', [App\Http\Controllers\Admin\PaymentsController::class, 'approve'])->name('payments.approve');
+    Route::post('/payments/{id}/reject', [App\Http\Controllers\Admin\PaymentsController::class, 'reject'])->name('payments.reject');
+
     Route::get('/update', [UpdateController::class, 'index'])->name('update.index');
     Route::post('/update', [UpdateController::class, 'update'])->name('update.perform');
     Route::get('/update/status', [UpdateController::class, 'status'])->name('update.status');
@@ -352,17 +358,72 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->g
     Route::get('/updates/status', [App\Http\Controllers\SystemUpdateController::class, 'status'])->name('updates.status');
 });
 
+// Top-level handler for legacy '/payments/checkout' — initialize tenancy
+// by host and dispatch to the tenant PaymentsController so requests
+// to '/payments/checkout' resolve on tenant subdomains.
+Route::get('/payments/checkout', function (\Illuminate\Http\Request $request) {
+    $host = $request->getHost();
+
+    $domain = \App\Models\Domain::where('domain', $host)->first();
+    $tenant = $domain ? $domain->tenant : \App\Models\Tenant::where('domain', $host)->first();
+
+    if (! $tenant) {
+        return abort(404);
+    }
+
+    tenancy()->initialize($tenant);
+
+    return app()->call([App\Http\Controllers\Tenant\PaymentsController::class, 'checkout']);
+});
+
+// Also accept legacy '/checkout' (some clients may navigate relatively)
+Route::get('/checkout', function () {
+    $qs = request()->getQueryString();
+    return redirect('/dashboard/payments/checkout' . ($qs ? '?' . $qs : ''));
+});
+
+// Top-level handler for tenant dashboard checkout: try to initialize
+// tenancy by host and dispatch to the tenant controller. This ensures
+// requests to tenant subdomains (e.g. chop.localhost) resolve even when
+// route host bindings are not present.
+Route::get('/dashboard/payments/checkout', function (\Illuminate\Http\Request $request) {
+    $host = $request->getHost();
+
+    $domain = \App\Models\Domain::where('domain', $host)->first();
+    $tenant = $domain ? $domain->tenant : \App\Models\Tenant::where('domain', $host)->first();
+
+    if (! $tenant) {
+        return abort(404);
+    }
+
+    tenancy()->initialize($tenant);
+
+    // Forward the request to the tenant PaymentsController.checkout action.
+    return app()->call([App\Http\Controllers\Tenant\PaymentsController::class, 'checkout']);
+});
+
 // Tenant-facing System Updates UI (read-only + reporting)
-$tenantMiddleware = ['auth', InitializeTenancyByQuery::class, 'tenant.active'];
-// In non-debug (production-like) environments, initialize tenancy by domain and prevent central-domain access
+$tenantMiddleware = ['auth', InitializeTenancyByQuery::class, InitializeTenancyByDomain::class, PreventAccessFromCentralDomains::class, 'tenant.active'];
+// In non-debug (production-like) environments, wrap domain initialization to
+// catch tenant-not-found gracefully by adding the suppress middleware.
 if (! config('app.debug')) {
-    // Wrap domain initialization to catch tenant-not-found gracefully
-    $tenantMiddleware[] = SuppressTenantNotFoundInDebug::class;
-    $tenantMiddleware[] = InitializeTenancyByDomain::class;
-    $tenantMiddleware[] = PreventAccessFromCentralDomains::class;
+    array_unshift($tenantMiddleware, SuppressTenantNotFoundInDebug::class);
 }
 
 Route::middleware($tenantMiddleware)->group(function () {
+    // Backwards-compatible route: some client code historically
+    // navigated to `/payments/checkout`. Provide a redirect so that
+    // requests reach the tenant-scoped checkout at
+    // `/dashboard/payments/checkout` and keep query parameters.
+    Route::get('/payments/checkout', function () {
+        $qs = request()->getQueryString();
+        return redirect('/dashboard/payments/checkout' . ($qs ? '?' . $qs : ''));
+    });
+    // Tenant manual payments
+    Route::get('/dashboard/payments/checkout', [App\Http\Controllers\Tenant\PaymentsController::class, 'checkout'])->name('tenant.payments.checkout');
+    Route::post('/dashboard/payments/checkout', [App\Http\Controllers\Tenant\PaymentsController::class, 'store'])->name('tenant.payments.store');
+    Route::get('/dashboard/payments/history', [App\Http\Controllers\Tenant\PaymentsController::class, 'history'])->name('tenant.payments.history');
+
     Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
     Route::post('/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])->name('tenant.updates.request');
     Route::post('/dashboard/updates/report', [App\Http\Controllers\TenantUpdateController::class, 'report'])->name('tenant.updates.report');
@@ -371,5 +432,11 @@ Route::middleware($tenantMiddleware)->group(function () {
     // Tenant support routes
     Route::get('/dashboard/support', [App\Http\Controllers\SupportTicketController::class, 'index'])->name('tenant.support.index');
     Route::post('/dashboard/support', [App\Http\Controllers\SupportTicketController::class, 'store'])->name('tenant.support.store');
+});
+
+// Admin: tenant settings editor
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
+    Route::get('/tenants/{tenantId}/settings', [App\Http\Controllers\Admin\TenantSettingsController::class, 'edit'])->name('tenants.settings.edit');
+    Route::post('/tenants/{tenantId}/settings', [App\Http\Controllers\Admin\TenantSettingsController::class, 'update'])->name('tenants.settings.update');
 });
 

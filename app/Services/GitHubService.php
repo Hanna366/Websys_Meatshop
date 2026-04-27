@@ -94,22 +94,22 @@ class GitHubService
                 ];
             }
 
-            if (!empty($formatted)) {
-                $formatted[0]['is_latest'] = true;
-                return $formatted;
-            }
-
-            // fallback to tags
+            // Merge in any lightweight tags that do not have releases so tags show up in the UI
             try {
-                $tagsUrl = "https://api.github.com/repos/{$svc->owner}/{$svc->repo}/tags?per_page=100";
+                $tagsUrl = "https://api.github.com/repos/{$svc->owner}/{$svc->repo}/tags?per_page=200";
                 $resp = $svc->client()->get($tagsUrl);
                 if ($resp->ok()) {
                     $tags = $resp->json();
-                    $out = [];
+                    $existingTags = array_column($formatted, 'tag_name');
+
                     foreach ($tags as $t) {
                         $name = $t['name'] ?? null;
                         if (!$name) continue;
-                        $out[] = [
+
+                        // Skip if there's already a release for this tag
+                        if (in_array($name, $existingTags, true)) continue;
+
+                        $formatted[] = [
                             'tag_name' => $name,
                             'name' => $name,
                             'body' => '',
@@ -121,10 +121,14 @@ class GitHubService
                             'download_count' => 0,
                         ];
                     }
-                    return $out;
                 }
             } catch (\Throwable $e) {
-                Log::warning('GitHub tags fallback failed: ' . $e->getMessage());
+                Log::warning('GitHub tags merge failed: ' . $e->getMessage());
+            }
+
+            if (!empty($formatted)) {
+                $formatted[0]['is_latest'] = true;
+                return $formatted;
             }
 
             return [];

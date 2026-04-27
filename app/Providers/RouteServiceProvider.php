@@ -55,5 +55,14 @@ class RouteServiceProvider extends ServiceProvider
                 ->domain($domain)
                 ->group(base_path('routes/web.php'));
         }
+
+        // Register a small set of host-based fallback routes globally
+        // so tenant subdomains (e.g. chop.localhost) can be resolved and
+        // handled even when the main web routes are registered under the
+        // central domains. These fallback routes are lightweight and
+        // explicitly initialize tenancy by host before forwarding.
+        if (file_exists(base_path('routes/host_fallbacks.php'))) {
+            Route::middleware(['web'])->group(base_path('routes/host_fallbacks.php'));
+        }
     }
 }
