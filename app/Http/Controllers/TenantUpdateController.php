@@ -347,14 +347,15 @@ class TenantUpdateController extends Controller
         $effectiveUser = $centralUser ?? $user;
         $userId = $effectiveUser->id ?? null;
 
-        $lastLog = $tenantId ? UpdateLog::where('tenant_id', $tenantId)->orderBy('created_at', 'desc')->first() : null;
+        // Get the tenant's current version using the service method
+        $currentVersion = $tenantId ? VersionManagementService::getTenantCurrentVersion($tenantId) : VersionManagementService::getCurrentVersion();
 
         // Create tenant-local ticket if we're in tenant context
         try {
             if (function_exists('tenant') && tenant()) {
                 TenantSupportTicket::create([
                     'user_id' => $userId,
-                    'current_version' => $lastLog->to_version ?? VersionManagementService::getCurrentVersion(),
+                    'current_version' => $currentVersion,
                     'message' => $request->input('message'),
                     'status' => 'open',
                     'meta' => ['reported_via' => 'tenant_updates_ui'],
@@ -366,11 +367,11 @@ class TenantUpdateController extends Controller
 
         // Always create a central support ticket so Central Admins can view reported issues
         try {
-            Log::info('Creating central support ticket', ['tenant_id' => $tenantId, 'user_id' => $userId]);
+            Log::info('Creating central support ticket', ['tenant_id' => $tenantId, 'user_id' => $userId, 'current_version' => $currentVersion]);
             $centralTicket = SupportTicket::create([
                 'tenant_id' => $tenantId,
                 'user_id' => $userId,
-                'current_version' => $lastLog->to_version ?? VersionManagementService::getCurrentVersion(),
+                'current_version' => $currentVersion,
                 'message' => $request->input('message'),
                 'status' => 'open',
                 'meta' => ['reported_via' => 'tenant_updates_ui'],
