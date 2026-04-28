@@ -179,19 +179,11 @@
             <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <div class="flex items-center gap-2 mb-2">
-                        <i data-lucide="package" class="h-4 w-4 text-indigo-600"></i>
-                        <h3 class="text-sm font-semibold text-slate-900">Current Version</h3>
-                    </div>
-                    <p class="text-2xl font-bold text-indigo-700">{{ $currentVersion ?? config('app.version', '1.0.0') }}</p>
-                    <p class="mt-1 text-xs text-slate-500">Stable release</p>
-                </div>
-                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <div class="flex items-center gap-2 mb-2">
-                        <i data-lucide="check-circle" class="h-4 w-4 text-emerald-600"></i>
+                        <i data-lucide="{{ $updateAvailable ? 'download' : 'check-circle' }}" class="h-4 w-4 text-{{ $updateAvailable ? 'amber' : 'emerald' }}-600"></i>
                         <h3 class="text-sm font-semibold text-slate-900">System Status</h3>
                     </div>
-                    <p class="text-2xl font-bold text-emerald-700">Up to Date</p>
-                    <p class="mt-1 text-xs text-slate-500">No updates available</p>
+                    <p class="text-2xl font-bold text-{{ $updateAvailable ? 'amber' : 'emerald' }}-700">{{ $updateAvailable ? 'Update Available' : 'Up to Date' }}</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ $updateAvailable ? 'Version ' . $latestVersion . ' ready' : 'No updates available' }}</p>
                 </div>
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <div class="flex items-center gap-2 mb-2">
@@ -209,6 +201,16 @@
                     <a href="{{ route('admin.update_requests.index') }}" class="inline-block">
                         <p class="text-2xl font-bold text-slate-700">{{ $pending_update_requests ?? 0 }}</p>
                         <p class="mt-1 text-xs text-slate-500">Pending update requests</p>
+                    </a>
+                </div>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="message-square" class="h-4 w-4 text-slate-600"></i>
+                        <h3 class="text-sm font-semibold text-slate-900">Support Tickets</h3>
+                    </div>
+                    <a href="{{ route('admin.support_tickets.index') }}" class="inline-block">
+                        <p class="text-2xl font-bold text-slate-700">{{ \App\Models\SupportTicket::where('status', 'open')->count() }}</p>
+                        <p class="mt-1 text-xs text-slate-500">Open tickets</p>
                     </a>
                 </div>
             </div>

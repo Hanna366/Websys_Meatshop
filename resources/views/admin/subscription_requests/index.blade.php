@@ -24,15 +24,6 @@
         @if(session('error'))
             <div class="alert alert-danger mb-4">{{ session('error') }}</div>
         @endif
-        
-        <!-- Debug Info -->
-        <div class="alert alert-info mb-4">
-            <strong>Debug:</strong> Found {{ $requests->count() }} subscription requests
-            @if($requests->count() > 0)
-                <br>Latest Request ID: {{ $requests->first()->id }}
-                <br>Status: {{ $requests->first()->status }}
-            @endif
-        </div>
 
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-slate-200 text-sm">
@@ -157,14 +148,17 @@
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                        'Accept': 'text/html'
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
                     document.getElementById('actions-' + id).innerHTML = '<span class="text-emerald-600 font-semibold">Approved</span>';
-                    document.querySelector('#requests-table tbody tr:has(#actions-' + id + ') td:nth-child(7)').textContent = 'Approved';
+                    const statusCell = document.querySelector('tr:has(#actions-' + id + ') > td:nth-child(7)');
+                    if (statusCell) statusCell.textContent = 'Approved';
                 } else {
-                    alert('Approval failed');
+                    alert(data.message || 'Approval failed');
                 }
             } catch (e) {
                 console.error(e);
@@ -178,20 +172,27 @@
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                        'Accept': 'text/html'
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
                     document.getElementById('actions-' + id).innerHTML = '<span class="text-rose-600 font-semibold">Rejected</span>';
-                    document.querySelector('#requests-table tbody tr:has(#actions-' + id + ') td:nth-child(7)').textContent = 'Rejected';
+                    const statusCell = document.querySelector('tr:has(#actions-' + id + ') > td:nth-child(7)');
+                    if (statusCell) statusCell.textContent = 'Rejected';
                 } else {
-                    alert('Rejection failed');
+                    alert(data.message || 'Rejection failed');
                 }
             } catch (e) {
                 console.error(e);
                 alert('Rejection error');
             }
         }
+
+        // Make functions globally accessible for onclick handlers
+        window.approveRequest = approveRequest;
+        window.rejectRequest = rejectRequest;
     })();
 </script>
 @endpush

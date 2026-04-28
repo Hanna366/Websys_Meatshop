@@ -63,7 +63,7 @@
                         @endif
                     </td>
                     <td class="px-5 py-4">{{ $ticket->id }}</td>
-                    <td class="px-5 py-4">{{ $ticket->version }}</td>
+                    <td class="px-5 py-4">{{ $ticket->current_version }}</td>
                     <td class="px-5 py-4">{{ Str::limit($ticket->message, 120) }}</td>
                     <td class="px-5 py-4">{{ ucfirst($ticket->status) }}</td>
                     <td class="px-5 py-4">{{ $ticket->created_at->toDateTimeString() }}</td>

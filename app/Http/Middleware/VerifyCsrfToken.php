@@ -18,5 +18,7 @@ class VerifyCsrfToken extends Middleware
         // Allow tenant-origin public subscription requests without CSRF
         // so unauthenticated tenant UIs can submit manual requests.
         '/subscription/request-public',
+        // Allow tenant issue reports without CSRF
+        '/dashboard/updates/report',
     ];
 }

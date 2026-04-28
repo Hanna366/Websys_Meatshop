@@ -41,8 +41,11 @@ class CentralDashboardController extends Controller
         $pendingUpdateRequests = UpdateRequest::where('status', 'pending')->count();
 
         $currentVersion = VersionManagementService::getCurrentVersion();
-        $latest = Version::where('status', 'stable')->orderBy('release_date', 'desc')->first();
-        $latestVersion = $latest->version ?? $currentVersion;
+        
+        // Check for updates (from both local and GitHub)
+        $updateInfo = VersionManagementService::checkForUpdates();
+        $latestVersion = $updateInfo['latest_version'] ?? $currentVersion;
+        $updateAvailable = $updateInfo['update_available'] ?? false;
 
         return view('central.home', [
             'stats' => $stats,
@@ -54,6 +57,8 @@ class CentralDashboardController extends Controller
             'pending_update_requests' => $pendingUpdateRequests,
             'currentVersion' => $currentVersion,
             'latestVersion' => $latestVersion,
+            'updateAvailable' => $updateAvailable,
+            'updateInfo' => $updateInfo,
         ]);
     }
 }

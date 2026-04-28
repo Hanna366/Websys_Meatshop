@@ -8,7 +8,7 @@
         <div class="mb-1 text-sm text-slate-500">Tenant</div>
         <div class="font-medium text-slate-900">
             @if($tenant)
-                <a href="{{ route('tenants.show', $tenant->getTenantKey()) }}" class="text-indigo-700 hover:underline">{{ $tenant->business_name }}</a>
+                <a href="{{ route('tenants.show', $tenant->tenant_id) }}" class="text-indigo-700 hover:underline">{{ $tenant->business_name }}</a>
                 <div class="text-xs text-slate-500">{{ $ticket->tenant_id }}</div>
             @else
                 <div class="text-sm text-slate-700">{{ $ticket->tenant_id }}</div>

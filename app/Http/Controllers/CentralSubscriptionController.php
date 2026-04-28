@@ -61,11 +61,17 @@ class CentralSubscriptionController extends Controller
         $req = SubscriptionRequest::findOrFail($id);
 
         if ($req->status !== 'pending') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Request is not pending.']);
+            }
             return redirect()->back()->with('error', 'Request is not pending.');
         }
 
         $tenant = Tenant::where('tenant_id', $req->tenant_id)->first();
         if (!$tenant) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Tenant not found.']);
+            }
             return redirect()->back()->with('error', 'Tenant not found.');
         }
 
@@ -90,6 +96,9 @@ class CentralSubscriptionController extends Controller
             \Log::warning('Failed to notify tenant about subscription approval', ['tenant' => $tenant->tenant_id, 'error' => $e->getMessage()]);
         }
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Subscription request approved and applied.']);
+        }
         return redirect()->back()->with('success', 'Subscription request approved and applied.');
     }
 
@@ -98,12 +107,18 @@ class CentralSubscriptionController extends Controller
         $req = SubscriptionRequest::findOrFail($id);
 
         if ($req->status !== 'pending') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Request is not pending.']);
+            }
             return redirect()->back()->with('error', 'Request is not pending.');
         }
 
         $req->status = 'rejected';
         $req->save();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Subscription request rejected.']);
+        }
         return redirect()->back()->with('success', 'Subscription request rejected.');
     }
 }

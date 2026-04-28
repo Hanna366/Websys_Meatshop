@@ -9,6 +9,15 @@ use App\Http\Controllers\SubscriptionController;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
+// Public report endpoint - no middleware at all (not even auth)
+Route::post('/dashboard/updates/report', [App\Http\Controllers\TenantUpdateController::class, 'report'])
+    ->name('tenant.updates.report.public');
+
+// Test public route
+Route::get('/test-public', function() {
+    return 'Public route works! No auth required.';
+});
+
 Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
@@ -128,7 +137,7 @@ Route::middleware([
         // Tenant System Updates (in-tenant routes) — ensure these are available on tenant domains
         Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
         Route::post('/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])->name('tenant.updates.request');
-        Route::post('/dashboard/updates/report', [App\Http\Controllers\TenantUpdateController::class, 'report'])->name('tenant.updates.report');
+        // Note: POST /dashboard/updates/report is public route above (no auth required)
         Route::get('/dashboard/updates/history', [App\Http\Controllers\TenantUpdateController::class, 'history'])->name('tenant.updates.history');
     });
 });

@@ -46,20 +46,39 @@ class VersionManagementService
     /**
      * Check for available updates (enhanced with GitHub integration)
      */
-    public static function checkForUpdates(?int $tenantId = null): array
+    public static function checkForUpdates($tenantId = null): array
     {
         // Installed version (based on last update log for this tenant, fallback to app version)
-        $lastLog = null;
         $installedVersion = self::getTenantCurrentVersion($tenantId);
         
-        // First check GitHub for updates
+        // Get latest from local database (prioritize local)
+        $localVersions = Version::where('status', 'stable')->get();
+        $localLatest = null;
+        foreach ($localVersions as $version) {
+            if ($localLatest === null || version_compare($version->version, $localLatest->version, '>')) {
+                $localLatest = $version;
+            }
+        }
+
+        // Check GitHub for updates
         $githubComparison = \App\Services\GitHubService::compareVersions();
         
-        if ($githubComparison['update_available']) {
+        // Determine the highest version from either source
+        $githubLatestVersion = ltrim($githubComparison['latest_version'] ?? '0.0.0', 'v');
+        $localLatestVersion = $localLatest ? $localLatest->version : '0.0.0';
+        
+        // Compare versions to find the highest
+        $highestVersion = version_compare($githubLatestVersion, $localLatestVersion, '>') ? $githubLatestVersion : $localLatestVersion;
+        $source = version_compare($githubLatestVersion, $localLatestVersion, '>') ? 'github' : 'local';
+        
+        $hasUpdate = version_compare($highestVersion, $installedVersion, '>');
+        
+        // Build update info based on source
+        if ($source === 'github' && $githubComparison['update_available']) {
             return [
-                'update_available' => true,
+                'update_available' => $hasUpdate,
                 'current_version' => $installedVersion,
-                'latest_version' => $githubComparison['latest_version'],
+                'latest_version' => $highestVersion,
                 'update_info' => [
                     'version' => $githubComparison['latest_version'] ?? null,
                     'type' => self::determineUpdateType($installedVersion, $githubComparison['latest_version'] ?? $installedVersion),
@@ -72,17 +91,13 @@ class VersionManagementService
                     'features' => \App\Services\GitHubService::extractFeatures($githubComparison['github_data']['body'] ?? ''),
                     'fixes' => \App\Services\GitHubService::extractFixes($githubComparison['github_data']['body'] ?? ''),
                 ],
-                'message' => $githubComparison['message'] ?? null,
+                'message' => $hasUpdate ? "Update to version {$highestVersion} available" : 'You are on the latest version',
                 'source' => 'github'
             ];
         }
         
-        // Fallback to local database
-        $latestVersion = Version::where('status', 'stable')
-            ->orderBy('release_date', 'desc')
-            ->first();
-
-        if (!$latestVersion) {
+        // Use local database
+        if (!$localLatest) {
             return [
                 'update_available' => false,
                 'current_version' => $installedVersion,
@@ -92,14 +107,12 @@ class VersionManagementService
             ];
         }
 
-        $hasUpdate = version_compare($latestVersion->version, $installedVersion, '>');
-
         return [
             'update_available' => $hasUpdate,
             'current_version' => $installedVersion,
-            'latest_version' => $latestVersion->version,
-            'update_info' => $hasUpdate ? $latestVersion : null,
-            'message' => $hasUpdate ? "Update to version {$latestVersion->version} available" : 'You are on the latest version',
+            'latest_version' => $highestVersion,
+            'update_info' => $hasUpdate ? $localLatest : null,
+            'message' => $hasUpdate ? "Update to version {$highestVersion} available" : 'You are on the latest version',
             'source' => 'local'
         ];
     }
@@ -107,7 +120,7 @@ class VersionManagementService
     /**
      * Download update package (enhanced with GitHub support)
      */
-    public static function downloadUpdate(string $version, ?int $tenantId = null): array
+    public static function downloadUpdate(string $version, $tenantId = null): array
     {
         // First try to get from GitHub
         $githubRelease = \App\Services\GitHubService::getReleaseByTag('v' . $version);
@@ -260,7 +273,7 @@ class VersionManagementService
     /**
      * Download update from GitHub
      */
-    private static function downloadFromGitHub(array $release, string $version, ?int $tenantId = null): array
+    private static function downloadFromGitHub(array $release, string $version, $tenantId = null): array
     {
         // Create update log
         $updateLog = UpdateLog::create([
@@ -341,7 +354,7 @@ class VersionManagementService
     /**
      * Install update package
      */
-    public static function installUpdate(string $filePath, string $version, ?int $tenantId = null): array
+    public static function installUpdate(string $filePath, string $version, $tenantId = null): array
     {
         $updateLog = UpdateLog::create([
             'tenant_id' => $tenantId,

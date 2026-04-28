@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\TenantUpdate;
+use Illuminate\Support\Facades\Schema;
 use App\Notifications\UpdateAvailable;
 use App\Notifications\UpdateCompleted;
 use App\Notifications\UpdateFailed;
@@ -32,7 +34,34 @@ class UpdateNotificationService
                 foreach ($adminUsers as $user) {
                     $user->notify(new UpdateAvailable($updateInfo));
                 }
-                
+
+                // Also persist a tenant-scoped pointer so the tenant UI shows the available version
+                try {
+                    if (Schema::hasTable('tenant_updates')) {
+                        $latestVersion = $updateInfo['latest_version'] ?? ($updateInfo['update_info']['version'] ?? null);
+                        $notes = $updateInfo['update_info']['description'] ?? null;
+
+                        $existing = TenantUpdate::first();
+                        if ($existing) {
+                            $existing->update([
+                                'available_version' => $latestVersion,
+                                'release_notes' => $notes,
+                                'last_checked_at' => now(),
+                            ]);
+                        } else {
+                            TenantUpdate::create([
+                                'current_version' => null,
+                                'available_version' => $latestVersion,
+                                'release_notes' => $notes,
+                                'last_checked_at' => now(),
+                                'force_update' => false,
+                            ]);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed updating tenant_updates table for tenant ' . ($tenant->id ?? 'unknown') . ': ' . $e->getMessage());
+                }
+
                 // End tenant context
                 tenancy()->end();
             }

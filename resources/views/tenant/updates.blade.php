@@ -98,7 +98,7 @@
                 </form>
             @else
                 @php
-                    $requestAction = '/dashboard/updates/request' . (request()->query('tenant') ? '?tenant=' . request()->query('tenant') : '');
+                    $requestAction = route('tenant.updates.request');
                     // Filter versions for tenants: stable, available_to_tenants, not deprecated, newer than installed
                     $availableVersions = collect();
                     if (isset($versions) && $versions->isNotEmpty()) {
@@ -112,6 +112,10 @@
                             }
                         }
                     }
+                    // Sort by version descending so latest appears first (using version_compare)
+                    $availableVersions = $availableVersions->sort(function($a, $b) {
+                        return version_compare($b->version, $a->version);
+                    })->values();
                 @endphp
 
                 @if($availableVersions->count() <= 1)
@@ -213,11 +217,11 @@
 <div id="reportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 hidden">
     <div class="w-full max-w-lg rounded-xl bg-white p-6">
         <h3 class="text-lg font-semibold">Report an Issue</h3>
-        @php
-            $reportAction = '/dashboard/updates/report' . (request()->query('tenant') ? '?tenant=' . request()->query('tenant') : '');
-        @endphp
-        <form method="POST" action="{{ $reportAction }}" class="mt-4">
+        <form method="POST" action="/dashboard/updates/report" class="mt-4">
             @csrf
+            @if(request()->query('tenant'))
+                <input type="hidden" name="tenant_id" value="{{ request()->query('tenant') }}">
+            @endif
             <div class="mb-3">
                 <label class="block text-sm text-slate-700">Describe the issue</label>
                 <textarea name="message" rows="5" class="w-full rounded border border-slate-200 p-2 text-sm" required></textarea>

@@ -6,6 +6,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class GitHubService
 {
@@ -204,13 +205,15 @@ class GitHubService
             try {
                 $versionStr = ltrim($release['tag_name'] ?? '', 'v');
                 if (!$versionStr) continue;
+                $isPrerelease = !empty($release['is_prerelease']);
+                $isStable = !$isPrerelease;
                 $model = \App\Models\Version::firstOrCreate(
                     ['version' => $versionStr],
                     [
                         'release_name' => $release['name'] ?? null,
                         'description' => $release['body'] ?? null,
                         'type' => self::determineReleaseType($release['tag_name'] ?? '' , $release['body'] ?? ''),
-                        'status' => !empty($release['is_prerelease']) ? 'testing' : 'stable',
+                        'status' => $isPrerelease ? 'testing' : 'stable',
                         'release_date' => $release['published_at'] ?? null,
                         'features' => self::extractFeatures($release['body'] ?? ''),
                         'fixes' => self::extractFixes($release['body'] ?? ''),
@@ -218,6 +221,9 @@ class GitHubService
                         'checksum' => null,
                         'is_mandatory' => false,
                         'auto_update' => false,
+                        'is_stable' => $isStable,
+                        'is_available_to_tenants' => $isStable,
+                        'is_deprecated' => false,
                     ]
                 );
                 if ($model->wasRecentlyCreated) $synced++; else $updated++;
@@ -227,7 +233,34 @@ class GitHubService
             }
         }
 
-        return ['success' => empty($errors), 'synced' => $synced, 'updated' => $updated, 'errors' => $errors, 'total_releases' => count($releases)];
+        $result = ['success' => empty($errors), 'synced' => $synced, 'updated' => $updated, 'errors' => $errors, 'total_releases' => count($releases)];
+
+        // After syncing releases centrally, notify tenants and write tenant-scoped pointers
+        try {
+            $latest = \App\Models\Version::where('is_stable', true)
+                ->when(Schema::hasColumn('versions', 'is_available_to_tenants'), function ($q) { return $q->where('is_available_to_tenants', true); })
+                ->orderBy('version', 'desc')
+                ->first();
+
+            if ($latest) {
+                $info = [
+                    'latest_version' => $latest->version,
+                    'update_info' => [
+                        'version' => $latest->version,
+                        'description' => $latest->description ?? null,
+                        'release_name' => $latest->release_name ?? null,
+                        'features' => $latest->features ?? null,
+                        'fixes' => $latest->fixes ?? null,
+                    ],
+                ];
+
+                \App\Services\UpdateNotificationService::notifyUpdateAvailable($info);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Post-sync tenant notification failed: ' . $e->getMessage());
+        }
+
+        return $result;
     }
 
     private static function determineReleaseType(string $tag, string $description): string

@@ -5,20 +5,7 @@
 @section('content')
 <div class="space-y-6">
     <!-- Version Overview Cards -->
-    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <article class="group rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <p class="mb-1 text-xs font-medium text-slate-500">Current Version</p>
-                    <h3 class="heading-font text-2xl font-semibold text-indigo-700">{{ $currentVersion }}</h3>
-                </div>
-                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
-                    <i data-lucide="package" class="h-4 w-4"></i>
-                </span>
-            </div>
-            <div class="mt-3 h-1 rounded-full bg-gradient-to-r from-indigo-500/60 to-indigo-100"></div>
-        </article>
-
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <article class="group rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
             <div class="flex items-start justify-between">
                 <div class="flex-1">

@@ -465,6 +465,11 @@ Route::post('/subscription/request-public', function (\Illuminate\Http\Request $
     return app()->call([App\Http\Controllers\SubscriptionController::class, 'requestSubscriptionPublic']);
 })->withoutMiddleware([\App\Http\Middleware\EnsureCentralDomain::class]);
 
+// Public tenant report endpoint (must be defined BEFORE auth group to take precedence)
+Route::middleware(['web'])->post('/dashboard/updates/report', [App\Http\Controllers\TenantUpdateController::class, 'report'])
+    ->name('tenant.updates.report.public')
+    ->withoutMiddleware([\App\Http\Middleware\EnsureCentralDomain::class]);
+
 // Tenant-facing System Updates UI (read-only + reporting)
 $tenantMiddleware = ['auth', InitializeTenancyByQuery::class, InitializeTenancyByDomain::class, PreventAccessFromCentralDomains::class, 'tenant.active'];
 // In non-debug (production-like) environments, wrap domain initialization to
@@ -489,9 +494,10 @@ Route::middleware($tenantMiddleware)->group(function () {
     // a POST route here that includes the 'auth' middleware.
     Route::get('/dashboard/payments/history', [App\Http\Controllers\Tenant\PaymentsController::class, 'history'])->name('tenant.payments.history');
 
+    // Tenant System Updates (accessible from central via query parameter)
     Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
     Route::post('/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])->name('tenant.updates.request');
-    Route::post('/dashboard/updates/report', [App\Http\Controllers\TenantUpdateController::class, 'report'])->name('tenant.updates.report');
+    // Note: POST /dashboard/updates/report is handled by public route below
     Route::get('/dashboard/updates/history', [App\Http\Controllers\TenantUpdateController::class, 'history'])->name('tenant.updates.history');
 
     // Tenant support routes

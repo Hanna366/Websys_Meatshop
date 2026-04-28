@@ -178,8 +178,13 @@ class TenantController extends Controller
         $this->notificationService->sendTenantSignupConfirmation($tenant);
         $this->notificationService->sendCentralApprovalRequest($tenant);
 
-        return redirect()->route('tenants.show', $tenant->tenant_id)
-            ->with('success', 'Tenant signup submitted and is pending central approval.');
+        // Logout user and flush session to require login for managing the tenant
+        auth()->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Tenant created successfully. Please login to central to manage the tenant and approve it.');
     }
 
     public function update(Request $request, string $tenantId)
