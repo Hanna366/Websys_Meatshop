@@ -67,11 +67,16 @@
             font-family: 'Sora', sans-serif;
         }
 
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
         .main-shell {
             min-height: 100vh;
-            background: rgba(238, 242, 247, 0.96);
-            border: 1px solid var(--line);
-            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+            background: #ffffff;
+            overflow-x: hidden;
+            max-width: 100vw;
         }
 
         .tenant-sidebar {
@@ -85,6 +90,40 @@
             box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.05);
             overflow-x: hidden;
             overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 50;
+        }
+
+        .main-content {
+            margin-left: 272px;
+            min-height: 100vh;
+            background: #ffffff;
+        }
+
+        .tenant-sidebar nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            min-height: 0;
+        }
+
+        .tenant-sidebar nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tenant-sidebar nav a,
+        .tenant-sidebar nav button {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .nav-item {
@@ -328,6 +367,7 @@
                 z-index: 50;
                 transform: translateX(-100%);
                 transition: transform 0.25s ease;
+                overflow-y: auto;
             }
 
             .tenant-sidebar.show {
@@ -356,8 +396,7 @@
             $tenantPricingUrl = $scheme.'://'.$tenantHost.$portPart.'/pricing';
         }
     @endphp
-    <div class="main-shell flex">
-        <aside class="tenant-sidebar shrink-0 p-4 text-white lg:sticky lg:top-0 lg:h-screen flex flex-col" id="tenantSidebar">
+    <aside class="tenant-sidebar p-4 text-white flex flex-col" id="tenantSidebar">
             <div class="tenant-brand-card mb-4 rounded-2xl p-3.5">
                 <img src="{{ asset('im.png') }}" alt="Branch Logo" class="tenant-brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <span class="tenant-brand-fallback" aria-hidden="true">BP</span>
@@ -377,47 +416,73 @@
                     <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
                     Dashboard
                 </a>
-                <a class="nav-item {{ request()->routeIs('tenant.products') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/products">
-                    <i data-lucide="package" class="h-4 w-4"></i>
-                    Products
-                </a>
-                <a class="nav-item {{ request()->routeIs('tenant.inventory') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/inventory">
-                    <i data-lucide="warehouse" class="h-4 w-4"></i>
-                    Inventory
-                </a>
-                <a class="nav-item {{ request()->routeIs('tenant.sales') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/sales">
-                    <i data-lucide="shopping-cart" class="h-4 w-4"></i>
-                    Sales
-                </a>
-                <a class="nav-item {{ request()->routeIs('tenant.customers') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/customers">
-                    <i data-lucide="users" class="h-4 w-4"></i>
-                    Customers
-                </a>
-                <a class="nav-item {{ request()->routeIs('tenant.suppliers') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/suppliers">
-                    <i data-lucide="truck" class="h-4 w-4"></i>
-                    Suppliers
-                </a>
-                <a class="nav-item {{ request()->routeIs('tenant.reports') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/reports">
-                    <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
-                    Reports
-                </a>
-                @php
-                    // This is the tenant layout — link to the tenant System Updates page using a relative URL
-                    // so the current host (tenant) is preserved instead of generating an absolute central URL.
-                    $queryTenant = request()->query('tenant') ?? (auth()->check() ? auth()->user()->tenant_id : null);
-                    $updatesUrl = url('/dashboard/updates');
-                    if ($queryTenant) {
-                        $updatesUrl = url('/dashboard/updates') . '?tenant=' . $queryTenant;
-                    }
-                @endphp
-                <a class="nav-item {{ request()->routeIs('tenant.updates.*') || request()->routeIs('tenant.updates.index') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ $updatesUrl }}">
-                    <i data-lucide="layers" class="h-4 w-4"></i>
-                    System Updates
-                </a>
-                <a class="nav-item {{ request()->routeIs('tenant.settings') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/settings">
-                    <i data-lucide="settings" class="h-4 w-4"></i>
-                    Settings
-                </a>
+
+                {{-- Cashiers: Sales and View Inventory Only --}}
+                @if(auth()->user()->role === 'cashier')
+                    <a class="nav-item {{ request()->routeIs('tenant.sales') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/sales">
+                        <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+                        Sales
+                    </a>
+                    <a class="nav-item {{ request()->routeIs('tenant.inventory') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/inventory">
+                        <i data-lucide="warehouse" class="h-4 w-4"></i>
+                        View Inventory
+                    </a>
+                @else
+                    {{-- Manager and Owner: Full access --}}
+                    <a class="nav-item {{ request()->routeIs('tenant.products') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/products">
+                        <i data-lucide="package" class="h-4 w-4"></i>
+                        Products
+                    </a>
+                    <a class="nav-item {{ request()->routeIs('tenant.inventory') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/inventory">
+                        <i data-lucide="warehouse" class="h-4 w-4"></i>
+                        Inventory
+                    </a>
+                    <a class="nav-item {{ request()->routeIs('tenant.sales') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/sales">
+                        <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+                        Sales
+                    </a>
+                    <a class="nav-item {{ request()->routeIs('tenant.customers') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/customers">
+                        <i data-lucide="users" class="h-4 w-4"></i>
+                        Customers
+                    </a>
+                    <a class="nav-item {{ request()->routeIs('tenant.suppliers') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/suppliers">
+                        <i data-lucide="truck" class="h-4 w-4"></i>
+                        Suppliers
+                    </a>
+                    <a class="nav-item {{ request()->routeIs('tenant.reports') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/reports">
+                        <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+                        Reports
+                    </a>
+
+                    {{-- User Management for Manager and Owner --}}
+                    @if(in_array(auth()->user()->role, ['owner', 'manager']))
+                        <a class="nav-item {{ request()->is('users*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/users">
+                            <i data-lucide="user-plus" class="h-4 w-4"></i>
+                            Users
+                        </a>
+                    @endif
+
+                    @php
+                        // This is the tenant layout — link to the tenant System Updates page using a relative URL
+                        // so the current host (tenant) is preserved instead of generating an absolute central URL.
+                        $queryTenant = request()->query('tenant') ?? (auth()->check() ? auth()->user()->tenant_id : null);
+                        $updatesUrl = url('/dashboard/updates');
+                        if ($queryTenant) {
+                            $updatesUrl = url('/dashboard/updates') . '?tenant=' . $queryTenant;
+                        }
+                    @endphp
+                    <a class="nav-item {{ request()->routeIs('tenant.updates.*') || request()->routeIs('tenant.updates.index') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="{{ $updatesUrl }}">
+                        <i data-lucide="layers" class="h-4 w-4"></i>
+                        System Updates
+                    </a>
+
+                    {{-- Settings: Owner only for subscription, Manager for basic --}}
+                    <a class="nav-item {{ request()->routeIs('tenant.settings') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/settings">
+                        <i data-lucide="settings" class="h-4 w-4"></i>
+                        Settings
+                    </a>
+                @endif
+
                 <a class="nav-item {{ request()->routeIs('tenant.profile') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium" href="/profile">
                     <i data-lucide="user-circle" class="h-4 w-4"></i>
                     Profile
@@ -433,10 +498,10 @@
                     </button>
                 </form>
             </div>
-        </aside>
+    </aside>
 
-        <div class="flex-1">
-            <header class="tenant-header sticky top-0 z-30 px-4 py-4 sm:px-6 lg:px-8">
+    <div class="main-content">
+        <header class="tenant-header sticky top-0 z-30 px-4 py-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <button class="sidebar-toggle inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm lg:hidden" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
@@ -466,7 +531,6 @@
             <main class="px-4 py-6 sm:px-6 lg:px-8">
                 @yield('content')
             </main>
-        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

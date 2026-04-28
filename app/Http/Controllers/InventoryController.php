@@ -58,6 +58,11 @@ class InventoryController extends Controller
 
     public function addBatch(Request $request): JsonResponse
     {
+        // Cashiers cannot add stock
+        if ($request->user()->role === 'cashier') {
+            return response()->json(['success' => false, 'message' => 'You do not have permission to add stock.'], 403);
+        }
+
         $validated = $request->validate([
             'product_id' => 'required',
             'batch_code' => 'nullable|string|max:255',
@@ -83,6 +88,11 @@ class InventoryController extends Controller
 
     public function updateBatch(Request $request, string $batch): JsonResponse
     {
+        // Cashiers cannot update batches
+        if ($request->user()->role === 'cashier') {
+            return response()->json(['success' => false, 'message' => 'You do not have permission to update stock.'], 403);
+        }
+
         $validated = $request->validate([
             'batch_code' => 'sometimes|string|max:255',
             'quantity' => 'sometimes|numeric|min:0',
@@ -107,6 +117,11 @@ class InventoryController extends Controller
 
     public function recordWaste(Request $request, string $batch): JsonResponse
     {
+        // Cashiers cannot record waste
+        if ($request->user()->role === 'cashier') {
+            return response()->json(['success' => false, 'message' => 'You do not have permission to record waste.'], 403);
+        }
+
         $validated = $request->validate([
             'quantity' => 'required|numeric|min:0',
             'reason' => 'nullable|string|max:255',

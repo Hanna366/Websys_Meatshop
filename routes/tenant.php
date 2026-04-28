@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TenantPageController;
+use App\Http\Controllers\TenantUserController;
 use App\Http\Controllers\SimpleAuthController;
 use App\Http\Controllers\SubscriptionController;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -124,11 +125,29 @@ Route::middleware([
 
         Route::put('/settings/users/{userId}', [TenantPageController::class, 'updateUser'])
             ->middleware(['subscription:custom_branding', 'tenant.owner'])
-            ->name('tenant.users.update');
+            ->name('tenant.settings.users.update');
 
         Route::patch('/settings/users/{userId}/status', [TenantPageController::class, 'toggleUserStatus'])
             ->middleware(['subscription:custom_branding', 'tenant.owner'])
-            ->name('tenant.users.status');
+            ->name('tenant.settings.users.status');
+
+        // User Management (owner and manager only)
+        Route::get('/users', [TenantUserController::class, 'index'])
+            ->name('tenant.users.index');
+        Route::get('/users/create', [TenantUserController::class, 'create'])
+            ->name('tenant.users.create');
+        Route::post('/users', [TenantUserController::class, 'store'])
+            ->name('tenant.users.store');
+        Route::get('/users/{id}', [TenantUserController::class, 'show'])
+            ->name('tenant.users.show');
+        Route::get('/users/{id}/edit', [TenantUserController::class, 'edit'])
+            ->name('tenant.users.edit');
+        Route::put('/users/{id}', [TenantUserController::class, 'update'])
+            ->name('tenant.users.update');
+        Route::post('/users/{id}/reset-password', [TenantUserController::class, 'resetPassword'])
+            ->name('tenant.users.reset-password');
+        Route::delete('/users/{id}', [TenantUserController::class, 'destroy'])
+            ->name('tenant.users.destroy');
 
         Route::get('/profile', function () {
             return view('profile');

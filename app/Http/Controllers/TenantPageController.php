@@ -863,11 +863,28 @@ class TenantPageController extends Controller
             return $this->resolvedConnection;
         }
 
+        // If tenancy is already initialized, use the tenant connection
         if (app()->bound('tenant') && tenant()) {
             $this->resolvedConnection = 'tenant';
             return $this->resolvedConnection;
         }
 
+        // Try to initialize tenancy from the current host/domain
+        $host = request()->getHost();
+        if ($host) {
+            $domain = \App\Models\Domain::where('domain', $host)->first();
+            if ($domain && $domain->tenant) {
+                try {
+                    tenancy()->initialize($domain->tenant);
+                    $this->resolvedConnection = 'tenant';
+                    return $this->resolvedConnection;
+                } catch (\Throwable $e) {
+                    \Log::warning('Failed to initialize tenancy from host in resolveTenantConnection', ['host' => $host, 'error' => $e->getMessage()]);
+                }
+            }
+        }
+
+        // Fallback to tenant_id if provided
         if (!empty($tenantId)) {
             $tenantModel = Tenant::query()->where('tenant_id', $tenantId)->first();
             if ($tenantModel && method_exists($tenantModel, 'getTenantDatabaseConfig')) {
