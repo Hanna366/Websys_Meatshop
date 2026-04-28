@@ -13,6 +13,7 @@ use App\Services\VersionManagementService;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class TenantUpdateController extends Controller
 {
@@ -205,7 +206,10 @@ class TenantUpdateController extends Controller
         $tenantId = null;
         if (function_exists('tenant') && tenant()) {
             $tenant = tenant();
-            $tenantId = $tenant->id ?? $tenant->tenant_id ?? null;
+            // Prefer the tenant UUID/identifier used by Central (`tenant_id`) so central
+            // records can be joined to the Tenant model. Fall back to numeric id when
+            // UUID is not available.
+            $tenantId = $tenant->tenant_id ?? $tenant->id ?? null;
         } else {
             $tenantId = $user->tenant_id ?? null;
         }
@@ -220,6 +224,19 @@ class TenantUpdateController extends Controller
             'meta' => ['reported_via' => 'tenant_updates_ui'],
         ]);
 
+        // Also create a central support ticket so Central Admins can view reported issues
+        try {
+            SupportTicket::create([
+                'tenant_id' => $tenantId,
+                'user_id' => $user->id ?? null,
+                'current_version' => $lastLog->to_version ?? VersionManagementService::getCurrentVersion(),
+                'message' => $request->input('message'),
+                'status' => 'open',
+                'meta' => ['reported_via' => 'tenant_updates_ui'],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed creating central SupportTicket: '.$e->getMessage());
+        }
         return redirect()->back()->with('success', 'Issue reported locally. Support will follow up.');
     }
 }

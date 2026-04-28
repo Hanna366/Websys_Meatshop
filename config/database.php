@@ -79,6 +79,29 @@ return [
             ]) : [],
         ],
 
+        // Tenant connection used by stancl/tenancy commands (db:wipe, migrate-fresh, etc.).
+        // Defaults to the same settings as the primary `mysql` connection but can be
+        // overridden with DB_TENANT_* environment variables if needed.
+        'tenant' => [
+            'driver' => env('DB_TENANT_DRIVER', 'mysql'),
+            'url' => env('DB_TENANT_URL', env('DB_URL')),
+            'host' => env('DB_TENANT_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_TENANT_PORT', env('DB_PORT', '3306')),
+            'database' => env('DB_TENANT_DATABASE', env('DB_DATABASE', 'meatshop_pos')),
+            'username' => env('DB_TENANT_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('DB_TENANT_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_TENANT_SOCKET', env('DB_SOCKET', '')),
+            'charset' => env('DB_TENANT_CHARSET', env('DB_CHARSET', 'utf8mb4')),
+            'collation' => env('DB_TENANT_COLLATION', env('DB_COLLATION', 'utf8mb4_unicode_ci')),
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::ATTR_TIMEOUT => (int) env('DB_TENANT_CONNECT_TIMEOUT', env('DB_CONNECT_TIMEOUT', 5)),
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

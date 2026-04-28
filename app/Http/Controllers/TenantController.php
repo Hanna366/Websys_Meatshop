@@ -79,7 +79,9 @@ class TenantController extends Controller
 
     public function show(string $tenantId)
     {
-        $tenant = Tenant::where('tenant_id', $tenantId)->firstOrFail();
+        $tenant = Tenant::where('tenant_id', $tenantId)
+            ->orWhere('id', $tenantId)
+            ->firstOrFail();
 
         return view('tenants.show', [
             'tenant' => $tenant,
@@ -182,7 +184,9 @@ class TenantController extends Controller
 
     public function update(Request $request, string $tenantId)
     {
-        $tenant = Tenant::where('tenant_id', $tenantId)->firstOrFail();
+        $tenant = Tenant::where('tenant_id', $tenantId)
+            ->orWhere('id', $tenantId)
+            ->firstOrFail();
 
         $request->merge([
             'domain' => $this->normalizeDomain($request->input('domain')),
@@ -214,7 +218,9 @@ class TenantController extends Controller
 
     public function updateStatus(Request $request, string $tenantId)
     {
-        $tenant = Tenant::where('tenant_id', $tenantId)->firstOrFail();
+        $tenant = Tenant::where('tenant_id', $tenantId)
+            ->orWhere('id', $tenantId)
+            ->firstOrFail();
 
         $previousStatus = $tenant->status;
 
@@ -280,7 +286,9 @@ class TenantController extends Controller
             'current_period_end' => 'nullable|date|after_or_equal:current_period_start',
         ]);
 
-        $tenant = TenantService::updateTenantSubscription($tenantId, $validated);
+        // Resolve tenant by UUID or numeric id before updating subscription
+        $tenantRecord = Tenant::where('tenant_id', $tenantId)->orWhere('id', $tenantId)->firstOrFail();
+        $tenant = TenantService::updateTenantSubscription($tenantRecord->tenant_id ?? $tenantRecord->id, $validated);
 
         $this->notificationService->sendSubscriptionUpdated($tenant);
 

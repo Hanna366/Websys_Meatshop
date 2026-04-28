@@ -15,6 +15,7 @@ class SupportTicket extends Model
         'tenant_id',
         'user_id',
         'version',
+        'current_version',
         'last_update_at',
         'message',
         'status',
