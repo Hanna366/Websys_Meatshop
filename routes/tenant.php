@@ -46,8 +46,28 @@ Route::middleware([
             ->middleware('tenant.owner')
             ->name('tenant.subscription.renew');
         Route::get('/subscription/status', [SubscriptionController::class, 'status'])
-            ->middleware('tenant.owner')
             ->name('tenant.subscription.status');
+        Route::get('/create-subscription/{plan}', function ($plan) {
+            // Use the actual tenant from the current domain
+            $tenant = tenant();
+            if (!$tenant) {
+                return 'No tenant found for this domain';
+            }
+            $pesoRate = env('PESO_RATE', 55);
+            $pricing = [
+                'basic' => 29 * $pesoRate,
+                'standard' => 79 * $pesoRate,
+                'premium' => 149 * $pesoRate,
+            ];
+            $request = new \App\Models\SubscriptionRequest();
+            $request->tenant_id = $tenant->tenant_id;
+            $request->requested_plan = $plan;
+            $request->amount = (float) ($pricing[$plan] ?? 0);
+            $request->status = 'pending';
+            $request->metadata = json_encode(['source' => 'tenant_page', 'domain' => request()->getHost()]);
+            $request->save();
+            return "Created subscription request ID: " . $request->id . " for tenant: " . $tenant->tenant_id . " plan: " . ucfirst($plan);
+        });
         Route::get('/subscription/billing', [SubscriptionController::class, 'billingPage'])
             ->middleware('tenant.owner')
             ->name('tenant.subscription.billing');

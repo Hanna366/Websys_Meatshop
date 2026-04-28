@@ -1,10 +1,26 @@
-@extends(app()->bound('tenant') ? 'layouts.tenant' : 'layouts.central')
+@extends((app()->bound('tenant') && tenant()) || preg_match('/^tenant:(.+)$/', (string) session('auth_context', 'central')) ? 'layouts.tenant' : 'layouts.central')
 
 @section('title', 'Plans')
 
 @section('content')
 @php
     $isTenant = app()->bound('tenant');
+    // Also treat the request as tenant-origin when the session carries a
+    // tenant auth_context (format "tenant:HOST"). This helps when tenant
+    // requests render without tenancy bound on the server but the user's
+    // session indicates they are on a tenant host.
+    $sessionAuthCtx = (string) session('auth_context', 'central');
+    $sessionTenantHost = null;
+    // Allow controller to force a tenant host (via ?tenant= or ?tenant_host=)
+    $forcedTenantHost = $forcedTenantHost ?? null;
+    if ($forcedTenantHost) {
+        $sessionTenantHost = $forcedTenantHost;
+        $isTenant = true;
+    }
+    if (preg_match('/^tenant:(.+)$/', $sessionAuthCtx, $m)) {
+        $sessionTenantHost = $m[1];
+        $isTenant = true;
+    }
 
     // When rendering in a tenant context, prefer tenant-scoped billing routes
     // and avoid falling back to central billing. If tenant billing isn't
@@ -77,7 +93,31 @@
             ],
         ],
     ];
-
+    // Determine proceed base URL: tenant checkout when in tenant and available,
+    // otherwise fall back to central billing or tenant signup.
+    $tenantCheckoutUrl = Route::has('tenant.payments.checkout') ? route('tenant.payments.checkout') : null;
+    $centralBillingUrl = Route::has('subscription.billing') ? route('subscription.billing') : null;
+    if ($isTenant) {
+        $proceedBase = $tenantCheckoutUrl ?? $centralBillingUrl ?? route('tenants.create');
+    } else {
+        $proceedBase = $centralBillingUrl ?? route('tenants.create');
+    }
+    // Build a central-host absolute billing URL using the configured app URL
+    // so tenants can be redirected to central billing regardless of current host.
+    $centralBillingFull = null;
+    if (Route::has('subscription.billing')) {
+        $relative = route('subscription.billing', [], false);
+        $appUrl = rtrim(config('app.url') ?? '', '/');
+        $centralBillingFull = $appUrl . ($relative ?: '/subscription/billing');
+    }
+    // Peso conversion rate for display (USD -> PHP). Default 55 PHP per USD.
+    $pesoRate = env('PESO_RATE', 55);
+    $plans_for_js = collect($plans)->map(function ($p) use ($pesoRate) {
+        $p['price_monthly'] = round(($p['price_monthly'] ?? 0) * $pesoRate, 2);
+        $p['price_annual'] = round(($p['price_annual'] ?? 0) * $pesoRate, 2);
+        return $p;
+    })->toArray();
+    // Accent utility classes used in the plan cards
     $accentClasses = [
         'emerald' => [
             'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -98,22 +138,44 @@
             'check' => 'text-rose-600',
         ],
     ];
-    // Determine proceed base URL: tenant checkout when in tenant and available,
-    // otherwise fall back to central billing or tenant signup.
-    $tenantCheckoutUrl = Route::has('tenant.payments.checkout') ? route('tenant.payments.checkout') : null;
-    $centralBillingUrl = Route::has('subscription.billing') ? route('subscription.billing') : null;
-    if ($isTenant) {
-        $proceedBase = $tenantCheckoutUrl ?? $centralBillingUrl ?? route('tenants.create');
-    } else {
-        $proceedBase = $centralBillingUrl ?? route('tenants.create');
-    }
-    // Build a central-host absolute billing URL using the configured app URL
-    // so tenants can be redirected to central billing regardless of current host.
-    $centralBillingFull = null;
-    if (Route::has('subscription.billing')) {
-        $relative = route('subscription.billing', [], false);
-        $appUrl = rtrim(config('app.url') ?? '', '/');
-        $centralBillingFull = $appUrl . ($relative ?: '/subscription/billing');
+    // Build an absolute tenant checkout URL server-side when rendering in a tenant
+    // context. This avoids relying on client-side `location.origin` which can
+    // cause tenant routes to be requested on the central host.
+    $tenantCheckoutFull = null;
+    $tenantPrimaryDomain = null;
+    if ($isTenant && Route::has('tenant.payments.checkout')) {
+        $relativeTenant = route('tenant.payments.checkout', [], false);
+        // Prefer the tenant's configured domain (primary) when available
+        // to avoid using the current request host which may be central.
+        $tenantOrigin = null;
+        try {
+            if (function_exists('tenant') && tenant()) {
+                $t = tenant();
+            } elseif (app()->bound('tenant')) {
+                $t = app('tenant');
+            } else {
+                $t = null;
+            }
+            if (!empty($t) && method_exists($t, 'domains')) {
+                $first = $t->domains()->first();
+                if ($first && !empty($first->domain)) {
+                    $tenantPrimaryDomain = $first->domain;
+                    $port = request()->getPort();
+                    $portPart = ($port && $port !== 80 && $port !== 443) ? ':' . $port : '';
+                    $tenantOrigin = (request()->getScheme() ?: 'http') . '://' . $first->domain . $portPart;
+                }
+            }
+        } catch (\Throwable $e) {
+            $tenantOrigin = null;
+            $tenantPrimaryDomain = null;
+        }
+
+        // Fall back to request origin or app.url
+        if (empty($tenantOrigin)) {
+            $tenantOrigin = request()->getSchemeAndHttpHost() ?: (rtrim(config('app.url') ?? '', '/'));
+        }
+
+        $tenantCheckoutFull = $tenantOrigin . ($relativeTenant ?: '/dashboard/payments/checkout');
     }
 @endphp
 
@@ -159,7 +221,7 @@
 
                 <div class="mb-5">
                     <div class="flex items-end gap-1">
-                        <span class="price heading-font text-4xl font-semibold text-slate-900" data-monthly="{{ $plan['price_monthly'] }}" data-annual="{{ $plan['price_annual'] }}">${{ $plan['price_monthly'] }}</span>
+                        <span class="price heading-font text-4xl font-semibold text-slate-900" data-monthly="{{ number_format($plan['price_monthly'] * $pesoRate, 2, '.', '') }}" data-annual="{{ number_format($plan['price_annual'] * $pesoRate, 2, '.', '') }}">₱{{ number_format($plan['price_monthly'] * $pesoRate, 2) }}</span>
                         <span class="mb-1 text-sm text-slate-500">/month</span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500">Billed monthly. Annual saves about 15%.</p>
@@ -197,25 +259,26 @@
 <div id="toastContainer" aria-live="polite" class="fixed inset-0 flex items-end px-4 py-6 pointer-events-none sm:p-6 z-50">
     <div id="toast" class="mx-auto w-full max-w-sm rounded-lg bg-slate-900 text-white p-3 shadow-lg pointer-events-auto hidden"></div>
 </div>
+<!-- SweetAlert2 for nicer pending confirmation dialogs -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     const planSelectBaseUrl = @json($planSelectBaseUrl);
-    const tenantCheckoutUrl = @json(Route::has('tenant.payments.checkout') ? route('tenant.payments.checkout') : null);
+    const TENANT_CHECKOUT_URL = @json($tenantCheckoutFull);
     const PROCEED_BASE = @json($proceedBase);
     const CENTRAL_BILLING_URL = @json($centralBillingFull);
     const IS_TENANT = @json($isTenant);
-    const PLANS = @json(collect($plans)->keyBy('id'));
+    const TENANT_PRIMARY_DOMAIN = @json($tenantPrimaryDomain ?? $sessionTenantHost ?? null);
+    const SESSION_TENANT_HOST = @json($sessionTenantHost ?? null);
+    try { console.debug('pricing context', { IS_TENANT: IS_TENANT, SESSION_TENANT_HOST: SESSION_TENANT_HOST, TENANT_PRIMARY_DOMAIN: TENANT_PRIMARY_DOMAIN, LOCATION_ORIGIN: location.origin }); } catch (e) {}
+    const CENTRAL_DOMAINS = @json(array_map('strtolower', (array) config('tenancy.central_domains', [])));
+    const PLANS = @json(collect($plans_for_js)->keyBy('id'));
     let currentBillingMode = 'monthly';
 
     function selectPlan(plan) {
         const normalized = String(plan || '').toLowerCase();
-        @if($isTenant)
-            // Tenant context: show an intro modal before taking action. The
-            // modal lets the tenant proceed to the manual checkout page or
-            // submit a subscription request without navigating away.
-            openPlanModal(normalized);
-        @else
-            window.location.href = planSelectBaseUrl + '?plan=' + encodeURIComponent(normalized);
-        @endif
+        // Always show the plan intro modal so both tenant and central users
+        // can request a subscription or proceed to manual checkout.
+        openPlanModal(normalized);
     }
 
     function showToast(message, timeout = 5000) {
@@ -232,12 +295,84 @@
         }
     }
 
+    function showPendingAlert(title = 'Subscription Pending', text = 'Your subscription request has been received. Please wait for central admin approval.') {
+        try {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: title,
+                    html: text,
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#a41245',
+                    background: '#ffffff',
+                    color: '#111827',
+                    iconColor: '#34d399',
+                    customClass: { popup: 'rounded-xl' }
+                });
+                return;
+            }
+        } catch (e) {
+            // ignore
+        }
+        try { window.alert(title + "\n\n" + text); return; } catch (e) { /* ignore */ }
+
+        // Fallback: create an inline modal overlay so user always sees confirmation
+        try {
+            // avoid duplicate
+            if (document.getElementById('inlinePendingModal')) return;
+            const overlay = document.createElement('div');
+            overlay.id = 'inlinePendingModal';
+            overlay.className = 'fixed inset-0 z-50 flex items-center justify-center';
+            overlay.style.backgroundColor = 'rgba(0,0,0,0.45)';
+
+            const box = document.createElement('div');
+            box.className = 'relative z-50 w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl text-center';
+
+            const iconWrap = document.createElement('div');
+            iconWrap.className = 'mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50';
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '48');
+            svg.setAttribute('height', '48');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.innerHTML = '<path fill="#10b981" d="M9 16.2l-3.5-3.5a1 1 0 0 0-1.4 1.4l4.2 4.2a1 1 0 0 0 1.4 0l9.2-9.2a1 1 0 1 0-1.4-1.4L9 16.2z"/>';
+            iconWrap.appendChild(svg);
+
+            const h = document.createElement('h3');
+            h.textContent = title;
+            h.className = 'heading-font text-2xl font-semibold text-slate-900 mb-2';
+
+            const p = document.createElement('div');
+            p.innerHTML = text;
+            p.className = 'text-sm text-slate-600 mb-4';
+
+            const btn = document.createElement('button');
+            btn.textContent = 'OK';
+            btn.className = 'btn-primary-gradient inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold';
+
+            btn.addEventListener('click', function () {
+                try { overlay.remove(); } catch (e) { overlay.style.display = 'none'; }
+            });
+
+            box.appendChild(iconWrap);
+            box.appendChild(h);
+            box.appendChild(p);
+            box.appendChild(btn);
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+        } catch (e) {
+            // final fallback to toast
+            showToast(text);
+        }
+    }
+
     function setBillingMode(mode) {
         const isAnnual = mode === 'annual';
         document.querySelectorAll('.price').forEach(function (node) {
             const monthly = Number(node.dataset.monthly || 0);
             const annual = Number(node.dataset.annual || monthly);
-            node.textContent = '$' + (isAnnual ? annual : monthly);
+            const display = (isAnnual ? annual : monthly);
+            node.textContent = '₱' + Number(display).toFixed(2);
         });
 
         const monthlyToggle = document.getElementById('monthlyToggle');
@@ -307,17 +442,31 @@
         // (tenant or central) using the server-provided PROCEED_BASE.
         try {
             const proceed = document.getElementById('proceedToCheckout');
-            if (proceed) {
-                const qs = '?plan=' + encodeURIComponent(plan) + '&billing=' + encodeURIComponent(currentBillingMode);
-                // Prefer PROCEED_BASE (absolute URL rendered server-side). If
-                // we're in a tenant and PROCEED_BASE is not tenant-scoped,
-                // fall back to constructing on current origin.
-                let target = PROCEED_BASE || (location.origin + '/dashboard/payments/checkout');
-                if (IS_TENANT && target.indexOf(location.origin) !== 0) {
-                    target = location.origin + '/dashboard/payments/checkout';
+                if (proceed) {
+                    const qs = '?plan=' + encodeURIComponent(plan) + '&billing=' + encodeURIComponent(currentBillingMode);
+                    let target;
+                        if (IS_TENANT) {
+                        // Tenant: prefer absolute checkout on the known tenant host
+                        // if the server provided one or if the session carries the
+                        // tenant host. Use the current page's port when composing
+                        // SESSION_TENANT_HOST so we don't accidentally hit Apache
+                        // on port 80 when the app runs on another port (e.g. :8000).
+                        if (TENANT_CHECKOUT_URL) {
+                            target = TENANT_CHECKOUT_URL;
+                        } else if (SESSION_TENANT_HOST) {
+                            const portPart = (location.port && !SESSION_TENANT_HOST.includes(':')) ? (':' + location.port) : '';
+                            target = location.protocol + '//' + SESSION_TENANT_HOST + portPart + '/dashboard/payments/checkout';
+                        } else {
+                            target = location.origin + '/dashboard/payments/checkout';
+                        }
+                    } else {
+                        // Central: prefer explicit central billing URL, then planSelectBaseUrl, then APP-origin fallback
+                        target = CENTRAL_BILLING_URL || planSelectBaseUrl || (location.origin + '/subscription/billing');
+                    }
+                    proceed.setAttribute('href', target + qs);
+                    // Debug info to help diagnose tenancy / redirect issues
+                    try { console.debug('plan modal proceed target', { target: target + qs, IS_TENANT: IS_TENANT, PROCEED_BASE: PROCEED_BASE, CENTRAL_BILLING_URL: CENTRAL_BILLING_URL, planSelectBaseUrl: planSelectBaseUrl, location_origin: location.origin }); } catch (e) {}
                 }
-                proceed.setAttribute('href', target + qs);
-            }
         } catch (e) {
             console.error('Unable to set proceed href', e);
         }
@@ -337,10 +486,70 @@
         // Only use central billing when not in a tenant or when tenant checkout
         // isn't available.
         const tenantPath = '/dashboard/payments/checkout' + qs;
+        // If server provided an absolute tenant checkout URL and it is not
+        // a central domain, navigate directly to it to ensure tenant context.
+        try {
+            if (TENANT_CHECKOUT_URL) {
+                const tc = new URL(TENANT_CHECKOUT_URL);
+                const tcHost = (tc.host || '').split(':')[0].toLowerCase();
+                if (!CENTRAL_DOMAINS.includes(tcHost)) {
+                    try { console.debug('proceedToCheckout direct tenant URL', { target: TENANT_CHECKOUT_URL + qs }); } catch (e) {}
+                    window.location.href = TENANT_CHECKOUT_URL + qs;
+                    return;
+                }
+            }
+        } catch (e) {
+            // ignore URL parse errors
+        }
+        // If the server rendered an absolute tenant checkout URL, prefer it
+        // for tenant pages to guarantee navigation stays on tenant origin.
+        if (IS_TENANT && TENANT_CHECKOUT_URL) {
+            try { console.debug('proceedToCheckout using server tenant URL', { target: TENANT_CHECKOUT_URL + qs }); } catch (e) {}
+            window.location.href = TENANT_CHECKOUT_URL + qs;
+            return;
+        }
         if (IS_TENANT) {
-            // Force tenant-origin checkout to avoid server-generated
-            // absolute URLs that point to central (e.g., http://localhost).
-            window.location.href = location.origin + '/dashboard/payments/checkout' + qs;
+            // Tenant: build target and prevent navigating to central domains.
+            const targetBase = TENANT_CHECKOUT_URL || (location.origin + '/dashboard/payments/checkout');
+            const target = targetBase + qs;
+            try { console.debug('proceedToCheckout tenant redirect', { target: target, IS_TENANT: IS_TENANT, TENANT_CHECKOUT_URL: TENANT_CHECKOUT_URL, location_origin: location.origin }); } catch (e) {}
+
+            // If the target host looks like a central domain, block and show guidance
+            try {
+                const url = new URL(target);
+                const hostLower = url.host.toLowerCase();
+                const isCentralHost = CENTRAL_DOMAINS.includes(hostLower.split(':')[0]) || CENTRAL_DOMAINS.includes(hostLower);
+                if (isCentralHost) {
+                    if (TENANT_PRIMARY_DOMAIN) {
+                        const tenantLink = (location.protocol + '//' + TENANT_PRIMARY_DOMAIN + (url.pathname || '/dashboard/payments/checkout') + url.search);
+                        showToast('Detected central host. Open the tenant checkout at ' + tenantLink);
+                        window.location.href = tenantLink;
+                        return;
+                    }
+
+                    // If we don't have a server-provided tenant primary domain,
+                    // try to use the referrer origin when it appears to be a tenant
+                    // (helps when the modal was rendered on central but user came
+                    // from the tenant page and the browser referrer is present).
+                    try {
+                        const ref = document.referrer ? new URL(document.referrer) : null;
+                        const refHost = ref ? (ref.host.split(':')[0].toLowerCase()) : null;
+                        const isRefTenant = ref && !CENTRAL_DOMAINS.includes(refHost);
+                        if (isRefTenant) {
+                            const tenantLink = ref.protocol + '//' + ref.host + (url.pathname || '/dashboard/payments/checkout') + url.search;
+                            showToast('Detected central host. Opening tenant checkout at ' + tenantLink);
+                            window.location.href = tenantLink;
+                            return;
+                        }
+                    } catch (e) {
+                        // ignore referrer parsing errors
+                    }
+                }
+            } catch (e) {
+                // if URL parsing fails, just proceed with target
+            }
+
+            window.location.href = target;
             return;
         }
 
@@ -359,34 +568,149 @@
         const plan = _selectedPlan || '';
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         try {
-            const res = await fetch('/subscription/request', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ plan: plan, billing_cycle: currentBillingMode })
-            });
+            // If we're already on the tenant origin, try a same-origin POST.
+            if (IS_TENANT) {
+                try {
+                    // Use GET endpoint that works without CSRF
+                    const res = await fetch(`/create-subscription/${plan}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'text/plain'
+                        }
+                    });
 
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error('Request failed: ' + res.status + ' ' + text);
+                    const raw = await res.text();
+                    let payload;
+                    try { payload = raw ? JSON.parse(raw) : {}; } catch (e) { payload = null; }
+
+                    if (!res.ok) {
+                        // If server returned non-JSON (Whoops) or an error, fallback
+                        // to central flow below.
+                        throw new Error(payload && (payload.error || payload.message) ? (payload.error || payload.message) : ('Request failed: ' + res.status));
+                    }
+
+                    if (payload && payload.success) {
+                        // Close the plan modal first to avoid overlay/z-index issues,
+                        // then show the pending confirmation. This prevents a brief
+                        // blank flicker where two modals compete for focus.
+                        if (typeof refreshBillingFromApi === 'function') refreshBillingFromApi();
+                        closePlanModal();
+                        // Give the UI one animation frame to hide the modal,
+                        // then show the confirmation dialog.
+                        requestAnimationFrame(function () {
+                            showPendingAlert('Subscription Pending', payload.message || 'Your subscription request is pending central approval.');
+                        });
+                        return;
+                    }
+
+                    showToast((payload && payload.error) || 'Failed to request subscription');
+                    return;
+                } catch (err) {
+                    console.warn('Tenant POST failed, falling back to central flow', err);
+                    // fall through to central fallback below
+                }
             }
 
-            const payload = await res.json();
-            if (payload && payload.success) {
-                showToast(payload.message || 'Subscription requested. Pending approval.');
-                if (typeof refreshBillingFromApi === 'function') refreshBillingFromApi();
+            // Not on tenant origin: do not attempt cross-origin POSTs (CORS/cookies
+            // frequently fail). Instead, open the tenant pricing/checkout page so
+            // the user can request the subscription from the tenant UI.
+            let tenantOpenUrl = null;
+            if (TENANT_CHECKOUT_URL) {
+                try { tenantOpenUrl = new URL(TENANT_CHECKOUT_URL).origin + '/pricing'; } catch (e) { tenantOpenUrl = null; }
+            }
+            if (!tenantOpenUrl && SESSION_TENANT_HOST) {
+                const portPart = (location.port && !SESSION_TENANT_HOST.includes(':')) ? (':' + location.port) : '';
+                tenantOpenUrl = location.protocol + '//' + SESSION_TENANT_HOST + portPart + '/pricing';
+            }
+
+            if (tenantOpenUrl) {
+                // Try to create the central pending request directly by POSTing
+                // tenant_host to the public endpoint. This avoids asking the user
+                // to navigate to the tenant UI when we can record the request now.
+                if (SESSION_TENANT_HOST) {
+                    try {
+                        const res = await fetch('/subscription/request-public', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token,
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({ plan: plan, tenant_host: SESSION_TENANT_HOST })
+                        });
+
+                        const raw = await res.text();
+                        let payload;
+                        try { payload = raw ? JSON.parse(raw) : {}; } catch (e) { payload = null; }
+
+                        if (res.ok && payload && payload.success) {
+                            closePlanModal();
+                            requestAnimationFrame(function () {
+                                showPendingAlert('Subscription Pending', payload.message || 'Your subscription request is pending central approval.');
+                            });
+                            return;
+                        }
+
+                        console.warn('Central POST did not succeed, falling back to tenant UI', payload);
+                    } catch (e) {
+                        console.warn('Central POST failed, falling back to tenant UI', e);
+                    }
+                }
+
+                // If central POST not attempted or failed, show confirmation
+                // (user can be instructed to open tenant pricing if needed).
                 closePlanModal();
-            } else {
-                showToast((payload && payload.error) || 'Failed to request subscription');
+                requestAnimationFrame(function () {
+                    if (res.ok && raw.includes('Created subscription request')) {
+                        showPendingAlert('Request Submitted', 'Your subscription request has been received. Please wait for central admin approval.');
+                        return;
+                    }
+                });
+                return;
             }
+
+            // Unknown tenant origin: show friendly guidance and wait-for-approval
+            closePlanModal();
+            requestAnimationFrame(function () {
+                showPendingAlert('Request Submitted', 'Your subscription request has been received. Please wait for central admin approval.');
+            });
+            return;
         } catch (err) {
             console.error(err);
             showToast('Unable to request subscription. ' + (err && err.message ? err.message : 'Please try again later.'));
+        }
+    }
+    
+    function requestSubscription() {
+        if (_selectedPlan) {
+            window.location.href = '/create-subscription/' + _selectedPlan;
+        } else {
+            alert('Please select a plan first');
+        }
+    }
+    
+    async function createSubscriptionRequest() {
+        if (!_selectedPlan) {
+            alert('Please select a plan first');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/create-subscription/' + _selectedPlan);
+            const text = await response.text();
+            
+            if (response.ok && text.includes('Created subscription request')) {
+                // Close the modal
+                closePlanModal();
+                // Show success alert
+                showPendingAlert('Request Submitted', 'Your subscription request has been received. Please wait for central admin approval.');
+            } else {
+                alert('Failed to create subscription request. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error creating subscription request. Please try again.');
         }
     }
 </script>
@@ -420,8 +744,8 @@
             </div>
             <p class="mt-4 text-sm text-slate-500">Choose one of the options below:</p>
             <div class="mt-4 grid grid-cols-1 gap-3">
-                <button onclick="requestSubscriptionFromModal()" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Request Subscription</button>
-                <a id="proceedToCheckout" href="/dashboard/payments/checkout" onclick="proceedToCheckoutFromModal(); return false;" class="w-full inline-block text-center rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white hover:bg-rose-500">Proceed to Manual Checkout</a>
+                <button onclick="createSubscriptionRequest()" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Request Subscription</button>
+                <a id="proceedToCheckout" href="javascript:void(0)" onclick="proceedToCheckoutFromModal(); return false;" class="w-full inline-block text-center rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white hover:bg-rose-500">Proceed to Manual Checkout</a>
             </div>
             <p class="mt-3 text-xs text-slate-400">Your plan will activate after Central Admin approval.</p>
         </div>

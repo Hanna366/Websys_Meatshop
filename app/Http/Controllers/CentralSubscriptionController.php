@@ -6,15 +6,53 @@ use App\Models\SubscriptionRequest;
 use App\Models\Tenant;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CentralSubscriptionController extends Controller
 {
     public function index()
     {
-        $requests = SubscriptionRequest::query()->orderByDesc('created_at')->limit(200)->get();
+        // Get ALL requests without any filters - force fresh data
+        $requests = SubscriptionRequest::orderByDesc('created_at')->get();
 
         return view('admin.subscription_requests.index', [
             'requests' => $requests,
+        ]);
+    }
+
+    /**
+     * Return new pending subscription requests created after the provided id.
+     * Used by the admin UI to poll for live updates.
+     */
+    public function updates(Request $request)
+    {
+        $since = (int) $request->query('since_id', 0);
+        
+        Log::info('Subscription updates polling', ['since_id' => $since]);
+
+        $new = SubscriptionRequest::query()
+            ->where('status', 'pending')
+            ->when($since > 0, function ($q) use ($since) {
+                $q->where('id', '>', $since);
+            })
+            ->orderBy('id')
+            ->get();
+            
+        Log::info('Found subscription requests', ['count' => $new->count(), 'requests' => $new->toArray()]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $new->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'tenant_id' => $r->tenant_id,
+                    'requested_plan' => $r->requested_plan,
+                    'amount' => number_format($r->amount, 2),
+                    'payment_reference' => $r->payment_reference,
+                    'created_at' => $r->created_at->format('Y-m-d H:i'),
+                    'status' => $r->status,
+                ];
+            }),
         ]);
     }
 

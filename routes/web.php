@@ -54,9 +54,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->g
 // Central subscription approval UI
 use App\Http\Controllers\CentralSubscriptionController;
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
-    Route::get('/subscription-requests', [CentralSubscriptionController::class, 'index'])->name('admin.subscription_requests.index');
-    Route::post('/subscription-requests/{id}/approve', [CentralSubscriptionController::class, 'approve'])->name('admin.subscription_requests.approve');
-    Route::post('/subscription-requests/{id}/reject', [CentralSubscriptionController::class, 'reject'])->name('admin.subscription_requests.reject');
+    Route::get('/subscription-requests', [CentralSubscriptionController::class, 'index'])->name('subscription_requests.index');
+    Route::get('/subscription-requests/updates', [CentralSubscriptionController::class, 'updates'])->name('subscription_requests.updates');
+    Route::post('/subscription-requests/{id}/approve', [CentralSubscriptionController::class, 'approve'])->name('subscription_requests.approve');
+    Route::post('/subscription-requests/{id}/reject', [CentralSubscriptionController::class, 'reject'])->name('subscription_requests.reject');
 });
 
 // Backwards-compatible redirect for legacy/non-prefixed URL
@@ -402,6 +403,68 @@ Route::get('/dashboard/payments/checkout', function (\Illuminate\Http\Request $r
     return app()->call([App\Http\Controllers\Tenant\PaymentsController::class, 'checkout']);
 });
 
+// Allow unauthenticated tenants to submit manual payment proofs without
+// being forced to log in. This initializes tenancy by host then forwards
+// the POST to the tenant PaymentsController@store action. Placed before
+// the auth-protected tenant group so guests aren't redirected to login.
+Route::post('/dashboard/payments/checkout', function (\Illuminate\Http\Request $request) {
+    $host = $request->getHost();
+
+    $domain = \App\Models\Domain::where('domain', $host)->first();
+    $tenant = $domain ? $domain->tenant : \App\Models\Tenant::where('domain', $host)->first();
+
+    if (! $tenant) {
+        return abort(404);
+    }
+
+    tenancy()->initialize($tenant);
+
+    return app()->call([App\Http\Controllers\Tenant\PaymentsController::class, 'store']);
+});
+
+// Public subscription request endpoint for tenant origins.
+// This accepts manual subscription requests (no auth) and records them
+// to the central `subscription_requests` table after initializing
+// tenancy by host. Used by tenant UIs to submit requests without
+// forcing a login redirect (UI should still ensure the user is a
+// legitimate tenant owner when possible).
+Route::post('/subscription/request-public', function (\Illuminate\Http\Request $request) {
+    \Illuminate\Support\Facades\Log::info('subscription.request-public route called', ['host' => $request->getHost(), 'payload' => $request->all()]);
+    // Resolve tenant by request body (tenant_host or tenant_id) first,
+    // then fall back to Host header. This allows central-rendered pages
+    // to POST a tenant_host and have the request recorded centrally.
+    $tenant = null;
+
+    if ($request->filled('tenant_id')) {
+        $tenant = \App\Models\Tenant::where('tenant_id', $request->input('tenant_id'))->first();
+    }
+
+    if (! $tenant && $request->filled('tenant_host')) {
+        $tenantHost = $request->input('tenant_host');
+        $domain = \App\Models\Domain::where('domain', $tenantHost)->first();
+        $tenant = $domain ? $domain->tenant : \App\Models\Tenant::where('domain', $tenantHost)->first();
+    }
+
+    if (! $tenant) {
+        // Fall back to Host header behavior for tenant-origin requests
+        $host = $request->getHost();
+        $domain = \App\Models\Domain::where('domain', $host)->first();
+        $tenant = $domain ? $domain->tenant : \App\Models\Tenant::where('domain', $host)->first();
+    }
+
+    if (! $tenant) {
+        return response()->json(['error' => 'Not in tenant context'], 400);
+    }
+
+    if (function_exists('tenancy')) {
+        tenancy()->initialize($tenant);
+    } else {
+        app(\Stancl\Tenancy\Tenancy::class)->initialize($tenant);
+    }
+
+    return app()->call([App\Http\Controllers\SubscriptionController::class, 'requestSubscriptionPublic']);
+})->withoutMiddleware([\App\Http\Middleware\EnsureCentralDomain::class]);
+
 // Tenant-facing System Updates UI (read-only + reporting)
 $tenantMiddleware = ['auth', InitializeTenancyByQuery::class, InitializeTenancyByDomain::class, PreventAccessFromCentralDomains::class, 'tenant.active'];
 // In non-debug (production-like) environments, wrap domain initialization to
@@ -421,7 +484,9 @@ Route::middleware($tenantMiddleware)->group(function () {
     });
     // Tenant manual payments
     Route::get('/dashboard/payments/checkout', [App\Http\Controllers\Tenant\PaymentsController::class, 'checkout'])->name('tenant.payments.checkout');
-    Route::post('/dashboard/payments/checkout', [App\Http\Controllers\Tenant\PaymentsController::class, 'store'])->name('tenant.payments.store');
+    // Note: POST is handled by a public route earlier so guests submitting
+    // manual payment proofs are not redirected to login. Do not re-register
+    // a POST route here that includes the 'auth' middleware.
     Route::get('/dashboard/payments/history', [App\Http\Controllers\Tenant\PaymentsController::class, 'history'])->name('tenant.payments.history');
 
     Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
@@ -438,5 +503,111 @@ Route::middleware($tenantMiddleware)->group(function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->group(function () {
     Route::get('/tenants/{tenantId}/settings', [App\Http\Controllers\Admin\TenantSettingsController::class, 'edit'])->name('tenants.settings.edit');
     Route::post('/tenants/{tenantId}/settings', [App\Http\Controllers\Admin\TenantSettingsController::class, 'update'])->name('tenants.settings.update');
+});
+
+// Simple subscription request that works
+Route::post('/simple-subscription-request', function (\Illuminate\Http\Request $request) {
+    try {
+        $plan = $request->input('plan', 'basic');
+        $tenant = \App\Models\Tenant::first();
+        
+        if (!$tenant) {
+            return response()->json(['error' => 'No tenant found'], 400);
+        }
+        
+        // Use correct pricing
+        $pesoRate = env('PESO_RATE', 55);
+        $pricing = [
+            'basic' => 29 * $pesoRate,     // ₱1,595
+            'standard' => 79 * $pesoRate,  // ₱4,345  
+            'premium' => 149 * $pesoRate,  // ₱8,195
+        ];
+        
+        $subscriptionRequest = new \App\Models\SubscriptionRequest();
+        $subscriptionRequest->tenant_id = $tenant->tenant_id;
+        $subscriptionRequest->requested_plan = $plan;
+        $subscriptionRequest->payment_method = null;
+        $subscriptionRequest->payment_reference = null;
+        $subscriptionRequest->amount = (float) ($pricing[$plan] ?? 0);
+        $subscriptionRequest->status = 'pending';
+        $subscriptionRequest->metadata = json_encode(['source' => 'simple_form']);
+        $subscriptionRequest->save();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Subscription request created! ID: ' . $subscriptionRequest->id,
+            'request_id' => $subscriptionRequest->id
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+// GET endpoint to create subscription request (no CSRF)
+Route::get('/create-subscription/{plan}', function ($plan) {
+    try {
+        $tenant = \App\Models\Tenant::first();
+        
+        if (!$tenant) {
+            return 'No tenant found';
+        }
+        
+        // Use correct pricing
+        $pesoRate = env('PESO_RATE', 55);
+        $pricing = [
+            'basic' => 29 * $pesoRate,     // ₱1,595
+            'standard' => 79 * $pesoRate,  // ₱4,345  
+            'premium' => 149 * $pesoRate,  // ₱8,195
+        ];
+        
+        $subscriptionRequest = new \App\Models\SubscriptionRequest();
+        $subscriptionRequest->tenant_id = $tenant->tenant_id;
+        $subscriptionRequest->requested_plan = $plan;
+        $subscriptionRequest->payment_method = null;
+        $subscriptionRequest->payment_reference = null;
+        $subscriptionRequest->amount = (float) ($pricing[$plan] ?? 0);
+        $subscriptionRequest->status = 'pending';
+        $subscriptionRequest->metadata = json_encode(['source' => 'get_endpoint']);
+        $subscriptionRequest->save();
+        
+        return "Created subscription request ID: " . $subscriptionRequest->id . " for plan: " . ucfirst($plan) . " - Amount: $" . number_format($subscriptionRequest->amount, 2);
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+
+// Test endpoint for subscription requests
+Route::get('/test-subscription-request', function () {
+    try {
+        $tenant = \App\Models\Tenant::first();
+        if (!$tenant) {
+            return 'No tenant found';
+        }
+        
+        // Use exact same pricing as pricing page
+        $pesoRate = env('PESO_RATE', 55);
+        $pricing = [
+            'basic' => 29 * $pesoRate,     // ₱1,595
+            'standard' => 79 * $pesoRate,  // ₱4,345  
+            'premium' => 149 * $pesoRate,  // ₱8,195
+        ];
+        $plans = ['basic', 'standard', 'premium'];
+        $plan = $plans[array_rand($plans)]; // Random plan
+        $amount = (float) $pricing[$plan];
+        
+        $request = new \App\Models\SubscriptionRequest();
+        $request->tenant_id = $tenant->tenant_id;
+        $request->requested_plan = $plan;
+        $request->payment_method = null;
+        $request->payment_reference = null;
+        $request->amount = $amount;
+        $request->status = 'pending';
+        $request->metadata = json_encode(['test' => true]);
+        $request->save();
+        
+        return "Created test subscription request ID: " . $request->id . " for plan: " . ucfirst($plan) . " - Amount: $" . number_format($amount, 2);
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
 });
 

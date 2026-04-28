@@ -24,6 +24,15 @@
         @if(session('error'))
             <div class="alert alert-danger mb-4">{{ session('error') }}</div>
         @endif
+        
+        <!-- Debug Info -->
+        <div class="alert alert-info mb-4">
+            <strong>Debug:</strong> Found {{ $requests->count() }} subscription requests
+            @if($requests->count() > 0)
+                <br>Latest Request ID: {{ $requests->first()->id }}
+                <br>Status: {{ $requests->first()->status }}
+            @endif
+        </div>
 
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-slate-200 text-sm">
@@ -47,7 +56,7 @@
                             <td class="px-4 py-3">{{ ucfirst($req->requested_plan) }}</td>
                             <td class="px-4 py-3">{{ number_format($req->amount,2) }}</td>
                             <td class="px-4 py-3">{{ $req->payment_reference }}</td>
-                            <td class="px-4 py-3">{{ $req->created_at->format('Y-m-d H:i') }}</td>
+                            <td class="px-4 py-3">{{ $req->created_at ? $req->created_at->format('Y-m-d H:i') : 'N/A' }}</td>
                             <td class="px-4 py-3">{{ ucfirst($req->status) }}</td>
                             <td class="px-4 py-3">
                                 @if($req->status === 'pending')
@@ -69,15 +78,9 @@
                                         }
                                     @endphp
 
-                                    <div class="inline-flex items-center gap-2">
-                                        <form method="POST" action="{{ $approveRoute }}">
-                                            @csrf
-                                            <button class="btn-primary-gradient inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold w-28 text-center">Approve</button>
-                                        </form>
-                                        <form method="POST" action="{{ $rejectRoute }}">
-                                            @csrf
-                                            <button class="btn-danger-gradient inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold w-28 text-center">Reject</button>
-                                        </form>
+                                    <div class="inline-flex items-center gap-2" id="actions-{{ $req->id }}">
+                                        <button onclick="approveRequest({{ $req->id }})" class="btn-primary-gradient inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold w-28 text-center">Approve</button>
+                                        <button onclick="rejectRequest({{ $req->id }})" class="btn-danger-gradient inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold w-28 text-center">Reject</button>
                                     </div>
                                 @endif
                             </td>
@@ -88,3 +91,107 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const tbody = document.querySelector('tbody.divide-y');
+        if (!tbody) return;
+
+        // Determine last seen id from the first row rendered (requests ordered desc)
+        let lastId = 0;
+        try {
+            const firstRowId = document.querySelector('tbody tr td')?.textContent || null;
+            if (firstRowId) lastId = parseInt(firstRowId, 10) || 0;
+        } catch (e) { lastId = 0; }
+
+        async function pollUpdates() {
+            try {
+                const updatesPath = @json(url('/admin/subscription-requests/updates'));
+                const url = new URL(updatesPath, location.origin);
+                url.searchParams.set('since_id', lastId);
+                const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                if (!res.ok) return;
+                const json = await res.json();
+                if (!json || !json.data || !json.data.length) return;
+                json.data.forEach(function (r) {
+                    // Build a table row matching existing markup
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-4 py-3">${r.id}</td>
+                        <td class="px-4 py-3">${(r.tenant_id) ? r.tenant_id : ''}</td>
+                        <td class="px-4 py-3">${(r.requested_plan||'').charAt(0).toUpperCase() + (r.requested_plan||'').slice(1)}</td>
+                        <td class="px-4 py-3">${r.amount}</td>
+                        <td class="px-4 py-3">${r.payment_reference || ''}</td>
+                        <td class="px-4 py-3">${r.created_at}</td>
+                        <td class="px-4 py-3">${(r.status||'').charAt(0).toUpperCase() + (r.status||'').slice(1)}</td>
+                        <td class="px-4 py-3">
+                            <div class="inline-flex items-center gap-2">
+                                <form method="POST" action="/admin/subscription-requests/${r.id}/approve">@csrf
+                                    <button class="btn-primary-gradient inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold w-28 text-center">Approve</button>
+                                </form>
+                                <form method="POST" action="/admin/subscription-requests/${r.id}/reject">@csrf
+                                    <button class="btn-danger-gradient inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold w-28 text-center">Reject</button>
+                                </form>
+                            </div>
+                        </td>
+                    `;
+
+                    // Prepend so newest appear at top
+                    tbody.insertBefore(tr, tbody.firstChild);
+                    lastId = Math.max(lastId, Number(r.id));
+                });
+            } catch (e) {
+                console.warn('Polling subscription updates failed', e);
+            }
+        }
+
+        // Poll every 1 second for new requests via AJAX
+        setInterval(pollUpdates, 1000);
+        pollUpdates();
+        
+        // Instant approve/reject via AJAX (no page reload)
+        async function approveRequest(id) {
+            try {
+                const res = await fetch('/admin/subscription-requests/' + id + '/approve', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                        'Accept': 'text/html'
+                    }
+                });
+                if (res.ok) {
+                    document.getElementById('actions-' + id).innerHTML = '<span class="text-emerald-600 font-semibold">Approved</span>';
+                    document.querySelector('#requests-table tbody tr:has(#actions-' + id + ') td:nth-child(7)').textContent = 'Approved';
+                } else {
+                    alert('Approval failed');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Approval error');
+            }
+        }
+
+        async function rejectRequest(id) {
+            try {
+                const res = await fetch('/admin/subscription-requests/' + id + '/reject', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                        'Accept': 'text/html'
+                    }
+                });
+                if (res.ok) {
+                    document.getElementById('actions-' + id).innerHTML = '<span class="text-rose-600 font-semibold">Rejected</span>';
+                    document.querySelector('#requests-table tbody tr:has(#actions-' + id + ') td:nth-child(7)').textContent = 'Rejected';
+                } else {
+                    alert('Rejection failed');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Rejection error');
+            }
+        }
+    })();
+</script>
+@endpush

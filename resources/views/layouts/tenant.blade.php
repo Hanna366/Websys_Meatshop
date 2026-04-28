@@ -342,6 +342,20 @@
     @stack('styles')
 </head>
 <body class="antialiased">
+    @php
+        // Tenant-aware pricing URL built from session auth_context when
+        // present. Use absolute origin to force navigation to the tenant host
+        // even if server-side tenancy initialization sometimes does not run.
+        $tenantPricingUrl = '/pricing';
+        $authCtx = (string) session('auth_context', 'central');
+        if (preg_match('/^tenant:(.+)$/', $authCtx, $m)) {
+            $tenantHost = $m[1];
+            $scheme = request()->getScheme();
+            $port = request()->getPort();
+            $portPart = ($port && $port !== 80 && $port !== 443) ? ':'.$port : '';
+            $tenantPricingUrl = $scheme.'://'.$tenantHost.$portPart.'/pricing';
+        }
+    @endphp
     <div class="main-shell flex">
         <aside class="tenant-sidebar shrink-0 p-4 text-white lg:sticky lg:top-0 lg:h-screen flex flex-col" id="tenantSidebar">
             <div class="tenant-brand-card mb-4 rounded-2xl p-3.5">
@@ -436,7 +450,7 @@
 
                     <div class="flex items-center gap-2 sm:gap-3">
                         @yield('header_actions')
-                        <a href="/pricing" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
+                        <a href="{{ $tenantPricingUrl }}" class="btn-primary-gradient inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold">
                             <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
                             <span class="hidden sm:inline">Upgrade Plan</span>
                         </a>

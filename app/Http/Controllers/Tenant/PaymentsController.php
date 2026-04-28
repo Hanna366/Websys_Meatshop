@@ -18,6 +18,21 @@ class PaymentsController extends Controller
         $plans = (array) config('plans.definitions', ['basic'=>[],'standard'=>[],'premium'=>[]]);
         $definition = $plans[$plan] ?? [];
 
+        // Convert configured plan prices (assumed USD) to PHP for tenant display.
+        // Use PESO_RATE from env (default 55) so UI shows ₱ amounts consistently.
+        $pesoRate = (float) env('PESO_RATE', 55);
+        if (!empty($definition)) {
+            $monthly = (float) data_get($definition, 'price_monthly', 0);
+            // Some plan configs use a different key for annual monthly price
+            $annualMonthly = (float) data_get($definition, 'price_annual', data_get($definition, 'price_annual_monthly', 0));
+            $definition['price_monthly'] = round($monthly * $pesoRate, 2);
+            if ($annualMonthly > 0) {
+                $definition['price_annual'] = round($annualMonthly * $pesoRate, 2);
+            } else {
+                $definition['price_annual'] = round(($monthly * 12) * $pesoRate, 2);
+            }
+        }
+
         return view('tenant.payments.checkout', [
             'plan_key' => $plan,
             'plan' => $definition,
@@ -50,10 +65,25 @@ class PaymentsController extends Controller
         }
 
         $plans = (array) config('plans.definitions', []);
-        $price = data_get($plans, "{$data['plan']}.price_monthly", 0);
+        // Determine configured price (assumed USD) then convert to PHP for
+        // simulated checkout. We do not call any external payment provider
+        // here — this is a mock/manual flow where tenants submit proof.
+        $configMonthly = (float) data_get($plans, "{$data['plan']}.price_monthly", 0);
+        $configAnnualMonthly = data_get($plans, "{$data['plan']}.price_annual", data_get($plans, "{$data['plan']}.price_annual_monthly", null));
+
         if ($data['billing_cycle'] === 'annual') {
-            $price = data_get($plans, "{$data['plan']}.price_annual", $price * 12);
+            if (!is_null($configAnnualMonthly)) {
+                $price = (float) $configAnnualMonthly * 12;
+            } else {
+                $price = $configMonthly * 12;
+            }
+        } else {
+            $price = $configMonthly;
         }
+
+        // Convert to PHP for display/storage using PESO_RATE (env fallback 55)
+        $pesoRate = (float) env('PESO_RATE', 55);
+        $price = round($price * $pesoRate, 2);
 
         $payment = SubscriptionPayment::create([
             'tenant_id' => $tenant->id,
@@ -68,7 +98,15 @@ class PaymentsController extends Controller
             'status' => 'pending'
         ]);
 
-        return redirect()->route('tenant.payments.history')->with('status', 'Payment submitted. Waiting for admin approval.');
+        // If the user is authenticated, send them to the payments history.
+        // If not authenticated (guest), return back with a flash message so
+        // they are not redirected to the login page and instead see a
+        // confirmation that their manual payment is pending approval.
+        if (auth()->check()) {
+            return redirect()->route('tenant.payments.history')->with('status', 'Payment submitted. Waiting for admin approval.');
+        }
+
+        return back()->with('status', 'Payment submitted. Waiting for admin approval.');
     }
 
     public function history()

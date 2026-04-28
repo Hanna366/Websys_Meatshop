@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use App\Models\Domain;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Services\SubscriptionService;
@@ -15,6 +17,37 @@ class SubscriptionController extends Controller
     public function billingPage()
     {
         [$subscription, $billingHistory, $centralBillingMode] = $this->resolveBillingPayload();
+
+        // If request comes from a tenant flow wanting to create a subscription
+        // request centrally (fallback), handle query param and create a pending
+        // subscription request record for central admins to review.
+        if (request()->query('create_subscription_request') && request()->query('tenant_host') && request()->query('plan')) {
+            $tenantHost = request()->query('tenant_host');
+            $plan = request()->query('plan');
+            try {
+                $domain = \App\Models\Domain::where('domain', $tenantHost)->first();
+                $tenant = $domain ? $domain->tenant : \App\Models\Tenant::where('domain', $tenantHost)->first();
+                if ($tenant) {
+                    $centralConn = config('tenancy.database.central_connection', config('database.default'));
+                    $now = now();
+                    $id = \DB::connection($centralConn)->table('subscription_requests')->insertGetId([
+                        'tenant_id' => (string) $tenant->tenant_id,
+                        'requested_plan' => $plan,
+                        'payment_method' => null,
+                        'payment_reference' => null,
+                        'amount' => (float) (\App\Services\SubscriptionService::getPlanPricing()[$plan] ?? 0),
+                        'status' => 'pending',
+                        'metadata' => json_encode(['via' => 'tenant_fallback']),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                    try { app(\App\Services\NotificationService::class)->sendCentralApprovalRequest($tenant); } catch (\Throwable $e) {}
+                    session()->flash('status', 'Subscription request created and pending central approval.');
+                }
+            } catch (\Throwable $e) {
+                \Log::warning('Failed to create fallback subscription request', ['tenant_host' => $tenantHost, 'error' => $e->getMessage()]);
+            }
+        }
 
         // If tenancy middleware didn't run for some reason (host routed to central),
         // attempt to initialize tenancy from the request host so tenant pages
@@ -104,7 +137,21 @@ class SubscriptionController extends Controller
                 return;
             }
 
-            $tenant = \App\Models\Tenant::where('domain', $host)->first();
+            $tenant = null;
+
+            // First try domains table lookup (preferred stancl/tenancy pattern)
+            if (\Illuminate\Support\Facades\Schema::hasTable('domains')) {
+                $domain = \App\Models\Domain::where('domain', $host)->first();
+                if ($domain && $domain->tenant) {
+                    $tenant = $domain->tenant;
+                }
+            }
+
+            // Fallback: some installations store domain on tenants table
+            if (! $tenant && \Illuminate\Support\Facades\Schema::hasTable('tenants') && \Illuminate\Support\Facades\Schema::hasColumn('tenants', 'domain')) {
+                $tenant = \App\Models\Tenant::where('domain', $host)->first();
+            }
+
             if ($tenant) {
                 if (function_exists('tenancy')) {
                     tenancy()->initialize($tenant);
@@ -270,8 +317,54 @@ class SubscriptionController extends Controller
         if (!session('authenticated')) {
             return redirect('/login');
         }
-        
-        return view('pricing');
+        // Log incoming request info to help diagnose central vs tenant rendering.
+        try {
+            \Log::info('SubscriptionController@index called', [
+                'host' => request()->getHost(),
+                'full_url' => request()->fullUrl(),
+                'tenant_bound_before' => (bool) (app()->bound('tenant') && tenant()),
+                'session_auth_context' => session('auth_context', null),
+            ]);
+        } catch (\Throwable $e) {
+            // ignore logging errors
+        }
+
+        // Try to initialize tenancy from the request host so the pricing page
+        // renders within the tenant context when accessed via a tenant domain.
+        $this->ensureTenantInitializedFromHost();
+
+        try {
+            \Log::info('SubscriptionController@index after ensureTenantInitializedFromHost', [
+                'host' => request()->getHost(),
+                'tenant_bound_after' => (bool) (app()->bound('tenant') && tenant()),
+                'tenant_id' => app()->bound('tenant') && tenant() ? tenant()->tenant_id : null,
+            ]);
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        // Allow central pages to pass ?tenant=<uuid> or ?tenant_host=<host>
+        // so the pricing view can act on behalf of that tenant.
+        $forcedTenantHost = null;
+        try {
+            if (request()->filled('tenant')) {
+                $t = \App\Models\Tenant::where('tenant_id', request()->query('tenant'))->orWhere('id', request()->query('tenant'))->first();
+                if ($t) {
+                    $forcedTenantHost = $t->domain ?? null;
+                    if (! $forcedTenantHost) {
+                        // try domains table
+                        $d = \App\Models\Domain::where('tenant_id', $t->id)->first();
+                        if ($d) $forcedTenantHost = $d->domain;
+                    }
+                }
+            } elseif (request()->filled('tenant_host')) {
+                $forcedTenantHost = request()->query('tenant_host');
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        return view('pricing', ['forcedTenantHost' => $forcedTenantHost]);
     }
 
     /**
@@ -331,6 +424,11 @@ class SubscriptionController extends Controller
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
+        // Ensure tenancy is initialized from the request host if it hasn't
+        // been bound yet. This helps when requests arrive via a central
+        // rendering but should operate in tenant context.
+        $this->ensureTenantInitializedFromHost();
+
         $request->validate([
             'plan' => 'required|in:basic,standard,premium,enterprise',
         ]);
@@ -382,6 +480,114 @@ class SubscriptionController extends Controller
                 return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
             }
 
+            return response()->json(['error' => 'Unable to request subscription at this time'], 500);
+        }
+    }
+
+    /**
+     * Public variant of requestSubscription for tenant-origin requests.
+     * Does not require session authentication but still validates input
+     * and writes a pending request to the central DB after tenancy is
+     * initialized by the caller.
+     */
+    public function requestSubscriptionPublic(Request $request)
+    {
+        $request->validate([
+            'plan' => 'required|in:basic,standard,premium,enterprise',
+        ]);
+
+        try {
+            Log::info('requestSubscriptionPublic called', ['payload' => $request->all(), 'host' => $request->getHost()]);
+            // Resolve tenant: prefer bound tenant, otherwise accept tenant_id or tenant_host
+            $tenant = null;
+            if (app()->bound('tenant') && tenant()) {
+                $tenant = tenant();
+            } else {
+                if ($request->filled('tenant_id')) {
+                    $tenant = Tenant::where('tenant_id', $request->input('tenant_id'))->first();
+                }
+
+                if (!$tenant && $request->filled('tenant_host')) {
+                    // Try domains table first (stancl tenancy domains), then tenant.domain column
+                    $domain = Domain::where('domain', $request->input('tenant_host'))->first();
+                    if ($domain && $domain->tenant) {
+                        $tenant = $domain->tenant;
+                    } else {
+                        $tenant = Tenant::where('domain', $request->input('tenant_host'))->first();
+                    }
+                }
+
+                // As a final attempt, try the Host header
+                if (!$tenant) {
+                    $hostHeader = $request->header('X-Tenant-Host') ?? $request->header('Host');
+                    if ($hostHeader) {
+                        $domain = Domain::where('domain', $hostHeader)->first();
+                        if ($domain && $domain->tenant) {
+                            $tenant = $domain->tenant;
+                        } else {
+                            $tenant = Tenant::where('domain', $hostHeader)->first();
+                        }
+                    }
+                }
+            }
+
+            if (!$tenant) {
+                Log::warning('requestSubscriptionPublic: tenant not found', ['payload' => $request->all(), 'host' => $request->getHost()]);
+                return response()->json(['error' => 'Tenant not found'], 400);
+            }
+
+            $pricing = SubscriptionService::getPlanPricing();
+            $amount = (float) ($pricing[$request->plan] ?? 0);
+
+            $centralConn = config('tenancy.database.central_connection', config('database.default'));
+            $now = now();
+            
+            // Use the model to create the request with correct pricing
+            $pesoRate = env('PESO_RATE', 55);
+            $planPricing = [
+                'basic' => 29 * $pesoRate,     // ₱1,595
+                'standard' => 79 * $pesoRate,  // ₱4,345  
+                'premium' => 149 * $pesoRate,  // ₱8,195
+            ];
+            $correctAmount = (float) ($planPricing[$request->plan] ?? $amount);
+            
+            $subscriptionRequest = new \App\Models\SubscriptionRequest();
+            $subscriptionRequest->tenant_id = (string) $tenant->tenant_id;
+            $subscriptionRequest->requested_plan = $request->plan;
+            $subscriptionRequest->payment_method = null;
+            $subscriptionRequest->payment_reference = null;
+            $subscriptionRequest->amount = $correctAmount;
+            $subscriptionRequest->status = 'pending';
+            $subscriptionRequest->metadata = json_encode(['source' => 'pricing_page']);
+            $subscriptionRequest->created_at = $now;
+            $subscriptionRequest->updated_at = $now;
+            $subscriptionRequest->save();
+            
+            $id = $subscriptionRequest->id;
+
+            Log::info('Created central subscription_request', ['id' => $id, 'tenant' => $tenant->tenant_id, 'plan' => $request->plan, 'amount' => $correctAmount, 'source' => 'pricing_page']);
+
+            $req = \DB::connection($centralConn)->table('subscription_requests')->where('id', $id)->first();
+            
+            Log::info('Retrieved subscription_request', ['request' => $req]);
+
+            try {
+                app(\App\Services\NotificationService::class)->sendCentralApprovalRequest($tenant);
+            } catch (\Throwable $e) {
+                \Log::warning('Failed to notify central admin about subscription request', ['tenant' => $tenant->tenant_id, 'error' => $e->getMessage()]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'pending' => true,
+                'message' => 'Subscription change requested. Pending central approval.',
+                'request_id' => $req->id,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Failed to request subscription (public)', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            if (config('app.debug')) {
+                return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+            }
             return response()->json(['error' => 'Unable to request subscription at this time'], 500);
         }
     }

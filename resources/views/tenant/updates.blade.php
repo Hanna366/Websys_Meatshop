@@ -128,6 +128,13 @@
                             </form>
                         @else
                             <p class="text-sm text-slate-500">No updates available.</p>
+                            @if($versions && $versions->count() > 0)
+                                <form method="POST" action="{{ $requestAction }}" class="mt-2">
+                                    @csrf
+                                    <input type="hidden" name="target_version" value="{{ $latestVersion }}">
+                                    <button type="submit" class="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">Request Latest Update</button>
+                                </form>
+                            @endif
                         @endif
                     </div>
                 @else

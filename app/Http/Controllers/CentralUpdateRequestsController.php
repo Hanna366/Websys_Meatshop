@@ -13,6 +13,9 @@ class CentralUpdateRequestsController extends Controller
     public function index(Request $request)
     {
         $query = UpdateRequest::query()->orderBy('requested_at', 'desc');
+        
+        // Force fresh data - no caching
+        $query->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));

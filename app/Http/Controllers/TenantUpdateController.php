@@ -180,7 +180,7 @@ class TenantUpdateController extends Controller
         ]);
 
         // Also create central update request record for admin visibility
-        UpdateRequest::create([
+        $centralRequest = UpdateRequest::create([
             'tenant_id' => $tenantId,
             'user_id' => $user->id ?? null,
             'current_version' => $currentVersion,
@@ -189,7 +189,7 @@ class TenantUpdateController extends Controller
             'requested_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', 'Update request submitted for admin review.');
+        return redirect()->back()->with('success', 'Update request submitted for admin review. Request ID: #' . $centralRequest->id);
     }
 
     /**

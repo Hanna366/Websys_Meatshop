@@ -135,6 +135,13 @@
     </style>
 </head>
 <body>
+    @php
+        // Central should link to central pricing only. Never auto-redirect central
+        // UI to tenant origins to avoid cross-origin session bleed and accidental
+        // elevation of tenant users in central.
+        $upgradeUrl = url('/pricing');
+    @endphp
+
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="brand">
@@ -162,7 +169,7 @@
                 <i class="fas fa-file-invoice-dollar me-2"></i>
                 Billing
             </a>
-            <a class="nav-link" href="{{ route('pricing') }}">
+            <a class="nav-link" href="{{ $upgradeUrl }}">
                 <i class="fas fa-crown me-2"></i>
                 Plans
             </a>
@@ -226,6 +233,11 @@
             document.querySelector('.sidebar').classList.toggle('show');
         });
         
+        @php
+            $upgradeUrl = url('/pricing');
+        @endphp
+        const UPGRADE_URL = '{{ $upgradeUrl }}';
+
         // SweetAlert flash messages
         @if(session('error'))
             Swal.fire({
@@ -239,7 +251,7 @@
                 cancelButtonColor: '#6c757d'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = '/pricing';
+                    window.location.href = UPGRADE_URL;
                 }
             });
         @endif

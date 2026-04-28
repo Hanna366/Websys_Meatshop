@@ -67,7 +67,18 @@
                 <div><p class="text-xs uppercase tracking-wide text-slate-500">Member Since</p><p class="mt-1 font-medium text-slate-800">January 15, 2026</p></div>
             </div>
             <div class="mt-4 flex flex-wrap gap-2">
-                <a href="/pricing" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Upgrade Plan</a>
+                @php
+                    $authCtx = (string) session('auth_context', 'central');
+                    $isTenantCtx = preg_match('/^tenant:(.+)$/', $authCtx, $m);
+                    $tenantHost = $isTenantCtx ? $m[1] : null;
+                    if ($tenantHost) {
+                        $scheme = request()->getScheme();
+                        $port = request()->getPort();
+                        $portPart = ($port && $port !== 80 && $port !== 443) ? ':'.$port : '';
+                        $tenantUrl = $scheme.'://'.$tenantHost.$portPart.'/pricing';
+                    }
+                @endphp
+                <a href="{{ $tenantHost ? $tenantUrl : url('/pricing') }}" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Upgrade Plan</a>
                 <button type="button" onclick="viewBilling()" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700">Billing History</button>
             </div>
         </section>

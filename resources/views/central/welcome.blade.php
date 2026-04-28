@@ -819,12 +819,16 @@
             </div>
         </section>
 
+        @php
+            $pesoRate = env('PESO_RATE', 55);
+        @endphp
+
         <section class="pricing-wrap">
             <h2>Flexible Plans for Every Shop</h2>
             <div class="pricing-grid">
                 <article class="price-card basic">
                     <h3>Basic Plan</h3>
-                    <div class="price">$29 <span>/ month</span></div>
+                    <div class="price">₱{{ number_format(29 * $pesoRate, 2) }} <span>/ month</span></div>
                     <p class="price-sub">Great for small shops</p>
                     <ul>
                         <li>Up to 100 products</li>
@@ -836,7 +840,7 @@
 
                 <article class="price-card highlight">
                     <h3>Standard Plan</h3>
-                    <div class="price">$79 <span>/ month</span></div>
+                    <div class="price">₱{{ number_format(79 * $pesoRate, 2) }} <span>/ month</span></div>
                     <p class="price-sub">Best for growing businesses</p>
                     <ul>
                         <li>Unlimited products</li>
@@ -848,7 +852,7 @@
 
                 <article class="price-card premium">
                     <h3>Premium Plan</h3>
-                    <div class="price">$149 <span>/ month</span></div>
+                    <div class="price">₱{{ number_format(149 * $pesoRate, 2) }} <span>/ month</span></div>
                     <p class="price-sub">For advanced operations</p>
                     <ul>
                         <li>Advanced analytics dashboard</li>

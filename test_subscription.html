@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Subscription Request</title>
+</head>
+<body>
+    <h1>Test Subscription Request</h1>
+    
+    <form method="POST" action="http://127.0.0.1:8000/simple-subscription-request">
+        <input type="hidden" name="_token" value="test">
+        <label>
+            Plan:
+            <select name="plan">
+                <option value="basic">Basic (₱1,595)</option>
+                <option value="standard">Standard (₱4,345)</option>
+                <option value="premium">Premium (₱8,195)</option>
+            </select>
+        </label>
+        <button type="submit">Request Subscription</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const response = await fetch(e.target.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': 'test',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            const result = await response.json();
+            document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+        });
+    </script>
+</body>
+</html>
