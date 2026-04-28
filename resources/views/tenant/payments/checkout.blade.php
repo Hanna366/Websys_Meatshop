@@ -116,14 +116,26 @@
                     </div>
 
                     <ul class="space-y-2.5 text-sm mb-4 text-slate-700">
-                        @foreach(data_get($plan, 'features', []) as $feature)
-                            <li class="flex items-start gap-2.5 {{ data_get($feature, 'included', true) ? 'text-slate-700' : 'text-slate-400' }}">
-                                @if(data_get($feature, 'included', true))
+                        @foreach(data_get($plan, 'features', []) as $featureKey => $feature)
+                            @php
+                                if (is_string($feature)) {
+                                    $label = $feature;
+                                    $included = true;
+                                } elseif (is_bool($feature)) {
+                                    $label = ucwords(str_replace('_', ' ', $featureKey));
+                                    $included = $feature;
+                                } else {
+                                    $label = data_get($feature, 'label', ucwords(str_replace('_', ' ', $featureKey)));
+                                    $included = data_get($feature, 'included', true);
+                                }
+                            @endphp
+                            <li class="flex items-start gap-2.5 {{ $included ? 'text-slate-700' : 'text-slate-400' }}">
+                                @if($included)
                                     <i data-lucide="check-circle-2" class="mt-0.5 h-4 w-4 shrink-0 {{ $accent['check'] }}"></i>
                                 @else
                                     <i data-lucide="minus-circle" class="mt-0.5 h-4 w-4 shrink-0 text-slate-300"></i>
                                 @endif
-                                <span>{{ data_get($feature, 'label', is_string($feature) ? $feature : '') }}</span>
+                                <span>{{ $label }}</span>
                             </li>
                         @endforeach
                     </ul>
@@ -133,32 +145,7 @@
                     </div>
                 </article>
             </aside>
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-700">Scale</span>
-                            <h3 class="mt-3 text-3xl font-extrabold mb-1">{{ ucfirst($plan_key) }}</h3>
-                            <p class="text-sm text-slate-500 mb-3">For advanced operations and multi-branch optimization.</p>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-sm text-slate-400">Monthly</div>
-                            <div class="text-3xl font-extrabold text-slate-900">₱{{ number_format((float) data_get($plan, 'price_monthly', 0), 2) }}</div>
-                        </div>
-                    </div>
-
-                    <ul class="space-y-2 text-sm mb-4 text-slate-700 mt-4">
-                        <li class="flex items-start gap-2"><span class="text-rose-500 mt-1">•</span><span>Advanced analytics dashboard</span></li>
-                        <li class="flex items-start gap-2"><span class="text-rose-500 mt-1">•</span><span>Unlimited export (CSV/Excel/PDF)</span></li>
-                        <li class="flex items-start gap-2"><span class="text-rose-500 mt-1">•</span><span>API access and batch operations</span></li>
-                        <li class="flex items-start gap-2"><span class="text-rose-500 mt-1">•</span><span>Unlimited users and priority support</span></li>
-                    </ul>
-
-                    <div class="border-t border-slate-100 pt-4 text-sm">
-                        <div class="flex justify-between text-slate-500"><span>Monthly subscription</span><span>₱{{ number_format((float) data_get($plan, 'price_monthly', 0), 2) }}</span></div>
-                        <div class="flex justify-between text-slate-500"><span>Estimated tax</span><span>₱0.00</span></div>
-                        <div class="mt-3 flex justify-between font-semibold text-slate-900"><span>Due today</span><span>₱{{ number_format((float) data_get($plan, 'price_monthly', 0), 2) }}</span></div>
-                    </div>
-
-                    <p class="mt-4 text-xs text-slate-500">Your plan will activate after Central Admin approves your payment.</p>
+                    
                 </div>
             </aside>
         </div>
