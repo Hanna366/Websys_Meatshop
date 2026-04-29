@@ -155,7 +155,8 @@ Route::middleware([
 
         // Tenant System Updates (in-tenant routes) — ensure these are available on tenant domains
         Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
-        Route::post('/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])->name('tenant.updates.request');
+        Route::match(['get', 'post'], '/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])
+            ->name('tenant.updates.request');
         // Note: POST /dashboard/updates/report is public route above (no auth required)
         Route::get('/dashboard/updates/history', [App\Http\Controllers\TenantUpdateController::class, 'history'])->name('tenant.updates.history');
     });

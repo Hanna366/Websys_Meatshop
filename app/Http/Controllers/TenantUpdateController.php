@@ -181,6 +181,7 @@ class TenantUpdateController extends Controller
             'lastLog' => $lastLog,
             'myRequests' => $myRequests,
             'versions' => $versions,
+            'requestAction' => url('/dashboard/updates/request'),
         ]);
     }
 
@@ -211,6 +212,11 @@ class TenantUpdateController extends Controller
      */
     public function requestUpdate(Request $request)
     {
+        // Handle GET request - just redirect to index
+        if ($request->isMethod('get')) {
+            return redirect('/dashboard/updates');
+        }
+
         $user = Auth::user();
 
         $request->validate([

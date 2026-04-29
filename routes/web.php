@@ -494,11 +494,7 @@ Route::middleware($tenantMiddleware)->group(function () {
     // a POST route here that includes the 'auth' middleware.
     Route::get('/dashboard/payments/history', [App\Http\Controllers\Tenant\PaymentsController::class, 'history'])->name('tenant.payments.history');
 
-    // Tenant System Updates (accessible from central via query parameter)
-    Route::get('/dashboard/updates', [App\Http\Controllers\TenantUpdateController::class, 'index'])->name('tenant.updates.index');
-    Route::post('/dashboard/updates/request', [App\Http\Controllers\TenantUpdateController::class, 'requestUpdate'])->name('tenant.updates.request');
-    // Note: POST /dashboard/updates/report is handled by public route below
-    Route::get('/dashboard/updates/history', [App\Http\Controllers\TenantUpdateController::class, 'history'])->name('tenant.updates.history');
+    // Tenant System Updates routes are now in routes/tenant.php
 
     // Tenant support routes
     Route::get('/dashboard/support', [App\Http\Controllers\SupportTicketController::class, 'index'])->name('tenant.support.index');

@@ -163,12 +163,20 @@ class VersionController extends Controller
      */
     public function checkUpdates()
     {
-        $updateInfo = VersionManagementService::checkForUpdates();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $updateInfo
-        ]);
+        try {
+            $updateInfo = VersionManagementService::checkForUpdates();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $updateInfo
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Update check failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Update check failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

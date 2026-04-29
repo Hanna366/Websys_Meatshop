@@ -322,14 +322,22 @@
 <script>
 function checkUpdates() {
     fetch('{{ route("admin.versions.check-updates") }}')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 location.reload();
+            } else {
+                alert('Update check failed: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
             console.error('Error checking updates:', error);
+            alert('Update check failed: ' + error.message);
         });
 }
 

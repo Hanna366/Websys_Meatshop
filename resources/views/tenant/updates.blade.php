@@ -98,7 +98,6 @@
                 </form>
             @else
                 @php
-                    $requestAction = route('tenant.updates.request');
                     // Filter versions for tenants: stable, available_to_tenants, not deprecated, newer than installed
                     $availableVersions = collect();
                     if (isset($versions) && $versions->isNotEmpty()) {
