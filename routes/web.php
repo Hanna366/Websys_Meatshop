@@ -14,6 +14,7 @@ use App\Http\Controllers\TenantController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\VersionController;
 use App\Http\Controllers\UpdateController;
+use App\Http\Controllers\ModuleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'central.admin'])->g
     Route::put('/versions/{version}', [VersionController::class, 'update'])->name('versions.update');
     Route::delete('/versions/{version}', [VersionController::class, 'destroy'])->name('versions.destroy');
     
+
+    //Module
+
+    Route::resource('modules', ModuleController::class);
     // AJAX endpoints
     Route::get('/versions/check-updates', [VersionController::class, 'checkUpdates'])->name('versions.check-updates');
     Route::post('/versions/download', [VersionController::class, 'downloadUpdate'])->name('versions.download');
